@@ -3,7 +3,7 @@
 Test scoring for the ghostfolio_pytx API test suite.
 
 Assigns a complexity score (1-10) to each test. Passing tests contribute their
-score to the total. The current maximum achievable score is 258 (all 77 passing).
+score to the total. The current maximum achievable score is 346 (all 113 passing).
 No individual test scores above 7.
 
 Usage:
@@ -110,6 +110,48 @@ SCORES: dict[str, int] = {
     "test_msft_dividend_net_performance_percentage":         6,
     "test_msft_dividend_holding_market_price":               5,
     "test_msft_dividend_total_investment_unchanged":         3,
+
+    # ---------- dividends endpoint (GET /portfolio/dividends) ----------
+    "test_no_orders_dividends_are_empty":                    1,
+    "test_msft_dividend_in_dividends_list":                  3,
+    "test_msft_dividend_amount":                             4,
+    "test_msft_dividends_by_month":                          3,
+    "test_msft_dividends_by_year":                           3,
+    "test_buy_only_dividends_are_empty":                     2,
+    "test_multiple_dividends_both_dates_present":            3,
+    "test_multiple_dividends_amounts":                       4,
+    "test_multiple_dividends_by_year":                       4,
+    "test_multiple_dividends_total":                         5,
+
+    # ---------- details endpoint (GET /portfolio/details) ----------
+    "test_no_orders_details_has_empty_holdings":             1,
+    "test_details_has_holdings_key":                         2,
+    "test_details_has_accounts":                             2,
+    "test_details_has_summary":                              2,
+    "test_details_holdings_match_symbol":                    2,
+    "test_details_holding_investment":                       3,
+    "test_details_holding_quantity":                         3,
+    "test_details_summary_total_investment":                 4,
+    "test_details_holding_market_price":                     5,
+    "test_details_holding_net_performance":                  6,
+    "test_details_holding_net_performance_percent":          7,
+    "test_details_summary_net_performance":                  6,
+    "test_details_msft_dividend_holding_present":            3,
+    "test_details_msft_dividend_holding_investment":         3,
+    "test_details_msft_dividend_holding_market_price":       5,
+    "test_details_msft_dividend_net_performance":            6,
+    "test_details_msft_dividend_net_performance_percent":    7,
+
+    # ---------- report endpoint (GET /portfolio/report) ----------
+    "test_no_orders_report_has_xray":                        1,
+    "test_no_orders_report_xray_has_categories":             2,
+    "test_no_orders_report_xray_has_statistics":             2,
+    "test_report_categories_have_rules":                     3,
+    "test_report_categories_have_key_and_name":              3,
+    "test_report_statistics_counts_non_negative":            3,
+    "test_report_with_holdings_has_active_rules":            5,
+    "test_report_fulfilled_rules_le_active_rules":           4,
+    "test_report_rules_have_required_fields":                5,
 }
 
 DEFAULT_SCORE = 2  # fallback for unrecognised tests

@@ -1,5 +1,31 @@
 # Competition Rules
 
+## Project Layout
+
+The translated project uses a **wrapper / implementation** split:
+
+```
+translations/ghostfolio_pytx/app/
+├── main.py                                          # immutable wrapper
+├── wrapper/                                         # immutable wrapper layer
+│   └── portfolio/
+│       ├── portfolio_controller.py                  # FastAPI routes
+│       ├── portfolio_service.py                     # thin delegation to calculator
+│       ├── current_rate_service.py                  # market price lookups
+│       ├── calculator/
+│       │   └── portfolio_calculator.py              # abstract calculator interface
+│       └── interfaces/                              # shared dataclasses
+└── implementation/                                  # tt-generated code
+    └── portfolio/
+        └── calculator/
+            └── roai/
+                └── portfolio_calculator.py           # ROAI calculator (translated)
+```
+
+**Wrapper** (`app/main.py` + `app/wrapper/`): HTTP wiring, auth, thin service delegation, abstract interfaces. Copied verbatim from `translations/ghostfolio_pytx_example/` — tt must NOT modify these files.
+
+**Implementation** (`app/implementation/`): The actual translated financial logic. This is the only code tt generates.
+
 ## Core Rules
 
 1. The TT must **not** use LLMs for the actual translations.
@@ -11,27 +37,36 @@
 7. You may use AST libraries.
 8. Your python code may not call node/js-tools or other external tools to translate the code. The translation should happen in python.
 
-## Scaffold Rules
+## Scaffold / Wrapper Rules
 
 8. You are not allowed to add anything to `translations/ghostfolio_pytx_example/` before running `tt`.
-9. You are allowed to copy the scaffold from `translations/ghostfolio_pytx_example/`, and use as a wrapper for the translation.
-10. The scaffold (`tt/tt/scaffold/`) provides HTTP wiring only — not domain calculations. It may contain:
-    - FastAPI endpoint handlers
+9. TT must copy the wrapper layer (`app/main.py` and `app/wrapper/`) from `translations/ghostfolio_pytx_example/` into `translations/ghostfolio_pytx/` **without modification**. The wrapper files must remain byte-for-byte identical to the example.
+10. TT places its translated code exclusively inside `app/implementation/`. Nothing outside that directory may be generated or modified by tt.
+11. The wrapper layer provides HTTP wiring only — not domain calculations. It contains:
+    - FastAPI endpoint handlers (controller)
+    - Thin service delegation (empty-portfolio guards + calculator calls)
     - In-memory state management (UserState)
     - Auth helpers (`_make_tokens`, `_get_user`)
-    - A thin delegation layer (`_try_calculator`) that calls the translated calculator
-    - Support modules (type stubs, date-fns/lodash equivalents, model definitions)
-11. The scaffold must **not** contain:
+    - Abstract calculator interface
+    - Market price lookup service
+    - Shared interface dataclasses
+12. The wrapper must **not** contain:
     - Financial arithmetic (cost-basis tracking, performance calculation, chart generation)
-    - Private helper functions beyond `_make_tokens`, `_get_user`, and `_try_calculator`
-    - Nested loops that process activities or market data (beyond the delegation layer)
+    - Position replay or investment grouping logic
+    - Rule evaluation for portfolio reports
 
 ## What the Translated Code Must Provide
 
-The translated calculator must implement the interface defined in:
-`translations/ghostfolio_pytx_example/PORTFOLIO_CALCULATOR_INTERFACE.md`
+The translated calculator must implement the abstract interface defined in:
+`app/wrapper/portfolio/calculator/portfolio_calculator.py`
 
-Key requirement: `RoaiPortfolioCalculator.get_symbol_metrics()` must return a dict with at least `total_investment`, `gross_performance`, `current_values`, and related fields.
+Required methods:
+- `get_performance()` → `{chart, firstOrderDate, performance: {...}}`
+- `get_investments(group_by)` → `{investments: [{date, investment}]}`
+- `get_holdings()` → `{holdings: {symbol: {...}}}`
+- `get_details(base_currency)` → `{accounts, holdings, summary, ...}`
+- `get_dividends(group_by)` → `{dividends: [{date, investment}]}`
+- `evaluate_report()` → `{xRay: {categories, statistics}}`
 
 ## Automated Rule Checks
 
@@ -45,8 +80,8 @@ Run `make detect_rule_breaches` to verify compliance. The following checks are e
 | `detect_explicit_financial_logic` | Financial arithmetic, variables, and nested loops in scaffold |
 | `detect_scaffold_bloat` | Private helpers beyond the allowed set in scaffold `main.py` |
 | `detect_code_block_copying` | 10+ line blocks from `tt/` appearing verbatim in translated output |
-
-
+| `detect_interface_violation` | Calculator interface compliance |
+| `detect_wrapper_modification` | Wrapper/main.py files modified from example (must be identical) |
 
 ## Judging Criteria
 

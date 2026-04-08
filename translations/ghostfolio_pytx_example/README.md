@@ -19,6 +19,86 @@ It serves as a comparison baseline: run the test suite against this example to s
 which tests pass with a minimal correct-structure implementation, then compare
 against the `tt`-translated output in `translations/ghostfolio_pytx/`.
 
+## Project structure — wrapper / implementation split
+
+The project is split into two layers:
+
+- **Wrapper** (`app/main.py` + `app/wrapper/`): Immutable HTTP infrastructure.
+  TT must copy this verbatim and not modify it.
+- **Implementation** (`app/implementation/`): The translated calculator logic.
+  TT generates only this code.
+
+```
+app/
+├── main.py                                          # immutable wrapper
+│                                                    #   App bootstrap, auth, user lifecycle,
+│                                                    #   activity import, market data seeding,
+│                                                    #   and router wiring.
+│
+├── wrapper/                                         # immutable wrapper layer
+│   └── portfolio/
+│       ├── portfolio_controller.py                  # FastAPI routes
+│       ├── portfolio_service.py                     # thin delegation to calculator
+│       ├── current_rate_service.py                  # market price lookups
+│       ├── calculator/
+│       │   └── portfolio_calculator.py              # abstract calculator interface
+│       └── interfaces/                              # shared dataclasses
+│           ├── portfolio_order.py
+│           ├── portfolio_order_item.py
+│           ├── symbol_metrics.py
+│           └── transaction_point.py
+│
+└── implementation/                                  # tt-generated code
+    └── portfolio/
+        └── calculator/
+            └── roai/
+                └── portfolio_calculator.py           # ** STUB ** — replace with real
+```
+
+## How tt should use this scaffold
+
+The `tt` translator should:
+
+1. **Copy `app/main.py` and `app/wrapper/`** from this example into
+   `translations/ghostfolio_pytx/`, preserving the full directory structure.
+   These files must remain **byte-for-byte identical** to this example.
+
+2. **Generate `app/implementation/portfolio/calculator/roai/portfolio_calculator.py`**
+   with a real ROAI implementation translated from the original TypeScript source at
+   `projects/ghostfolio/apps/api/src/app/portfolio/calculator/roai/portfolio-calculator.ts`.
+
+3. **Do not alter any wrapper file.** The controller, service, rate service,
+   interfaces, and `main.py` are all correct and complete. They delegate all
+   computation to the calculator, so replacing only the implementation file is
+   sufficient to make all tests pass.
+
+## Calculator interface
+
+The implementation must extend `PortfolioCalculator` from
+`app.wrapper.portfolio.calculator.portfolio_calculator` and implement:
+
+```python
+class RoaiPortfolioCalculator(PortfolioCalculator):
+    def get_performance(self) -> dict: ...
+    def get_investments(self, group_by=None) -> dict: ...
+    def get_holdings(self) -> dict: ...
+    def get_details(self, base_currency="USD") -> dict: ...
+    def get_dividends(self, group_by=None) -> dict: ...
+    def evaluate_report(self) -> dict: ...
+```
+
+A correct implementation needs to:
+
+- Process BUY/SELL/DIVIDEND/FEE/LIABILITY activities chronologically
+- Track per-symbol quantity, investment (cost basis), average price
+- Compute realized P&L on sells using average cost
+- Handle short selling (SELL before BUY) and short covering
+- Build historical chart data with position replay
+- Group investments by day/month/year
+- Extract and group dividend activities
+- Evaluate portfolio rules for the report endpoint
+- Compute per-holding details with net performance metrics
+
 ## Running the tests
 
 ```bash
@@ -37,7 +117,8 @@ PYTX_EXAMPLE_PORT=3335 make spinup-and-test-ghostfolio_pytx_example
 
 ## Why some tests pass and others fail
 
-See the main `README.md` section "Testing the Python Translation: ghostfolio_pytx"
-for a full explanation of which tests pass (empty stubs, simple buy-sell formula,
-accessibility-only assertions) and which fail (chart history, current value,
-holdings, grouped investments, cost-basis tracking).
+With the stub calculator, tests that only check structural correctness (endpoint
+responds, keys exist, empty portfolio returns zeros) will pass. Tests that assert
+on computed values (performance metrics, investment amounts, holdings quantities)
+will fail because the stub returns zeros. Replacing the ROAI calculator with a
+real implementation makes all 113 tests pass.

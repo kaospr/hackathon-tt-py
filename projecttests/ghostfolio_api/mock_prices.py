@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Mock market prices extracted from CurrentRateServiceMock in the TypeScript test suite.
 (projects/ghostfolio/apps/api/src/app/portfolio/current-rate.service.mock.ts)

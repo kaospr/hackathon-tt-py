@@ -124,6 +124,26 @@ class GhostfolioClient:
             params={"range": date_range},
         )
 
+    def get_details(self, date_range: str = "max") -> dict:
+        """GET /api/v1/portfolio/details"""
+        return self._get(
+            self._url("portfolio/details"),
+            params={"range": date_range},
+        )
+
+    def get_dividends(
+        self, group_by: str | None = None, date_range: str = "max"
+    ) -> dict:
+        """GET /api/v1/portfolio/dividends"""
+        params: dict = {"range": date_range}
+        if group_by:
+            params["groupBy"] = group_by
+        return self._get(self._url("portfolio/dividends"), params=params)
+
+    def get_report(self) -> dict:
+        """GET /api/v1/portfolio/report"""
+        return self._get(self._url("portfolio/report"))
+
     # ------------------------------------------------------------------
     # Convenience helpers
     # ------------------------------------------------------------------
