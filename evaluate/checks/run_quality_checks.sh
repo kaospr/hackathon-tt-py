@@ -82,6 +82,27 @@ for i in "${!CHECK_NAMES[@]}"; do
   fi
 done
 
+# Write check results to JSON for downstream consumers
+CHECKS_RESULTS_DIR="$ROOT_DIR/evaluate/checks/results"
+mkdir -p "$CHECKS_RESULTS_DIR"
+{
+  echo "{"
+  echo "  \"checks\": {"
+  for i in "${!CHECK_NAMES[@]}"; do
+    comma=","
+    if [ "$i" -eq $(( ${#CHECK_NAMES[@]} - 1 )) ]; then comma=""; fi
+    echo "    \"${CHECK_NAMES[$i]}\": \"${CHECK_STATUSES[$i]}\"$comma"
+  done
+  echo "  },"
+  if [ "$FAILURES" -gt 0 ]; then
+    echo "  \"legal\": false,"
+  else
+    echo "  \"legal\": true,"
+  fi
+  echo "  \"failures\": $FAILURES"
+  echo "}"
+} > "$CHECKS_RESULTS_DIR/latest.json"
+
 if [ "$FAILURES" -gt 0 ]; then
   echo "Code quality checks: $FAILURES check(s) FAILED"
   exit 1

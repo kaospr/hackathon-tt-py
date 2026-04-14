@@ -201,6 +201,7 @@ _PROJECT_DEFAULTS: dict[str, tuple[str, str]] = {
 
 def run(api_url: str | None = None) -> dict:
     """Return scoring result dict for use by other scripts."""
+    import json
     import os
     repo_root = Path(__file__).parent.parent.parent.resolve()
     project = os.environ.get("PROJECT_NAME", "ghostfolio")
@@ -208,16 +209,26 @@ def run(api_url: str | None = None) -> dict:
     api_url = api_url or os.environ.get(env_var, default_url)
     results = run_pytest(repo_root, api_url)
     if not results:
-        return {"error": "no test results collected", "score": 0, "max_score": MAX_SCORE, "percentage": 0.0}
-    achieved, max_possible, n_passed, n_total = score(results)
-    return {
-        "achieved": achieved,
-        "max_possible": max_possible,
-        "theoretical_max": max_possible,
-        "n_passed": n_passed,
-        "n_total": n_total,
-        "percentage": round(achieved / max_possible * 100, 2) if max_possible else 0.0,
-    }
+        result = {"error": "no test results collected", "score": 0, "max_score": MAX_SCORE, "percentage": 0.0}
+    else:
+        achieved, max_possible, n_passed, n_total = score(results)
+        result = {
+            "achieved": achieved,
+            "max_possible": max_possible,
+            "theoretical_max": max_possible,
+            "n_passed": n_passed,
+            "n_total": n_total,
+            "percentage": round(achieved / max_possible * 100, 2) if max_possible else 0.0,
+        }
+
+    # Save results to JSON for downstream consumers
+    results_dir = Path(__file__).parent / "results"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    (results_dir / "tests_latest.json").write_text(
+        json.dumps(result, indent=2), encoding="utf-8"
+    )
+
+    return result
 
 
 def main() -> int:

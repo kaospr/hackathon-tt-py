@@ -7,8 +7,6 @@
 - [Competition Task: Translation Tool (TT)](#competition-task-translation-tool-tt)
   - [Rules](#rules)
   - [Workflow suggestion](#workflow-suggestion)
-  - [Scaffold and Calculator Interface](#scaffold-and-calculator-interface)
-  - [Scaffold Setup Helper](#scaffold-setup-helper)
   - [Judging Criteria](#judging-criteria)
 - [Translation Tool (tt)](#translation-tool-tt)
   - [Running the translator](#running-the-translator)
@@ -184,6 +182,12 @@ The project ghostfolio should be translated to `ghostfolio_pytx`.
 Run
 
 ```make evaluate_tt_ghostfolio```
+
+### Publish your results to the competition live dashboards
+
+```make publish_results```
+
+It publishes the last result from your evaluation.
 
 ## Additional judging tools
 
