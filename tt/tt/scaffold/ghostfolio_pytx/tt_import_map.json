@@ -1,0 +1,21 @@
+{
+  "python_imports": [
+    "from __future__ import annotations",
+    "from decimal import Decimal",
+    "from datetime import datetime, timedelta",
+    "from copy import deepcopy",
+    "from app.wrapper.portfolio.calculator.portfolio_calculator import PortfolioCalculator",
+    "from app.wrapper.portfolio.current_rate_service import CurrentRateService"
+  ],
+  "source_files": [
+    {
+      "path": "projects/ghostfolio/apps/api/src/app/portfolio/calculator/roai/portfolio-calculator.ts",
+      "include_classes": ["RoaiPortfolioCalculator"]
+    }
+  ],
+  "output": {
+    "class_name": "RoaiPortfolioCalculator",
+    "base_class": "PortfolioCalculator",
+    "target_path": "app/implementation/portfolio/calculator/roai/portfolio_calculator.py"
+  }
+}
