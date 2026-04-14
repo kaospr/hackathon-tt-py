@@ -2,7 +2,6 @@ include make/studyoriginal.mk
 include make/evaloriginal.mk
 include make/evalsolution.mk
 include make/evalexamplesolution.mk
-include make/arquero.mk
 
 .PHONY: help spinup-and-test-all evaluate_all
 help: ## Show this help message
@@ -34,45 +33,3 @@ help: ## Show this help message
 	@echo ""
 	@echo "--- Reference example skeleton (ghostfolio_pytx_example) ---"
 	@echo "  spinup-and-test-ghostfolio_pytx_example  Spin up reference skeleton, run API tests, tear down (port 3334)"
-	@echo ""
-	@echo "--- Arquero API (original Node.js) ---"
-	@echo "  install-arquero-api                   Install npm dependencies for the Arquero API server"
-	@echo "  evaluate_arquero                      Full evaluation: install deps and run all Arquero API tests"
-	@echo "  evaluate_tt_arquero                   Evaluate the real tt translator against arquero"
-	@echo "  evaluate_tt_example_arquero           Evaluate the minimal example scaffold against arquero (no translation)"
-	@echo "  translate-arquero                     Translate all arquero JS sources to Python (translations/arquero_pytx)"
-	@echo "  evaluate-tt-arquero                   Translate arquero JS → Python, then run code quality scoring"
-	@echo "  spinup-and-test-arquero               Spin up Arquero API, run all tests, tear down (port 3336)"
-	@echo "  test-arquero-api                      Run pytest against an already-running Arquero API server"
-	@echo "  kill-arquero                          Kill any process on the Arquero API port"
-	@echo ""
-	@echo "--- Translated project (arquero_pytx) ---"
-	@echo "  translate-and-test-arquero_pytx       Translate sources with tt, then run API tests against the output"
-	@echo "  spinup-and-test-arquero_pytx          Spin up translated Python project, run API tests, tear down (port 3338)"
-	@echo "  test-arquero-tx                       Run pytest directly against tt-translated output in arquero_pytx"
-	@echo "  test-arquero-pytx                     Alias for test-arquero-tx"
-	@echo "  test-translated-arquero               Run pytest inside the translations/arquero_pytx directory"
-	@echo "  setup-arquero-scaffold                Set up the Arquero scaffold for tt translation"
-	@echo ""
-	@echo "--- Reference example skeleton (arquero_pytx_example) ---"
-	@echo "  spinup-and-test-arquero_pytx_example  Spin up reference skeleton, run API tests, tear down (port 3337)"
-	@echo ""
-	@echo "--- Combined ---"
-	@echo "  evaluate_all                          Full evaluation of both tt/Ghostfolio and Arquero"
-	@echo "  spinup-and-test-all                   Spin up and test both Ghostfolio (Docker) and Arquero sequentially"
-
-# Full evaluation of both projects
-evaluate_all:
-	@echo "=== [1/3] Ghostfolio tt evaluation ==="
-	$(MAKE) evaluate_tt
-	@echo "=== [2/3] Arquero tt translation evaluation ==="
-	$(MAKE) evaluate-tt-arquero
-	@echo "=== [3/3] Arquero API evaluation ==="
-	$(MAKE) evaluate_arquero
-
-# Spin up and test both projects sequentially
-spinup-and-test-all:
-	@echo "=== [1/2] Ghostfolio ==="
-	$(MAKE) spinup-and-test-ghostfolio
-	@echo "=== [2/2] Arquero ==="
-	$(MAKE) spinup-and-test-arquero

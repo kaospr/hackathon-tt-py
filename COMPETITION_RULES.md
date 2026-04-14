@@ -31,11 +31,11 @@ The TT will be judged on:
 3. Best engineering under constraints
    * Very short time for assignment
    * We expect a prototype, not perfect code
-4. **Python code quality**, ranked by relevance
+4. **Python code quality**
    1. Readability
    2. Maintainability
    4. Avoid Duplication (DRY)
-   5. Some specific code quality metrics, meausre by tooling `make scoring_codequality`
+   5. Some specific code quality metrics, measured by tooling `make scoring_codequality`
       1. health_score (0-100) - Overall code health score with letter grade (A-F)
       2. complexity_score - Code complexity analysis
       3. dead_code_score - Detection of unused/unreachable code
@@ -46,7 +46,7 @@ The TT will be judged on:
 5. **Understanding** — judges will evaluate how well competitors understand what their translator actually does. Automated scoring will be balanced with human evaluation of architectural choices, trade-offs, and the team's ability to explain their approach. A high test score from a tool the team cannot explain will be weighted down.
 6. **Completion time** - If several teams solve all or the same number of tests, the earliest team to solve them will be assigned an extra advantage in the judging.
 
-We use tools like pyscn for scoring the quality. Scoring: `make evaluate_tt_ghostfolio` runs tests (50%) + code quality via pyscn (50%). Judge review adjusts the final score.
+We use tools like pyscn for scoring the quality. Scoring: `make evaluate_tt_ghostfolio` runs tests (85%) + code quality via pyscn (15%). Judge review adjusts the final score.
 
 The jury will be able to decide on how to balance these criteria when selecting the winner. The reason we do
 not judge 100% deterministically is that we are not yet sure what the nature of solutions will be, and how it is
@@ -102,7 +102,6 @@ Gift cards will be mailed to the winners after one week.
     - Auth helpers (`_make_tokens`, `_get_user`)
     - Abstract calculator interface
     - Market price lookup service
-    - Shared interface dataclasses
 12. The wrapper must **not** contain:
     - Financial arithmetic (cost-basis tracking, performance calculation, chart generation)
     - Position replay or investment grouping logic
@@ -122,7 +121,6 @@ translations/ghostfolio_pytx/app/
 │       ├── current_rate_service.py                  # market price lookups
 │       ├── calculator/
 │       │   └── portfolio_calculator.py              # abstract calculator interface
-│       └── interfaces/                              # shared dataclasses
 └── implementation/                                  # tt-generated code
     └── portfolio/
         └── calculator/
@@ -130,7 +128,7 @@ translations/ghostfolio_pytx/app/
                 └── portfolio_calculator.py           # ROAI calculator (translated)
 ```
 
-**Wrapper** (`app/main.py` + `app/wrapper/`): HTTP wiring, auth, thin service delegation, abstract interfaces. Copied verbatim from `translations/ghostfolio_pytx_example/` — tt must NOT modify these files.
+**Wrapper** (`app/main.py` + `app/wrapper/`): HTTP wiring, auth, thin service delegation, abstract interface. Copied verbatim from `translations/ghostfolio_pytx_example/` — tt must NOT modify these files.
 
 **Implementation** (`app/implementation/`): The actual translated financial logic. This is the only code tt generates.
 

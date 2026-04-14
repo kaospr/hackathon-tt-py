@@ -43,6 +43,8 @@ The python project produced by tt, called `ghostfolio-pytx` will be evaluated by
 
 Build a **Translation Tool** that translates two TypeScript/JavaScript codebases into Python.
 
+A simple example of tt has been provided in /tt. You can test it with `make evaluate_tt_ghostfolio`. It should be able to run tests with `87 failed, 48 passed`, and give some code analysis output.
+
 ### Rules
 
 See [COMPETITION_RULES.md](COMPETITION_RULES.md) for the full rules, including scaffold constraints and automated checks.

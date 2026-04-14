@@ -1,6 +1,0 @@
-*.sublime-*
-.github
-.DS_Store
-_site
-docs/
-test/

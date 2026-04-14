@@ -196,7 +196,6 @@ def score(results: list[tuple[str, bool]]) -> tuple[int, int, int, int]:
 
 _PROJECT_DEFAULTS: dict[str, tuple[str, str]] = {
     "ghostfolio": ("GHOSTFOLIO_API_URL", "http://localhost:3335"),
-    "arquero": ("ARQUERO_API_URL", "http://localhost:3338"),
 }
 
 
