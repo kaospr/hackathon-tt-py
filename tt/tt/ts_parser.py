@@ -157,23 +157,26 @@ def _scan_for_body_brace(content: str, i: int) -> int | None:
 
 def _process_brace_char(content, i, ch, state):
     """Process one character during body brace scanning. Returns (result, next_i)."""
-    brace_depth, found_colon = state
+    brace_depth = state[0]
     if ch == ";" and brace_depth == 0:
         return None, len(content)
     if ch == ":":
         state[1] = True
-        found_colon = True
     if ch == "{":
-        result = _handle_brace(content, i, brace_depth, found_colon)
-        if isinstance(result, int) and result == i:
-            return i, i  # Found body brace
-        if isinstance(result, int):
-            state[0] = result
-            return None, i + 1
-    elif ch == "}":
+        return _process_open_brace(content, i, state)
+    if ch == "}":
         state[0] = brace_depth - 1
-        if state[0] < 0:
-            return None, len(content)
+        return (None, len(content)) if state[0] < 0 else (None, i + 1)
+    return None, i + 1
+
+
+def _process_open_brace(content, i, state):
+    """Handle an opening brace during body-brace scanning."""
+    result = _handle_brace(content, i, state[0], state[1])
+    if isinstance(result, int) and result == i:
+        return i, i  # Found body brace
+    if isinstance(result, int):
+        state[0] = result
     return None, i + 1
 
 
@@ -250,35 +253,42 @@ def _is_type_brace(content: str, pos: int) -> bool:
 
 
 def _skip_string(content: str, pos: int) -> int:
-    """
-    Skip a string literal starting at *pos*.
-    Handles single-quoted, double-quoted, and template literals.
+    """Skip a string literal starting at *pos*.
+
+    Delegates to specialised helpers for template literals vs. plain strings.
     Returns the index after the closing quote.
     """
+    if content[pos] == "`":
+        return _skip_template_literal(content, pos + 1)
+    return _skip_simple_string(content, pos)
+
+
+def _skip_template_literal(content: str, i: int) -> int:
+    """Skip a backtick template literal, handling ``${...}`` expressions."""
+    length = len(content)
+    depth = 0
+    while i < length:
+        ch = content[i]
+        if ch == "\\" and i + 1 < length:
+            i += 2
+            continue
+        if ch == "`" and depth == 0:
+            return i + 1
+        if ch == "$" and i + 1 < length and content[i + 1] == "{":
+            depth += 1
+            i += 2
+            continue
+        if ch == "}" and depth > 0:
+            depth -= 1
+        i += 1
+    return i
+
+
+def _skip_simple_string(content: str, pos: int) -> int:
+    """Skip a single- or double-quoted string literal."""
     quote = content[pos]
     i = pos + 1
     length = len(content)
-
-    if quote == "`":
-        # Template literal -- need to handle ${...} expressions
-        depth = 0
-        while i < length:
-            ch = content[i]
-            if ch == "\\" and i + 1 < length:
-                i += 2
-                continue
-            if ch == "`" and depth == 0:
-                return i + 1
-            if ch == "$" and i + 1 < length and content[i + 1] == "{":
-                depth += 1
-                i += 2
-                continue
-            if ch == "}" and depth > 0:
-                depth -= 1
-            i += 1
-        return i
-
-    # Single or double quoted string
     while i < length:
         ch = content[i]
         if ch == "\\" and i + 1 < length:
@@ -290,18 +300,28 @@ def _skip_string(content: str, pos: int) -> int:
     return i
 
 
-def _extract_method_body(content: str, brace_pos: int) -> int:
+def _skip_non_code(content: str, i: int, ch: str) -> int | None:
+    """If *ch* starts a string or comment, skip it and return the new index.
+
+    Returns ``None`` when *ch* is ordinary code and no skip is needed.
     """
-    Given the position of the opening '{' of a method body, find
-    the matching closing '}' using brace counting.
+    if ch in ("'", '"', "`"):
+        return _skip_string(content, i)
+    if ch == "/" and i + 1 < len(content):
+        nxt = content[i + 1]
+        if nxt == "/":
+            nl = content.find("\n", i)
+            return nl + 1 if nl != -1 else len(content)
+        if nxt == "*":
+            end = content.find("*/", i + 2)
+            return end + 2 if end != -1 else len(content)
+    return None
 
-    Handles:
-    - String literals (single, double, template with ${})
-    - Line comments (//)
-    - Block comments (/* */)
-    - Nested objects/functions
 
-    Returns the index of the closing '}'.
+def _extract_method_body(content: str, brace_pos: int) -> int:
+    """Find the closing ``}`` that matches the opening brace at *brace_pos*.
+
+    Correctly skips string literals and comments via :func:`_skip_non_code`.
     """
     depth = 0
     i = brace_pos
@@ -309,24 +329,10 @@ def _extract_method_body(content: str, brace_pos: int) -> int:
 
     while i < length:
         ch = content[i]
-
-        # Handle string literals
-        if ch == "'" or ch == '"' or ch == "`":
-            i = _skip_string(content, i)
+        skipped = _skip_non_code(content, i, ch)
+        if skipped is not None:
+            i = skipped
             continue
-
-        # Handle comments
-        if ch == "/" and i + 1 < length:
-            if content[i + 1] == "/":
-                # Line comment -- skip to end of line
-                nl = content.find("\n", i)
-                i = nl + 1 if nl != -1 else length
-                continue
-            elif content[i + 1] == "*":
-                # Block comment -- skip to */
-                end = content.find("*/", i + 2)
-                i = end + 2 if end != -1 else length
-                continue
 
         if ch == "{":
             depth += 1
@@ -334,10 +340,9 @@ def _extract_method_body(content: str, brace_pos: int) -> int:
             depth -= 1
             if depth == 0:
                 return i
-
         i += 1
 
-    return length - 1  # Fallback: end of content
+    return length - 1
 
 
 def parse_ts_file(path: Path) -> dict[str, str]:
@@ -362,68 +367,41 @@ def parse_ts_file(path: Path) -> dict[str, str]:
 
         method_name, decl_start, after_paren_open = result
 
-        # Skip methods we don't want
-        if method_name in _SKIP_METHODS:
+        # Skip unwanted or abstract methods
+        if method_name in _SKIP_METHODS or _is_abstract_declaration(content, decl_start):
             pos = after_paren_open
             continue
 
-        # Check if this is an abstract declaration
-        if _is_abstract_declaration(content, decl_start):
-            pos = after_paren_open
-            continue
-
-        # Find the opening brace of the method body
         body_brace = _find_opening_brace(content, after_paren_open)
         if body_brace is None:
-            # No body (abstract or declaration-only)
             pos = after_paren_open
             continue
 
-        # Find the closing brace
         closing_brace = _extract_method_body(content, body_brace)
-
-        # Extract full method source: from declaration start to closing brace (inclusive)
-        method_source = content[decl_start : closing_brace + 1]
-
-        # Strip @LogPerformance decorator lines -- they're TS-specific
-        method_source = re.sub(
-            r"^[ \t]*@LogPerformance\s*\n", "", method_source, flags=re.MULTILINE
-        )
-
-        methods[method_name] = method_source
-
-        # Continue scanning after this method
+        methods[method_name] = _clean_method_source(content[decl_start : closing_brace + 1])
         pos = closing_brace + 1
 
     return methods
 
 
+def _clean_method_source(source: str) -> str:
+    """Strip TS-specific decorator lines from extracted method source."""
+    return re.sub(r"^[ \t]*@LogPerformance\s*\n", "", source, flags=re.MULTILINE)
+
+
 def extract_methods(roai_path: Path, base_path: Path) -> dict[str, str]:
+    """Extract the required methods from the ROAI and base calculator TS files.
+
+    Returns a combined dict mapping method name to source text for the methods
+    listed in ``_ROAI_METHODS`` (from *roai_path*) and ``_BASE_METHODS`` (from
+    *base_path*).
     """
-    Extract the required methods from both the ROAI and base calculator
-    TypeScript files.
+    return {
+        **_pick(parse_ts_file(roai_path), _ROAI_METHODS),
+        **_pick(parse_ts_file(base_path), _BASE_METHODS),
+    }
 
-    Args:
-        roai_path: Path to `roai/portfolio-calculator.ts`
-        base_path: Path to `portfolio-calculator.ts`
 
-    Returns a combined dict with these keys:
-        From ROAI: calculateOverallPerformance, getPerformanceCalculationType,
-                   getSymbolMetrics
-        From base: computeSnapshot, computeTransactionPoints, getChartDateMap,
-                   getPerformance, getInvestments, getInvestmentsByGroup
-    """
-    roai_methods = parse_ts_file(roai_path)
-    base_methods = parse_ts_file(base_path)
-
-    result: dict[str, str] = {}
-
-    for name in _ROAI_METHODS:
-        if name in roai_methods:
-            result[name] = roai_methods[name]
-
-    for name in _BASE_METHODS:
-        if name in base_methods:
-            result[name] = base_methods[name]
-
-    return result
+def _pick(source: dict[str, str], names: set[str]) -> dict[str, str]:
+    """Return the subset of *source* whose keys are in *names*."""
+    return {k: v for k, v in source.items() if k in names}

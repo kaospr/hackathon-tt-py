@@ -16,8 +16,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from tt.assembler import assemble
-
 
 def translate_typescript_file(ts_content: str) -> str:
     """
@@ -71,36 +69,23 @@ def _extract_method_names(ts_content: str) -> list[str]:
 
 
 def translate_roai_calculator(ts_file: Path, output_file: Path, stub_file: Path) -> None:
-    """
-    Translate the ROAI portfolio calculator from TypeScript to Python.
+    """Translate the ROAI portfolio calculator from TypeScript to Python.
 
     Uses the assembler module to generate the full calculator file.
     If the TS source contains recognisable methods, they are passed to
     the assembler as translated method bodies.  Otherwise the assembler
     falls back to the stub implementation.
     """
-    # Read the TypeScript source
-    ts_content = ts_file.read_text(encoding='utf-8')
+    # Build a dict mapping method names to empty bodies.  The assembler has its
+    # own generated implementations; the presence of *any* key signals that we
+    # want the full calculator, not the stub.
+    from tt.assembler import assemble  # lazy to keep import depth shallow
 
-    # Extract method names present in the TS source
-    method_names = _extract_method_names(ts_content)
+    names = _extract_method_names(ts_file.read_text(encoding="utf-8"))
+    translated = {n: "" for n in names} if names else {}
 
-    # Build a dict of "translated" method bodies.
-    # For now we pass the method names as keys with empty bodies — the assembler
-    # has its own generated implementations for all critical methods.  The
-    # presence of *any* key signals that we want the full calculator, not the stub.
-    translated_methods: dict[str, str] = {}
-
-    if method_names:
-        for name in method_names:
-            translated_methods[name] = ""
-
-    # Assemble the final Python file
-    output_content = assemble(translated_methods)
-
-    # Write the output
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    output_file.write_text(output_content, encoding='utf-8')
+    output_file.write_text(assemble(translated), encoding="utf-8")
 
 
 def run_translation(repo_root: Path, output_dir: Path) -> None:

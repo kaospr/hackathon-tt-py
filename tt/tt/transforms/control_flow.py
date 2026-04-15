@@ -137,6 +137,33 @@ def _match_c_for(line: str) -> re.Match | None:
     return m
 
 
+def _range_up_by_one(indent, var, init_val, end, **_):
+    """``for i = 0; i < N; i += 1`` -> ``for i in range(N):``"""
+    start = "" if init_val == "0" else f"{init_val}, "
+    return f"{indent}for {var} in range({start}{end}):"
+
+
+def _range_down_by_one(indent, var, init_val, cond_val, **_):
+    """``for i = N; i >= 0; i -= 1`` -> ``for i in range(N, -1, -1):``"""
+    start = _length_expr(init_val)
+    stop = "-1" if cond_val == "0" else f"{_length_expr(cond_val)} - 1"
+    return f"{indent}for {var} in range({start}, {stop}, -1):"
+
+
+def _range_up_by_step(indent, var, init_val, end, step, **_):
+    """``for i = 0; i < N; i += S`` -> ``for i in range(0, N, S):``"""
+    start_arg = "" if init_val == "0" else f"{init_val}, "
+    return f"{indent}for {var} in range({start_arg}{end}, {step}):"
+
+
+# Maps (cond_op, upd_op, step_is_one) -> builder function
+_RANGE_BUILDERS: dict[tuple[str, str, bool], callable] = {
+    ("<", "+=", True): _range_up_by_one,
+    (">=", "-=", True): _range_down_by_one,
+    ("<", "+=", False): _range_up_by_step,
+}
+
+
 def _build_range_loop(m: re.Match) -> str | None:
     """Build a Python range() loop from a C-style for regex match."""
     indent, var = m.group(1), m.group(2)
@@ -144,22 +171,14 @@ def _build_range_loop(m: re.Match) -> str | None:
     cond_val, upd_op, step = m.group(6).strip(), m.group(8), m.group(9)
     end = _length_expr(cond_val)
 
-    if cond_op == "<" and upd_op == "+=" and step == "1":
-        if init_val == "0":
-            return f"{indent}for {var} in range({end}):"
-        return f"{indent}for {var} in range({init_val}, {end}):"
-
-    if cond_op == ">=" and upd_op == "-=" and step == "1":
-        start = _length_expr(init_val)
-        if cond_val == "0":
-            return f"{indent}for {var} in range({start}, -1, -1):"
-        return f"{indent}for {var} in range({start}, {_length_expr(cond_val)} - 1, -1):"
-
-    if cond_op == "<" and upd_op == "+=":
-        start_arg = "" if init_val == "0" else f"{init_val}, "
-        return f"{indent}for {var} in range({start_arg}{end}, {step}):"
-
-    return None
+    key = (cond_op, upd_op, step == "1")
+    builder = _RANGE_BUILDERS.get(key)
+    if builder is None:
+        return None
+    return builder(
+        indent=indent, var=var, init_val=init_val,
+        end=end, cond_val=cond_val, step=step,
+    )
 
 
 def _length_expr(expr: str) -> str:
@@ -272,28 +291,25 @@ def _ternary_line(line: str) -> str:
     return _convert_ternaries_in_text(line)
 
 
+def _is_ternary_qmark(text: str, pos: int) -> bool:
+    """Return True if the ``?`` at *pos* looks like a ternary operator."""
+    if pos + 1 < len(text) and text[pos + 1] in (".", "?"):
+        return False  # optional-chaining (?.) or nullish coalescing (??)
+    return pos > 0 and text[pos + 1:pos + 2] in (" ", "\t", "\n", "")
+
+
 def _convert_ternaries_in_text(text: str) -> str:
     """Recursively convert ternary expressions in a piece of text."""
-    # Find a ternary pattern.  This is tricky because of nesting.
-    # We'll use a simple approach: find ``? `` (with a space) that isn't
-    # part of ``?.`` or ``??``.
     idx = 0
     while idx < len(text):
         qmark = text.find("?", idx)
         if qmark == -1:
             break
-        # Skip ?. (optional chaining) and ?? (nullish coalescing)
-        if qmark + 1 < len(text) and text[qmark + 1] in (".", "?"):
-            idx = qmark + 2
-            continue
-        # Check this looks like a ternary: character before ? should be
-        # an expression character, and after ? should be a space or expression
-        if qmark > 0 and text[qmark + 1:qmark + 2] in (" ", "\t", "\n", ""):
-            # Try to parse this ternary
+        if _is_ternary_qmark(text, qmark):
             converted = _try_parse_ternary(text, qmark)
             if converted is not None:
                 return converted
-        idx = qmark + 1
+        idx = qmark + (2 if qmark + 1 < len(text) and text[qmark + 1] in (".", "?") else 1)
     return text
 
 
@@ -343,30 +359,32 @@ def _try_parse_ternary(text: str, qmark_pos: int) -> str | None:
     return f"{prefix}{true_val} if {condition} else {false_val}"
 
 
+_BRACKET_DELTAS = {"(": (1, 0), ")": (-1, 0), "[": (0, 1), "]": (0, -1)}
+
+
+def _is_ternary_question(text: str, i: int) -> bool:
+    """Return True if ``?`` at position *i* is a ternary (not ``?.`` or ``??``)."""
+    return i + 1 < len(text) and text[i + 1] not in (".", "?")
+
+
 def _find_matching_colon(text: str, start: int) -> int | None:
     """Find the ``:`` that matches the ternary ``?``, accounting for nesting."""
-    depth = 0  # ternary nesting depth
-    paren_depth = 0
-    bracket_depth = 0
-    i = start
-    while i < len(text):
+    depth = paren = bracket = 0
+    for i in range(start, len(text)):
         ch = text[i]
-        if ch == "(":
-            paren_depth += 1
-        elif ch == ")":
-            paren_depth -= 1
-        elif ch == "[":
-            bracket_depth += 1
-        elif ch == "]":
-            bracket_depth -= 1
-        elif ch == "?" and i + 1 < len(text) and text[i + 1] not in (".", "?"):
-            if paren_depth == 0 and bracket_depth == 0:
-                depth += 1
-        elif ch == ":" and paren_depth == 0 and bracket_depth == 0:
-            if depth == 0:
-                return i
+        deltas = _BRACKET_DELTAS.get(ch)
+        if deltas:
+            paren += deltas[0]
+            bracket += deltas[1]
+            continue
+        if paren != 0 or bracket != 0:
+            continue
+        if ch == "?" and _is_ternary_question(text, i):
+            depth += 1
+        elif ch == ":" and depth == 0:
+            return i
+        elif ch == ":":
             depth -= 1
-        i += 1
     return None
 
 
@@ -404,35 +422,32 @@ def _convert_multi_line_ternaries(source: str) -> str:
     return source
 
 
+def _try_ternary_at(lines: list[str], i: int) -> tuple[str | None, int]:
+    """Try to convert a multi-line ternary starting at line *i*.
+
+    Returns ``(converted_line, lines_consumed)`` on success, or
+    ``(None, 0)`` if no ternary pattern was found.
+    """
+    if i + 1 >= len(lines):
+        return None, 0
+    if lines[i + 1].lstrip().startswith("? "):
+        return _parse_multiline_ternary(lines, i)
+    if i + 2 < len(lines) and lines[i + 2].lstrip().startswith("? "):
+        return _parse_multiline_ternary_split(lines, i)
+    return None, 0
+
+
 def _multiline_ternary_pass(source: str) -> str:
     """One pass of multi-line ternary conversion."""
     lines = source.split("\n")
     result: list[str] = []
     i = 0
     while i < len(lines):
-        # Scan ahead: find a line whose lstrip starts with "? " that
-        # indicates a multi-line ternary.  The condition is the previous
-        # non-blank line(s), and before that is potentially an assignment.
-        found = False
-        if i + 1 < len(lines):
-            # Check if line i+1 starts with ?
-            nxt = lines[i + 1].lstrip()
-            if nxt.startswith("? "):
-                converted, consumed = _parse_multiline_ternary(lines, i)
-                if converted is not None:
-                    result.append(converted)
-                    i += consumed
-                    found = True
-            # Also check i+2 in case the assignment and condition are on separate lines
-            elif i + 2 < len(lines):
-                nxt2 = lines[i + 2].lstrip()
-                if nxt2.startswith("? "):
-                    converted, consumed = _parse_multiline_ternary_split(lines, i)
-                    if converted is not None:
-                        result.append(converted)
-                        i += consumed
-                        found = True
-        if not found:
+        converted, consumed = _try_ternary_at(lines, i)
+        if converted is not None:
+            result.append(converted)
+            i += consumed
+        else:
             result.append(lines[i])
             i += 1
     return "\n".join(result)
@@ -450,19 +465,13 @@ def _collect_continuation_lines(
     parts: list[str] = []
     while i < len(lines):
         stripped = lines[i].lstrip()
-        line_indent = len(lines[i]) - len(lines[i].lstrip())
-        # Stop markers at same or shallower indent
-        if stripped.startswith(": ") and line_indent <= base_indent:
+        line_indent = len(lines[i]) - len(stripped)
+        is_marker = stripped.startswith(("? ", ": "))
+        # Stop at markers on the same or shallower indent level
+        if is_marker and line_indent <= base_indent:
             break
-        if stripped.startswith("? ") and line_indent <= base_indent:
-            break
-        # Nested ternary parts at deeper indent (only for false branch)
-        if allow_nested and stripped.startswith(("? ", ": ")) and line_indent > base_indent:
-            parts.append(stripped)
-            i += 1
-            continue
-        # Regular continuation lines (deeper indent)
-        if line_indent > base_indent and stripped:
+        # Include deeper-indent content (markers only when allow_nested)
+        if line_indent > base_indent and (stripped and (not is_marker or allow_nested)):
             parts.append(stripped)
             i += 1
             continue

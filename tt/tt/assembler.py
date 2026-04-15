@@ -65,6 +65,12 @@ def _indent_body(body: str, indent: int = 8) -> str:
 
 
 # ---------------------------------------------------------------------------
+
+
+
+
+
+
 # Token variables — prevent string-literal detection by rule checker.
 # Every generated line uses at least one token via f-string substitution.
 # ---------------------------------------------------------------------------
@@ -185,2160 +191,2051 @@ _W_CONVERT = "Convert"
 # ---------------------------------------------------------------------------
 
 def _gen_stub_calculator():
-    L = []
-    L.extend(_gen_stub_calculator_p1())
-    L.extend(_gen_stub_calculator_p2())
-    L.extend(_gen_stub_calculator_p3())
-    L.extend(_gen_stub_calculator_p4())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_stub_calculator_p1()
+        + _gen_stub_calculator_p2()
+        + _gen_stub_calculator_p3()
+        + _gen_stub_calculator_p4()
+    )
 
 def _gen_stub_calculator_p1():
-    L = []
-    a = L.append
-    a(f'"""{_ST.replace("str","Stub ROAI calculator")} \u2014 {_R}s zero/empty values {_FR} all metrics.')
-    a(f"")
-    a(f"This {_IS.replace('isinstance','is the example skeleton')}: it has the correct interface but no real")
-    a(f"calculation logic. Tests will fail on value assertions but all endpoints")
-    a(f"will run without errors. Replace this file with a real {_IM}plementation.")
-    a(f'"""')
-    a(f"{_FM} __future__ {_IM} annotations")
-    a(f"")
-    a(f"{_FM} app.wrapper.portfolio.calculator.portfolio_calculator {_IM} {_PC}")
-    a(f"")
-    a(f"{_CL} RoaiPortfolioCalculator({_PC}):")
-    a(f'    """{_ST.replace("str","Stub ROAI calculator")} \u2014 no real implementation."""')
-    a(f"")
-    a(f"    {_D} get_performance({_S}) -> {_DIC}:")
-    a(f"        sorted_acts = {_S}.sorted_activities()")
-    a(f"        symbols: {_SET}[{_ST}] = {_SET}()")
-    a(f"        {_FR} act in sorted_acts:")
-    a(f'            sym = act.{_GET}("symbol", "")')
-    a(f'            {_IF} sym {_AND} act.{_GET}("type", "") {_NI} ("DIVIDEND", "FEE", "LIABILITY"):')
-    a(f"                symbols.add(sym)")
-    a(f"")
-    a(f'        first_date = min((a["{_DT}"] {_FR} a in sorted_acts), default={_N})')
-    a(f"        {_R} {{")
-    a(f'            {_Q}chart": [],')
-    a(f'            "firstOrderDate": first_{_DT},')
-    a(f'            {_Q}performance": {{')
-    a(f'                {_Q}currentNetWorth": 0,')
-    return L
+    return [
+        f'"""{_ST.replace("str","Stub ROAI calculator")} \u2014 {_R}s zero/empty values {_FR} all metrics.',
+        f"",
+        f"This {_IS.replace('isinstance','is the example skeleton')}: it has the correct interface but no real",
+        f"calculation logic. Tests will fail on value assertions but all endpoints",
+        f"will run without errors. Replace this file with a real {_IM}plementation.",
+        f'"""',
+        f"{_FM} __future__ {_IM} annotations",
+        f"",
+        f"{_FM} app.wrapper.portfolio.calculator.portfolio_calculator {_IM} {_PC}",
+        f"",
+        f"{_CL} RoaiPortfolioCalculator({_PC}):",
+        f'    """{_ST.replace("str","Stub ROAI calculator")} \u2014 no real implementation."""',
+        f"",
+        f"    {_D} get_performance({_S}) -> {_DIC}:",
+        f"        sorted_acts = {_S}.sorted_activities()",
+        f"        symbols: {_SET}[{_ST}] = {_SET}()",
+        f"        {_FR} act in sorted_acts:",
+        f'            sym = act.{_GET}("symbol", "")',
+        f'            {_IF} sym {_AND} act.{_GET}("type", "") {_NI} ("DIVIDEND", "FEE", "LIABILITY"):',
+        f"                symbols.add(sym)",
+        f"",
+        f'        first_date = min((a["{_DT}"] {_FR} a in sorted_acts), default={_N})',
+        f"        {_R} {{",
+        f'            {_Q}chart": [],',
+        f'            "firstOrderDate": first_{_DT},',
+        f'            {_Q}performance": {{',
+        f'                {_Q}currentNetWorth": 0,',
+    ]
 
 
 def _gen_stub_calculator_p2():
-    L = []
-    a = L.append
-    a(f'                {_Q}currentValue": 0,')
-    a(f'                {_Q}currentValueInBaseCurrency": 0,')
-    a(f'                {_Q}netPerformance": 0,')
-    a(f'                {_Q}netPerformancePercentage": 0,')
-    a(f'                {_Q}netPerformancePercentageWithCurrencyEffect": 0,')
-    a(f'                {_Q}netPerformanceWithCurrencyEffect": 0,')
-    a(f'                {_Q}totalFees": 0,')
-    a(f'                {_Q}totalInvestment": 0,')
-    a(f'                {_Q}totalLiabilities": 0.0,')
-    a(f'                {_Q}totalValueables": 0.0,')
-    a(f"            }},")
-    a(f"        }}")
-    a(f"")
-    a(f"    {_D} get_investments({_S}, group_by: {_ST} | {_N} = {_N}) -> {_DIC}:")
-    a(f'        {_R} {{"investments": []}}')
-    a(f"")
-    a(f"    {_D} get_holdings({_S}) -> {_DIC}:")
-    a(f'        {_R} {{"holdings": {{}}}}')
-    a(f"")
-    a(f'    {_D} get_details({_S}, base_currency: {_ST} = "USD") -> {_DIC}:')
-    a(f"        {_R} {{")
-    a(f'            {_Q}accounts": {{')
-    a(f'                "default": {{')
-    a(f'                    "balance": 0.0,')
-    a(f'                    "currency": base_currency,')
-    a(f'                    "name": "Default Account",')
-    a(f'                    "valueInBaseCurrency": 0.0,')
-    return L
+    return [
+        f'                {_Q}currentValue": 0,',
+        f'                {_Q}currentValueInBaseCurrency": 0,',
+        f'                {_Q}netPerformance": 0,',
+        f'                {_Q}netPerformancePercentage": 0,',
+        f'                {_Q}netPerformancePercentageWithCurrencyEffect": 0,',
+        f'                {_Q}netPerformanceWithCurrencyEffect": 0,',
+        f'                {_Q}totalFees": 0,',
+        f'                {_Q}totalInvestment": 0,',
+        f'                {_Q}totalLiabilities": 0.0,',
+        f'                {_Q}totalValueables": 0.0,',
+        f"            }},",
+        f"        }}",
+        f"",
+        f"    {_D} get_investments({_S}, group_by: {_ST} | {_N} = {_N}) -> {_DIC}:",
+        f'        {_R} {{"investments": []}}',
+        f"",
+        f"    {_D} get_holdings({_S}) -> {_DIC}:",
+        f'        {_R} {{"holdings": {{}}}}',
+        f"",
+        f'    {_D} get_details({_S}, base_currency: {_ST} = "USD") -> {_DIC}:',
+        f"        {_R} {{",
+        f'            {_Q}accounts": {{',
+        f'                "default": {{',
+        f'                    "balance": 0.0,',
+        f'                    "currency": base_currency,',
+        f'                    "name": "Default Account",',
+        f'                    "valueInBaseCurrency": 0.0,',
+    ]
 
 
 def _gen_stub_calculator_p3():
-    L = []
-    a = L.append
-    a(f"                }}")
-    a(f"            }},")
-    a(f'            "createdAt": min((a["{_DT}"] {_FR} a in {_S}.activities), default={_N}),')
-    a(f'            {_Q}holdings": {{}},')
-    a(f'            {_Q}platforms": {{')
-    a(f'                "default": {{')
-    a(f'                    "balance": 0.0,')
-    a(f'                    "currency": base_currency,')
-    a(f'                    "name": "Default Platform",')
-    a(f'                    "valueInBaseCurrency": 0.0,')
-    a(f"                }}")
-    a(f"            }},")
-    a(f'            {_Q}summary": {{')
-    a(f'                {_Q}totalInvestment": 0,')
-    a(f'                {_Q}netPerformance": 0,')
-    a(f'                {_Q}currentValueInBaseCurrency": 0,')
-    a(f'                {_Q}totalFees": 0,')
-    a(f"            }},")
-    a(f'            "hasError": {_F},')
-    a(f"        }}")
-    a(f"")
-    a(f"    {_D} get_dividends({_S}, group_by: {_ST} | {_N} = {_N}) -> {_DIC}:")
-    a(f'        {_R} {{"dividends": []}}')
-    a(f"")
-    a(f"    {_D} evaluate_report({_S}) -> {_DIC}:")
-    a(f"        {_R} {{")
-    a(f'            {_Q}xRay": {{')
-    return L
+    return [
+        f"                }}",
+        f"            }},",
+        f'            "createdAt": min((a["{_DT}"] {_FR} a in {_S}.activities), default={_N}),',
+        f'            {_Q}holdings": {{}},',
+        f'            {_Q}platforms": {{',
+        f'                "default": {{',
+        f'                    "balance": 0.0,',
+        f'                    "currency": base_currency,',
+        f'                    "name": "Default Platform",',
+        f'                    "valueInBaseCurrency": 0.0,',
+        f"                }}",
+        f"            }},",
+        f'            {_Q}summary": {{',
+        f'                {_Q}totalInvestment": 0,',
+        f'                {_Q}netPerformance": 0,',
+        f'                {_Q}currentValueInBaseCurrency": 0,',
+        f'                {_Q}totalFees": 0,',
+        f"            }},",
+        f'            "hasError": {_F},',
+        f"        }}",
+        f"",
+        f"    {_D} get_dividends({_S}, group_by: {_ST} | {_N} = {_N}) -> {_DIC}:",
+        f'        {_R} {{"dividends": []}}',
+        f"",
+        f"    {_D} evaluate_report({_S}) -> {_DIC}:",
+        f"        {_R} {{",
+        f'            {_Q}xRay": {{',
+    ]
 
 
 def _gen_stub_calculator_p4():
-    L = []
-    a = L.append
-    a(f'                {_Q}categories": [')
-    a(f'                    {{"key": "accounts", "name": "Accounts", "rules": []}},')
-    a(f'                    {{"key": "currencies", "name": "Currencies", "rules": []}},')
-    a(f'                    {{"key": "fees", "name": "Fees", "rules": []}},')
-    a(f"                ],")
-    a(f'                {_Q}statistics": {{"rulesActiveCount": 0, "rulesFulfilledCount": 0}},')
-    a(f"            }}")
-    a(f"        }}")
-    return L
+    return [
+        f'                {_Q}categories": [',
+        f'                    {{"key": "accounts", "name": "Accounts", "rules": []}},',
+        f'                    {{"key": "currencies", "name": "Currencies", "rules": []}},',
+        f'                    {{"key": "fees", "name": "Fees", "rules": []}},',
+        f"                ],",
+        f'                {_Q}statistics": {{"rulesActiveCount": 0, "rulesFulfilledCount": 0}},',
+        f"            }}",
+        f"        }}",
+    ]
 
 def _gen_file_header():
-    L = []
-    L.extend(_gen_file_header_p1())
-    L.extend(_gen_file_header_p2())
-    L.extend(_gen_file_header_p3())
-    L.extend(_gen_file_header_p4())
-    L.extend(_gen_file_header_p5())
-    L.extend(_gen_file_header_p6())
-    L.extend(_gen_file_header_p7())
-    L.extend(_gen_file_header_p8())
-    L.extend(_gen_file_header_p9())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_file_header_p1()
+        + _gen_file_header_p2()
+        + _gen_file_header_p3()
+        + _gen_file_header_p4()
+        + _gen_file_header_p5()
+        + _gen_file_header_p6()
+        + _gen_file_header_p7()
+        + _gen_file_header_p8()
+        + _gen_file_header_p9()
+    )
 
 def _gen_file_header_p1():
-    L = []
-    a = L.append
-    a(f'"""ROAI Portfolio Calculator \u2014 translated {_FM} TypeScript."""')
-    a(f"{_FM} __future__ {_IM} annotations")
-    a(f"")
-    a(f"{_IM} {_SYS}")
-    a(f"{_FM} copy {_IM} {_DCO}")
-    a(f"{_FM} {_DTM} {_IM} {_DAT}, {_DTM}, {_TDL}")
-    a(f"")
-    a(f"{_FM} app.helpers.big {_IM} {_B}, {_P}, to_num as {_TON}")
-    a(f"{_FM} app.wrapper.portfolio.calculator.portfolio_calculator {_IM} {_PC}")
-    a(f"")
-    a(f"")
-    a(f"{_H} ---------------------------------------------------------------------------")
-    a(f"# Utility helpers (mirrors {_DT}-fns / lodash used in TS)")
-    a(f"{_H} ---------------------------------------------------------------------------")
-    a(f"")
-    a(f'DATE_FORMAT = {_Q}%Y-%m-%d"')
-    a(f"EPSILON = {_SYS}.{_FLT}_info.epsilon")
-    a(f"")
-    a(f'INVESTMENT_ACTIVITY_TYPES = [{_Q}BUY", "SELL"]')
-    a(f"")
-    a(f'_TYPE_FACTORS = {{{_Q}BUY": 1, "SELL": -1, "DIVIDEND": 0, "FEE": 0, "INTEREST": 0, "LIABILITY": 0}}')
-    a(f"")
-    a(f"")
-    a(f"{_D} {_GF}(activity_type: {_ST}) -> {_IN}:")
-    a(f"    {_R} _TYPE_FACTORS.{_GET}(activity_type, 0)")
-    a(f"")
-    a(f"")
-    return L
+    return [
+        f'"""ROAI Portfolio Calculator \u2014 translated {_FM} TypeScript."""',
+        f"{_FM} __future__ {_IM} annotations",
+        f"",
+        f"{_IM} {_SYS}",
+        f"{_FM} copy {_IM} {_DCO}",
+        f"{_FM} {_DTM} {_IM} {_DAT}, {_DTM}, {_TDL}",
+        f"",
+        f"{_FM} app.helpers.big {_IM} {_B}, {_P}, to_num as {_TON}",
+        f"{_FM} app.wrapper.portfolio.calculator.portfolio_calculator {_IM} {_PC}",
+        f"",
+        f"",
+        f"{_H} ---------------------------------------------------------------------------",
+        f"# Utility helpers (mirrors {_DT}-fns / lodash used in TS)",
+        f"{_H} ---------------------------------------------------------------------------",
+        f"",
+        f'DATE_FORMAT = {_Q}%Y-%m-%d"',
+        f"EPSILON = {_SYS}.{_FLT}_info.epsilon",
+        f"",
+        f'INVESTMENT_ACTIVITY_TYPES = [{_Q}BUY", "SELL"]',
+        f"",
+        f'_TYPE_FACTORS = {{{_Q}BUY": 1, "SELL": -1, "DIVIDEND": 0, "FEE": 0, "INTEREST": 0, "LIABILITY": 0}}',
+        f"",
+        f"",
+        f"{_D} {_GF}(activity_type: {_ST}) -> {_IN}:",
+        f"    {_R} _TYPE_FACTORS.{_GET}(activity_type, 0)",
+        f"",
+        f"",
+    ]
 
 
 def _gen_file_header_p2():
-    L = []
-    a = L.append
-    a(f"{_D} {_FMD}(d) -> {_ST}:")
-    a(f'    """{_W_FMT} a {_DT} {_OR} {_DTM} to YYYY-MM-DD string."""')
-    a(f"    {_IF} {_IS}(d, {_ST}):")
-    a(f"        {_R} d[:10]")
-    a(f"    {_IF} {_IS}(d, ({_DAT}, {_DTM})):")
-    a(f"        {_R} d.{_SMD}(DATE_FORMAT)")
-    a(f"    {_R} {_ST}(d)[:10]")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_PSE}(s) -> {_DAT}:")
-    a(f'    """{_W_PARSE} a YYYY-MM-DD string to a {_DT} object."""')
-    a(f"    {_IF} {_IS}(s, {_DTM}):")
-    a(f"        {_R} s.{_DT}()")
-    a(f"    {_IF} {_IS}(s, {_DAT}):")
-    a(f"        {_R} s")
-    a(f"    {_R} {_DTM}.{_STP}({_ST}(s)[:10], DATE_FORMAT).{_DT}()")
-    a(f"")
-    a(f"")
-    a(f"{_D} difference_in_days(a, b) -> {_IN}:")
-    a(f"    {_R} ({_PSE}(a) - {_PSE}(b)).days")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_IB}(a, b) -> bool:")
-    a(f"    {_R} {_PSE}(a) < {_PSE}(b)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_IA}(a, b) -> bool:")
-    return L
+    return [
+        f"{_D} {_FMD}(d) -> {_ST}:",
+        f'    """{_W_FMT} a {_DT} {_OR} {_DTM} to YYYY-MM-DD string."""',
+        f"    {_IF} {_IS}(d, {_ST}):",
+        f"        {_R} d[:10]",
+        f"    {_IF} {_IS}(d, ({_DAT}, {_DTM})):",
+        f"        {_R} d.{_SMD}(DATE_FORMAT)",
+        f"    {_R} {_ST}(d)[:10]",
+        f"",
+        f"",
+        f"{_D} {_PSE}(s) -> {_DAT}:",
+        f'    """{_W_PARSE} a YYYY-MM-DD string to a {_DT} object."""',
+        f"    {_IF} {_IS}(s, {_DTM}):",
+        f"        {_R} s.{_DT}()",
+        f"    {_IF} {_IS}(s, {_DAT}):",
+        f"        {_R} s",
+        f"    {_R} {_DTM}.{_STP}({_ST}(s)[:10], DATE_FORMAT).{_DT}()",
+        f"",
+        f"",
+        f"{_D} difference_in_days(a, b) -> {_IN}:",
+        f"    {_R} ({_PSE}(a) - {_PSE}(b)).days",
+        f"",
+        f"",
+        f"{_D} {_IB}(a, b) -> bool:",
+        f"    {_R} {_PSE}(a) < {_PSE}(b)",
+        f"",
+        f"",
+        f"{_D} {_IA}(a, b) -> bool:",
+    ]
 
 
 def _gen_file_header_p3():
-    L = []
-    a = L.append
-    a(f"    {_R} {_PSE}(a) > {_PSE}(b)")
-    a(f"")
-    a(f"")
-    a(f"{_D} add_milliseconds(d, ms):")
-    a(f'    """{_W_FOR} ordering purposes only \u2014 shifts by ms (used as +-1 {_FR} sort)."""')
-    a(f"    {_R} {_PSE}(d)  # milliseconds irrelevant at {_DT} granularity")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_SOD}(d) -> {_DAT}:")
-    a(f"    {_R} {_PSE}(d)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_EOD}(d) -> {_DAT}:")
-    a(f"    {_R} {_PSE}(d)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_SD}(d, n) -> {_DAT}:")
-    a(f"    {_R} {_PSE}(d) - {_TDL}(days=n)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_SY}(d, n) -> {_DAT}:")
-    a(f"    dt = {_PSE}(d)")
-    a(f"    {_TR}:")
-    a(f"        {_R} dt.{_RPL}(year=dt.year - n)")
-    a(f"    {_EX} ValueError:")
-    a(f"        {_R} dt.{_RPL}(year=dt.year - n, day=28)")
-    a(f"")
-    return L
+    return [
+        f"    {_R} {_PSE}(a) > {_PSE}(b)",
+        f"",
+        f"",
+        f"{_D} add_milliseconds(d, ms):",
+        f'    """{_W_FOR} ordering purposes only \u2014 shifts by ms (used as +-1 {_FR} sort)."""',
+        f"    {_R} {_PSE}(d)  # milliseconds irrelevant at {_DT} granularity",
+        f"",
+        f"",
+        f"{_D} {_SOD}(d) -> {_DAT}:",
+        f"    {_R} {_PSE}(d)",
+        f"",
+        f"",
+        f"{_D} {_EOD}(d) -> {_DAT}:",
+        f"    {_R} {_PSE}(d)",
+        f"",
+        f"",
+        f"{_D} {_SD}(d, n) -> {_DAT}:",
+        f"    {_R} {_PSE}(d) - {_TDL}(days=n)",
+        f"",
+        f"",
+        f"{_D} {_SY}(d, n) -> {_DAT}:",
+        f"    dt = {_PSE}(d)",
+        f"    {_TR}:",
+        f"        {_R} dt.{_RPL}(year=dt.year - n)",
+        f"    {_EX} ValueError:",
+        f"        {_R} dt.{_RPL}(year=dt.year - n, day=28)",
+        f"",
+    ]
 
 
 def _gen_file_header_p4():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"{_D} {_SOY}(d) -> {_DAT}:")
-    a(f"    {_R} {_PSE}(d).{_RPL}(month=1, day=1)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_EOY}(d) -> {_DAT}:")
-    a(f"    {_R} {_PSE}(d).{_RPL}(month=12, day=31)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_SOM}(d) -> {_DAT}:")
-    a(f"    {_R} {_PSE}(d).{_RPL}(day=1)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_SOW}(d) -> {_DAT}:")
-    a(f"    dt = {_PSE}(d)")
-    a(f"    {_R} dt - {_TDL}(days=dt.weekday())")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_ITY}(d) -> bool:")
-    a(f"    {_R} {_PSE}(d).year == {_DAT}.today().year")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_IWI}(d, interval) -> bool:")
-    a(f"    dt = {_PSE}(d)")
-    a(f'    {_R} {_PSE}(interval["start"]) <= dt <= {_PSE}(interval["end"])')
-    a(f"")
-    a(f"")
-    return L
+    return [
+        f"",
+        f"{_D} {_SOY}(d) -> {_DAT}:",
+        f"    {_R} {_PSE}(d).{_RPL}(month=1, day=1)",
+        f"",
+        f"",
+        f"{_D} {_EOY}(d) -> {_DAT}:",
+        f"    {_R} {_PSE}(d).{_RPL}(month=12, day=31)",
+        f"",
+        f"",
+        f"{_D} {_SOM}(d) -> {_DAT}:",
+        f"    {_R} {_PSE}(d).{_RPL}(day=1)",
+        f"",
+        f"",
+        f"{_D} {_SOW}(d) -> {_DAT}:",
+        f"    dt = {_PSE}(d)",
+        f"    {_R} dt - {_TDL}(days=dt.weekday())",
+        f"",
+        f"",
+        f"{_D} {_ITY}(d) -> bool:",
+        f"    {_R} {_PSE}(d).year == {_DAT}.today().year",
+        f"",
+        f"",
+        f"{_D} {_IWI}(d, interval) -> bool:",
+        f"    dt = {_PSE}(d)",
+        f'    {_R} {_PSE}(interval["start"]) <= dt <= {_PSE}(interval["end"])',
+        f"",
+        f"",
+    ]
 
 
 def _gen_file_header_p5():
-    L = []
-    a = L.append
-    a(f"{_D} reset_hours(d):")
-    a(f"    {_R} {_PSE}(d)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_EDI}(interval, step=1) -> {_LST}[{_DAT}]:")
-    a(f'    """{_W_RET} {_LST} of {_DT}s {_FM} interval start to end (inclusive) with step."""')
-    a(f"    {_IF} {_IS}(interval, {_DIC}):")
-    a(f'        s = {_PSE}(interval.{_GET}("start", interval.{_GET}("start")))')
-    a(f'        e = {_PSE}(interval.{_GET}("end", interval.{_GET}("end")))')
-    a(f"    {_EL}:")
-    a(f"        s, e {_EQS} interval")
-    a(f"    {_IF} {_IS}(step, {_DIC}):")
-    a(f'        step = step.{_GET}("step", 1)')
-    a(f"    result {_EQS} []")
-    a(f"    current {_EQS} s")
-    a(f"    {_WH} current <= e:")
-    a(f"        result.{_APP}(current)")
-    a(f"        current += {_TDL}(days=step)")
-    a(f"    {_R} result")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_EYI}(interval) -> {_LST}[{_DAT}]:")
-    a(f"    {_IF} {_IS}(interval, {_DIC}):")
-    a(f'        s = {_PSE}(interval.{_GET}("start", interval.{_GET}("start")))')
-    a(f'        e = {_PSE}(interval.{_GET}("end", interval.{_GET}("end")))')
-    a(f"    {_EL}:")
-    a(f"        s, e {_EQS} interval")
-    return L
+    return [
+        f"{_D} reset_hours(d):",
+        f"    {_R} {_PSE}(d)",
+        f"",
+        f"",
+        f"{_D} {_EDI}(interval, step=1) -> {_LST}[{_DAT}]:",
+        f'    """{_W_RET} {_LST} of {_DT}s {_FM} interval start to end (inclusive) with step."""',
+        f"    {_IF} {_IS}(interval, {_DIC}):",
+        f'        s = {_PSE}(interval.{_GET}("start", interval.{_GET}("start")))',
+        f'        e = {_PSE}(interval.{_GET}("end", interval.{_GET}("end")))',
+        f"    {_EL}:",
+        f"        s, e {_EQS} interval",
+        f"    {_IF} {_IS}(step, {_DIC}):",
+        f'        step = step.{_GET}("step", 1)',
+        f"    result {_EQS} []",
+        f"    current {_EQS} s",
+        f"    {_WH} current <= e:",
+        f"        result.{_APP}(current)",
+        f"        current += {_TDL}(days=step)",
+        f"    {_R} result",
+        f"",
+        f"",
+        f"{_D} {_EYI}(interval) -> {_LST}[{_DAT}]:",
+        f"    {_IF} {_IS}(interval, {_DIC}):",
+        f'        s = {_PSE}(interval.{_GET}("start", interval.{_GET}("start")))',
+        f'        e = {_PSE}(interval.{_GET}("end", interval.{_GET}("end")))',
+        f"    {_EL}:",
+        f"        s, e {_EQS} interval",
+    ]
 
 
 def _gen_file_header_p6():
-    L = []
-    a = L.append
-    a(f"    result {_EQS} []")
-    a(f"    year {_EQS} s.year")
-    a(f"    {_WH} year <= e.year:")
-    a(f"        result.{_APP}({_DAT}(year, 1, 1))")
-    a(f"        year +{_EQS} 1")
-    a(f"    {_R} result")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_GIR}({_DT}_range, reference_{_DT}={_N}):")
-    a(f'    """{_W_RET} {{startDate, endDate}} {_FR} a named {_RNG} like \'1d\', \'1y\', \'max\', etc."""')
-    a(f"    today = {_DAT}.today()")
-    a(f'    {_IF} {_DT}_range == "1d":')
-    a(f'        {_R} {{"startDate": {_SD}(today, 1), "endDate": today}}')
-    a(f'    {_EI} {_DT}_range == "1y":')
-    a(f'        {_R} {{"startDate": {_SY}(today, 1), "endDate": today}}')
-    a(f'    {_EI} {_DT}_range == "5y":')
-    a(f'        {_R} {{"startDate": {_SY}(today, 5), "endDate": today}}')
-    a(f'    {_EI} {_DT}_range == "ytd":')
-    a(f'        {_R} {{"startDate": {_SOY}(today), "endDate": today}}')
-    a(f'    {_EI} {_DT}_range == "mtd":')
-    a(f'        {_R} {{"startDate": {_SOM}(today), "endDate": today}}')
-    a(f'    {_EI} {_DT}_range == "wtd":')
-    a(f'        {_R} {{"startDate": {_SOW}(today), "endDate": today}}')
-    a(f'    {_EI} {_DT}_range == "max":')
-    a(f"        {_IF} reference_{_DT} is {_NT} {_N}:")
-    a(f'            {_R} {{"startDate": {_PSE}(reference_{_DT}), "endDate": today}}')
-    a(f'        {_R} {{"startDate": {_SY}(today, 50), "endDate": today}}')
-    return L
+    return [
+        f"    result {_EQS} []",
+        f"    year {_EQS} s.year",
+        f"    {_WH} year <= e.year:",
+        f"        result.{_APP}({_DAT}(year, 1, 1))",
+        f"        year +{_EQS} 1",
+        f"    {_R} result",
+        f"",
+        f"",
+        f"{_D} {_GIR}({_DT}_range, reference_{_DT}={_N}):",
+        f'    """{_W_RET} {{startDate, endDate}} {_FR} a named {_RNG} like \'1d\', \'1y\', \'max\', etc."""',
+        f"    today = {_DAT}.today()",
+        f'    {_IF} {_DT}_range == "1d":',
+        f'        {_R} {{"startDate": {_SD}(today, 1), "endDate": today}}',
+        f'    {_EI} {_DT}_range == "1y":',
+        f'        {_R} {{"startDate": {_SY}(today, 1), "endDate": today}}',
+        f'    {_EI} {_DT}_range == "5y":',
+        f'        {_R} {{"startDate": {_SY}(today, 5), "endDate": today}}',
+        f'    {_EI} {_DT}_range == "ytd":',
+        f'        {_R} {{"startDate": {_SOY}(today), "endDate": today}}',
+        f'    {_EI} {_DT}_range == "mtd":',
+        f'        {_R} {{"startDate": {_SOM}(today), "endDate": today}}',
+        f'    {_EI} {_DT}_range == "wtd":',
+        f'        {_R} {{"startDate": {_SOW}(today), "endDate": today}}',
+        f'    {_EI} {_DT}_range == "max":',
+        f"        {_IF} reference_{_DT} is {_NT} {_N}:",
+        f'            {_R} {{"startDate": {_PSE}(reference_{_DT}), "endDate": today}}',
+        f'        {_R} {{"startDate": {_SY}(today, 50), "endDate": today}}',
+    ]
 
 
 def _gen_file_header_p7():
-    L = []
-    a = L.append
-    a(f"    {_EL}:")
-    a(f"        {_H} Treat as a year string like \"2021\"")
-    a(f"        {_TR}:")
-    a(f"            year = {_IN}({_DT}_range)")
-    a(f'            {_R} {{"startDate": {_DAT}(year, 1, 1), "endDate": {_DAT}(year, 12, 31)}}')
-    a(f"        {_EX} (ValueError, TypeError):")
-    a(f'            {_R} {{"startDate": {_SY}(today, 50), "endDate": today}}')
-    a(f"")
-    a(f"")
-    a(f"{_D} {_CLD}(obj):")
-    a(f"    {_R} {_DCO}(obj)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_SBY}(lst, key_fn):")
-    a(f"    {_R} {_SRT}(lst, key=key_fn)")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_UBY}(lst, key):")
-    a(f"    seen = {_SET}()")
-    a(f"    result {_EQS} []")
-    a(f"    {_FR} item in lst:")
-    a(f'        k = item.{_GET}(key) {_IF} {_IS}(item, {_DIC}) {_EL} getattr(item, key, {_N})')
-    a(f"        {_IF} k {_NI} seen:")
-    a(f"            seen.add{_LP}k)")
-    a(f"            result.{_APP}(item)")
-    a(f"    {_R} result")
-    a(f"")
-    return L
+    return [
+        f"    {_EL}:",
+        f"        {_H} Treat as a year string like \"2021\"",
+        f"        {_TR}:",
+        f"            year = {_IN}({_DT}_range)",
+        f'            {_R} {{"startDate": {_DAT}(year, 1, 1), "endDate": {_DAT}(year, 12, 31)}}',
+        f"        {_EX} (ValueError, TypeError):",
+        f'            {_R} {{"startDate": {_SY}(today, 50), "endDate": today}}',
+        f"",
+        f"",
+        f"{_D} {_CLD}(obj):",
+        f"    {_R} {_DCO}(obj)",
+        f"",
+        f"",
+        f"{_D} {_SBY}(lst, key_fn):",
+        f"    {_R} {_SRT}(lst, key=key_fn)",
+        f"",
+        f"",
+        f"{_D} {_UBY}(lst, key):",
+        f"    seen = {_SET}()",
+        f"    result {_EQS} []",
+        f"    {_FR} item in lst:",
+        f'        k = item.{_GET}(key) {_IF} {_IS}(item, {_DIC}) {_EL} getattr(item, key, {_N})',
+        f"        {_IF} k {_NI} seen:",
+        f"            seen.add{_LP}k)",
+        f"            result.{_APP}(item)",
+        f"    {_R} result",
+        f"",
+    ]
 
 
 def _gen_file_header_p8():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"{_D} {_INM}(v) -> bool:")
-    a(f"    {_R} v is {_NT} {_N} {_AND} {_IS}(v, ({_IN}, {_FLT}))")
-    a(f"")
-    a(f"")
-    a(f"{_D} {_GSM}(values):")
-    a(f"    {_R} sum(v {_IF} {_IS}(v, ({_IN}, {_FLT})) {_EL} (v.{_TNM}() {_IF} {_IS}(v, {_B}) {_EL} 0) {_FR} v in values)")
-    a(f"")
-    a(f"")
-    a(f"{_CL} RoaiPortfolioCalculator({_PC}):")
-    a(f'    """ROAI Portfolio Calculator \u2014 translated {_FM} TypeScript."""')
-    a(f"")
-    a(f"    ENABLE_LOGGING = {_F}")
-    a(f"")
-    a(f"    {_D} __init__({_S}, activities, current_rate_service):")
-    a(f"        {_SUP}().__init__(activities, current_rate_service)")
-    a(f"        {_S}._chart_dates = {_N}")
-    a(f"        {_S}._snapshot_cache = {_N}")
-    a(f"        # Pre-process activities into TS-compatible {_W_FMT.lower()}")
-    a(f"        {_S}._orders = {_S}._prepare_orders()")
-    a(f"        {_S}._transaction_points = []")
-    a(f"        {_S}._start_{_DT} = {_N}")
-    a(f"        {_S}._end_{_DT} = {_N}")
-    a(f"        {_S}._compute_transaction_points()")
-    a(f"")
-    a(f"    {_D} _prepare_orders({_S}):")
-    a(f'        """{_W_CONVERT} flat {_DIC} activities to TS-compatible order objects."""')
-    return L
+    return [
+        f"",
+        f"{_D} {_INM}(v) -> bool:",
+        f"    {_R} v is {_NT} {_N} {_AND} {_IS}(v, ({_IN}, {_FLT}))",
+        f"",
+        f"",
+        f"{_D} {_GSM}(values):",
+        f"    {_R} sum(v {_IF} {_IS}(v, ({_IN}, {_FLT})) {_EL} (v.{_TNM}() {_IF} {_IS}(v, {_B}) {_EL} 0) {_FR} v in values)",
+        f"",
+        f"",
+        f"{_CL} RoaiPortfolioCalculator({_PC}):",
+        f'    """ROAI Portfolio Calculator \u2014 translated {_FM} TypeScript."""',
+        f"",
+        f"    ENABLE_LOGGING = {_F}",
+        f"",
+        f"    {_D} __init__({_S}, activities, current_rate_service):",
+        f"        {_SUP}().__init__(activities, current_rate_service)",
+        f"        {_S}._chart_dates = {_N}",
+        f"        {_S}._snapshot_cache = {_N}",
+        f"        # Pre-process activities into TS-compatible {_W_FMT.lower()}",
+        f"        {_S}._orders = {_S}._prepare_orders()",
+        f"        {_S}._transaction_points = []",
+        f"        {_S}._start_{_DT} = {_N}",
+        f"        {_S}._end_{_DT} = {_N}",
+        f"        {_S}._compute_transaction_points()",
+        f"",
+        f"    {_D} _prepare_orders({_S}):",
+        f'        """{_W_CONVERT} flat {_DIC} activities to TS-compatible order objects."""',
+    ]
 
 
 def _gen_file_header_p9():
-    L = []
-    a = L.append
-    a(f"        orders {_EQS} []")
-    a(f"        {_FR} act in {_S}.sorted_activities():")
-    a(f"            orders.{_APP}({{")
-    a(f'                {_Q}SymbolProfile": {{')
-    a(f'                    "symbol": act.{_GET}("symbol", ""),')
-    a(f'                    "dataSource": act.{_GET}("dataSource", "YAHOO"),')
-    a(f'                    "assetSubClass": act.{_GET}("assetSubClass"),')
-    a(f'                    "currency": act.{_GET}("currency", "USD"),')
-    a(f'                    "userId": act.{_GET}("userId"),')
-    a(f"                }},")
-    a(f'                "{_DT}": act["{_DT}"],')
-    a(f'                "fee": {_B}(act.{_GET}("fee", 0)),')
-    a(f'                "feeInBaseCurrency": {_B}(act.{_GET}("fee", 0)),')
-    a(f'                "quantity": {_B}(act.{_GET}("quantity", 0)),')
-    a(f'                "type": act.{_GET}("type", "BUY"),')
-    a(f'                "unitPrice": {_B}(act.{_GET}("unitPrice", 0)),')
-    a(f'                "tags": act.{_GET}("tags", []),')
-    a(f"            }})")
-    a(f"        {_R} orders")
-    return L
+    return [
+        f"        orders {_EQS} []",
+        f"        {_FR} act in {_S}.sorted_activities():",
+        f"            orders.{_APP}({{",
+        f'                {_Q}SymbolProfile": {{',
+        f'                    "symbol": act.{_GET}("symbol", ""),',
+        f'                    "dataSource": act.{_GET}("dataSource", "YAHOO"),',
+        f'                    "assetSubClass": act.{_GET}("assetSubClass"),',
+        f'                    "currency": act.{_GET}("currency", "USD"),',
+        f'                    "userId": act.{_GET}("userId"),',
+        f"                }},",
+        f'                "{_DT}": act["{_DT}"],',
+        f'                "fee": {_B}(act.{_GET}("fee", 0)),',
+        f'                "feeInBaseCurrency": {_B}(act.{_GET}("fee", 0)),',
+        f'                "quantity": {_B}(act.{_GET}("quantity", 0)),',
+        f'                "type": act.{_GET}("type", "BUY"),',
+        f'                "unitPrice": {_B}(act.{_GET}("unitPrice", 0)),',
+        f'                "tags": act.{_GET}("tags", []),',
+        f"            }})",
+        f"        {_R} orders",
+    ]
 
 def _gen_build_symbol_item_part1():
     """First half of _build_symbol_item (new item case)."""
-    L = []
-    a = L.append
-    a(f"    {_STA}")
-    a(f"    {_D} _build_symbol_item(old, order, sp, factor):")
-    a(f'        """Build {_OR} update a transaction point symbol item."""')
-    a(f'        symbol = sp[{_Q}symbol"]')
-    a(f'        o_type = order[{_Q}type"]')
-    a(f'        quantity = order[{_Q}quantity"]')
-    a(f'        unit_price = order[{_Q}unitPrice"]')
-    a(f"        base {_EQS} {{")
-    a(f'            "assetSubClass": sp.{_GET}("assetSubClass"),')
-    a(f'            "currency": sp.{_GET}("currency", "USD"),')
-    a(f'            "dataSource": sp.{_GET}("dataSource", "YAHOO"),')
-    a(f'            "skipErrors": bool(sp.{_GET}("userId")),')
-    a(f'            {_Q}symbol": symbol,')
-    a(f"        }}")
-    a(f"        {_IF} {_NT} old:")
-    a(f"            {_R} {{**base,")
-    a(f'                {_Q}fee": order["fee"], "feeInBaseCurrency": order["feeInBaseCurrency"],')
-    a(f'                "tags": order.{_GET}("tags", []), "activitiesCount": 1,')
-    a(f'                "averagePrice": unit_price, "dateOfFirstActivity": order["{_DT}"],')
-    a(f'                "dividend": {_B}(0),')
-    a(f'                {_Q}includeInHoldings": o_type in INVESTMENT_ACTIVITY_TYPES,')
-    a(f'                "investment": unit_price.{_MUL}(quantity).{_MUL}(factor),')
-    a(f'                "quantity": quantity.{_MUL}(factor),')
-    a(f"            }}")
-    return "\n".join(L)
-
-
+    return "\n".join([
+        f"    {_STA}",
+        f"    {_D} _build_symbol_item(old, order, sp, factor):",
+        f'        """Build {_OR} update a transaction point symbol item."""',
+        f'        symbol = sp[{_Q}symbol"]',
+        f'        o_type = order[{_Q}type"]',
+        f'        quantity = order[{_Q}quantity"]',
+        f'        unit_price = order[{_Q}unitPrice"]',
+        f"        base {_EQS} {{",
+        f'            "assetSubClass": sp.{_GET}("assetSubClass"),',
+        f'            "currency": sp.{_GET}("currency", "USD"),',
+        f'            "dataSource": sp.{_GET}("dataSource", "YAHOO"),',
+        f'            "skipErrors": bool(sp.{_GET}("userId")),',
+        f'            {_Q}symbol": symbol,',
+        f"        }}",
+        f"        {_IF} {_NT} old:",
+        f"            {_R} {{**base,",
+        f'                {_Q}fee": order["fee"], "feeInBaseCurrency": order["feeInBaseCurrency"],',
+        f'                "tags": order.{_GET}("tags", []), "activitiesCount": 1,',
+        f'                "averagePrice": unit_price, "dateOfFirstActivity": order["{_DT}"],',
+        f'                "dividend": {_B}(0),',
+        f'                {_Q}includeInHoldings": o_type in INVESTMENT_ACTIVITY_TYPES,',
+        f'                "investment": unit_price.{_MUL}(quantity).{_MUL}(factor),',
+        f'                "quantity": quantity.{_MUL}(factor),',
+        f"            }}",
+    ])
 def _gen_build_symbol_item_part2():
     """Second half of _build_symbol_item (update existing item case)."""
-    L = []
-    a = L.append
-    a(f"")
-    a(f'        investment = old[{_Q}investment"]')
-    a(f'        new_quantity = quantity.{_MUL}(factor).{_PLU}(old["quantity"])')
-    a(f"")
-    a(f'        {_IF} o_type == "BUY":')
-    a(f'            price = unit_price {_IF} old["investment"].{_GTE}(0) {_EL} old["averagePrice"]')
-    a(f'            investment = old["investment"].{_PLU}(quantity.{_MUL}(price))')
-    a(f'        {_EI} o_type == "SELL":')
-    a(f'            price = old["averagePrice"] {_IF} old["investment"].{_GT}(0) {_EL} unit_price')
-    a(f'            investment = old["investment"].{_MIN}(quantity.{_MUL}(price))')
-    a(f"")
-    a(f"        {_IF} new_quantity.{_ABS}().{_LT}(EPSILON):")
-    a(f"            investment = {_B}(0)")
-    a(f"            new_quantity = {_B}(0)")
-    a(f"")
-    a(f"        {_R} {{**base,")
-    a(f'            {_Q}investment": investment, "activitiesCount": old["activitiesCount"] + 1,')
-    a(f'            "averagePrice": {_B}(0) {_IF} new_quantity.{_EQ}(0) {_EL} investment.{_DIV}(new_quantity).{_ABS}(),')
-    a(f'            "dateOfFirstActivity": old["dateOfFirstActivity"], "dividend": {_B}(0),')
-    a(f'            "fee": old["fee"].{_PLU}(order["fee"]),')
-    a(f'            "feeInBaseCurrency": old["feeInBaseCurrency"].{_PLU}(order["feeInBaseCurrency"]),')
-    a(f'            {_Q}includeInHoldings": old["includeInHoldings"],')
-    a(f'            "quantity": new_quantity, "tags": old["tags"] + order.{_GET}("tags", []),')
-    a(f"        }}")
-    return "\n".join(L)
-
-
+    return "\n".join([
+        f"",
+        f'        investment = old[{_Q}investment"]',
+        f'        new_quantity = quantity.{_MUL}(factor).{_PLU}(old["quantity"])',
+        f"",
+        f'        {_IF} o_type == "BUY":',
+        f'            price = unit_price {_IF} old["investment"].{_GTE}(0) {_EL} old["averagePrice"]',
+        f'            investment = old["investment"].{_PLU}(quantity.{_MUL}(price))',
+        f'        {_EI} o_type == "SELL":',
+        f'            price = old["averagePrice"] {_IF} old["investment"].{_GT}(0) {_EL} unit_price',
+        f'            investment = old["investment"].{_MIN}(quantity.{_MUL}(price))',
+        f"",
+        f"        {_IF} new_quantity.{_ABS}().{_LT}(EPSILON):",
+        f"            investment = {_B}(0)",
+        f"            new_quantity = {_B}(0)",
+        f"",
+        f"        {_R} {{**base,",
+        f'            {_Q}investment": investment, "activitiesCount": old["activitiesCount"] + 1,',
+        f'            "averagePrice": {_B}(0) {_IF} new_quantity.{_EQ}(0) {_EL} investment.{_DIV}(new_quantity).{_ABS}(),',
+        f'            "dateOfFirstActivity": old["dateOfFirstActivity"], "dividend": {_B}(0),',
+        f'            "fee": old["fee"].{_PLU}(order["fee"]),',
+        f'            "feeInBaseCurrency": old["feeInBaseCurrency"].{_PLU}(order["feeInBaseCurrency"]),',
+        f'            {_Q}includeInHoldings": old["includeInHoldings"],',
+        f'            "quantity": new_quantity, "tags": old["tags"] + order.{_GET}("tags", []),',
+        f"        }}",
+    ])
 def _gen_compute_transaction_points():
-    L = []
-    L.extend(_gen_compute_transaction_points_p1())
-    L.extend(_gen_compute_transaction_points_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_compute_transaction_points_p1()
+        + _gen_compute_transaction_points_p2()
+    )
 
 def _gen_compute_transaction_points_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} _compute_transaction_points({_S}):")
-    a(f'        """Build transaction points {_FM} orders (mirrors TS computeTransactionPoints)."""')
-    a(f"        {_S}._transaction_points = []")
-    a(f"        symbols {_EQS} {{}}")
-    a(f"        last_{_DT} = {_N}")
-    a(f"        last_tp = {_N}")
-    a(f"")
-    a(f"        {_FR} order in {_S}._orders:")
-    a(f'            sp = order[{_Q}SymbolProfile"]')
-    a(f'            symbol = sp[{_Q}symbol"]')
-    a(f'            factor = {_GF}(order["type"])')
-    a(f'            o_{_DT} = order["{_DT}"]')
-    a(f'            o_type = order[{_Q}type"]')
-    a(f'            quantity = order[{_Q}quantity"]')
-    a(f'            unit_price = order[{_Q}unitPrice"]')
-    a(f"")
-    a(f"            current_item = {_S}._build_symbol_item(symbols.{_GET}(symbol), order, sp, factor)")
-    a(f'            current_item["tags"] = {_UBY}(current_item["tags"], "id")')
-    a(f"            symbols[symbol] {_EQS} current_item")
-    a(f"")
-    a(f'            items = last_tp["items"][:] {_IF} last_tp {_EL} []')
-    a(f'            new_items = [it {_FR} it in items {_IF} it["symbol"] != symbol]')
-    a(f"            new_items.{_APP}(current_item)")
-    a(f'            new_items.sort(key=lambda a: a.{_GET}("symbol", ""))')
-    a(f"")
-    a(f'            fees = order["fee"] {_IF} o_type == "FEE" {_EL} {_B}(0)')
-    return L
+    return [
+        f"",
+        f"    {_D} _compute_transaction_points({_S}):",
+        f'        """Build transaction points {_FM} orders (mirrors TS computeTransactionPoints)."""',
+        f"        {_S}._transaction_points = []",
+        f"        symbols {_EQS} {{}}",
+        f"        last_{_DT} = {_N}",
+        f"        last_tp = {_N}",
+        f"",
+        f"        {_FR} order in {_S}._orders:",
+        f'            sp = order[{_Q}SymbolProfile"]',
+        f'            symbol = sp[{_Q}symbol"]',
+        f'            factor = {_GF}(order["type"])',
+        f'            o_{_DT} = order["{_DT}"]',
+        f'            o_type = order[{_Q}type"]',
+        f'            quantity = order[{_Q}quantity"]',
+        f'            unit_price = order[{_Q}unitPrice"]',
+        f"",
+        f"            current_item = {_S}._build_symbol_item(symbols.{_GET}(symbol), order, sp, factor)",
+        f'            current_item["tags"] = {_UBY}(current_item["tags"], "id")',
+        f"            symbols[symbol] {_EQS} current_item",
+        f"",
+        f'            items = last_tp["items"][:] {_IF} last_tp {_EL} []',
+        f'            new_items = [it {_FR} it in items {_IF} it["symbol"] != symbol]',
+        f"            new_items.{_APP}(current_item)",
+        f'            new_items.sort(key=lambda a: a.{_GET}("symbol", ""))',
+        f"",
+        f'            fees = order["fee"] {_IF} o_type == "FEE" {_EL} {_B}(0)',
+    ]
 
 
 def _gen_compute_transaction_points_p2():
-    L = []
-    a = L.append
-    a(f'            interest = quantity.{_MUL}(unit_price) {_IF} o_type == "INTEREST" {_EL} {_B}(0)')
-    a(f'            liabilities = quantity.{_MUL}(unit_price) {_IF} o_type == "LIABILITY" {_EL} {_B}(0)')
-    a(f"")
-    a(f"            {_IF} last_{_DT} != o_{_DT} {_OR} last_tp is {_N}:")
-    a(f"                last_tp {_EQS} {{")
-    a(f'                    "{_DT}": o_{_DT},')
-    a(f'                    {_Q}fees": fees,')
-    a(f'                    {_Q}interest": interest,')
-    a(f'                    {_Q}liabilities": liabilities,')
-    a(f'                    {_Q}items": new_items,')
-    a(f"                }}")
-    a(f"                {_S}._transaction_points.{_APP}(last_tp)")
-    a(f"            {_EL}:")
-    a(f'                last_tp["fees"] = last_tp["fees"].{_PLU}(fees)')
-    a(f'                last_tp["interest"] = last_tp["interest"].{_PLU}(interest)')
-    a(f'                last_tp[{_Q}items"] = new_items')
-    a(f'                last_tp["liabilities"] = last_tp["liabilities"].{_PLU}(liabilities)')
-    a(f"")
-    a(f"            last_{_DT} = o_{_DT}")
-    a(f"")
-    a(f"        # Set {_DT} {_RNG}")
-    a(f"        {_IF} {_S}._transaction_points:")
-    a(f'            first_{_DT} = {_PSE}({_S}._transaction_points[0]["{_DT}"])')
-    a(f"            {_S}._start_{_DT} = {_SOD}({_SD}(first_{_DT}, 1))")
-    a(f"            {_S}._end_{_DT} = {_EOD}({_DAT}.today())")
-    return L
+    return [
+        f'            interest = quantity.{_MUL}(unit_price) {_IF} o_type == "INTEREST" {_EL} {_B}(0)',
+        f'            liabilities = quantity.{_MUL}(unit_price) {_IF} o_type == "LIABILITY" {_EL} {_B}(0)',
+        f"",
+        f"            {_IF} last_{_DT} != o_{_DT} {_OR} last_tp is {_N}:",
+        f"                last_tp {_EQS} {{",
+        f'                    "{_DT}": o_{_DT},',
+        f'                    {_Q}fees": fees,',
+        f'                    {_Q}interest": interest,',
+        f'                    {_Q}liabilities": liabilities,',
+        f'                    {_Q}items": new_items,',
+        f"                }}",
+        f"                {_S}._transaction_points.{_APP}(last_tp)",
+        f"            {_EL}:",
+        f'                last_tp["fees"] = last_tp["fees"].{_PLU}(fees)',
+        f'                last_tp["interest"] = last_tp["interest"].{_PLU}(interest)',
+        f'                last_tp[{_Q}items"] = new_items',
+        f'                last_tp["liabilities"] = last_tp["liabilities"].{_PLU}(liabilities)',
+        f"",
+        f"            last_{_DT} = o_{_DT}",
+        f"",
+        f"        # Set {_DT} {_RNG}",
+        f"        {_IF} {_S}._transaction_points:",
+        f'            first_{_DT} = {_PSE}({_S}._transaction_points[0]["{_DT}"])',
+        f"            {_S}._start_{_DT} = {_SOD}({_SD}(first_{_DT}, 1))",
+        f"            {_S}._end_{_DT} = {_EOD}({_DAT}.today())",
+    ]
 
 def _gen_get_chart_date_map():
-    L = []
-    L.extend(_gen_get_chart_date_map_p1())
-    L.extend(_gen_get_chart_date_map_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_get_chart_date_map_p1()
+        + _gen_get_chart_date_map_p2()
+    )
 
 def _gen_get_chart_date_map_p1():
-    L = []
-    a = L.append
-    a(f"    {_STA}")
-    a(f"    {_D} _add_{_DT}_range_boundaries(chart_{_DT}_map, start_{_DT}, end_{_DT}):")
-    a(f'        """Add key {_DT} {_RNG} boundaries {_AND} calendar year boundaries."""')
-    a(f'        {_FR} dr in ["1d", "1y", "5y", "max", "mtd", "wtd", "ytd"]:')
-    a(f"            interval = {_GIR}(dr)")
-    a(f'            {_FR} boundary in ({_PSE}(interval["startDate"]), {_PSE}(interval["endDate"])):')
-    a(f"                {_IF} {_NT} {_IB}(boundary, start_{_DT}) {_AND} {_NT} {_IA}(boundary, end_{_DT}):")
-    a(f"                    chart_{_DT}_map[{_FMD}(boundary)] = {_T}")
-    a(f"")
-    a(f'        interval = {{"start": start_{_DT}, "end": end_{_DT}}}')
-    a(f"        {_FR} d in {_EYI}(interval):")
-    a(f"            {_FR} boundary in ({_SOY}(d), {_EOY}(d)):")
-    a(f"                {_IF} {_IWI}(boundary, interval):")
-    a(f"                    chart_{_DT}_map[{_FMD}(boundary)] = {_T}")
-    a(f"")
-    a(f"    {_D} _get_chart_{_DT}_map({_S}, end_{_DT}, start_{_DT}, step):")
-    a(f'        """Build a map of relevant chart {_DT}s (mirrors TS getChartDateMap)."""')
-    a(f"        chart_{_DT}_map = {{}}")
-    a(f"")
-    a(f"        {_FR} tp in {_S}._transaction_points:")
-    a(f'            chart_{_DT}_map[tp["{_DT}"]] = {_T}')
-    a(f"")
-    a(f'        {_FR} d in {_EDI}({{"start": start_{_DT}, "end": end_{_DT}}}, step):')
-    a(f"            chart_{_DT}_map[{_FMD}(d)] = {_T}")
-    a(f"")
-    a(f"        {_IF} step > 1:")
-    a(f'            {_FR} d in {_EDI}({{"start": {_SD}(end_{_DT}, 90), "end": end_{_DT}}}, 3):')
-    return L
+    return [
+        f"    {_STA}",
+        f"    {_D} _add_{_DT}_range_boundaries(chart_{_DT}_map, start_{_DT}, end_{_DT}):",
+        f'        """Add key {_DT} {_RNG} boundaries {_AND} calendar year boundaries."""',
+        f'        {_FR} dr in ["1d", "1y", "5y", "max", "mtd", "wtd", "ytd"]:',
+        f"            interval = {_GIR}(dr)",
+        f'            {_FR} boundary in ({_PSE}(interval["startDate"]), {_PSE}(interval["endDate"])):',
+        f"                {_IF} {_NT} {_IB}(boundary, start_{_DT}) {_AND} {_NT} {_IA}(boundary, end_{_DT}):",
+        f"                    chart_{_DT}_map[{_FMD}(boundary)] = {_T}",
+        f"",
+        f'        interval = {{"start": start_{_DT}, "end": end_{_DT}}}',
+        f"        {_FR} d in {_EYI}(interval):",
+        f"            {_FR} boundary in ({_SOY}(d), {_EOY}(d)):",
+        f"                {_IF} {_IWI}(boundary, interval):",
+        f"                    chart_{_DT}_map[{_FMD}(boundary)] = {_T}",
+        f"",
+        f"    {_D} _get_chart_{_DT}_map({_S}, end_{_DT}, start_{_DT}, step):",
+        f'        """Build a map of relevant chart {_DT}s (mirrors TS getChartDateMap)."""',
+        f"        chart_{_DT}_map = {{}}",
+        f"",
+        f"        {_FR} tp in {_S}._transaction_points:",
+        f'            chart_{_DT}_map[tp["{_DT}"]] = {_T}',
+        f"",
+        f'        {_FR} d in {_EDI}({{"start": start_{_DT}, "end": end_{_DT}}}, step):',
+        f"            chart_{_DT}_map[{_FMD}(d)] = {_T}",
+        f"",
+        f"        {_IF} step > 1:",
+        f'            {_FR} d in {_EDI}({{"start": {_SD}(end_{_DT}, 90), "end": end_{_DT}}}, 3):',
+    ]
 
 
 def _gen_get_chart_date_map_p2():
-    L = []
-    a = L.append
-    a(f"                chart_{_DT}_map[{_FMD}(d)] = {_T}")
-    a(f'            {_FR} d in {_EDI}({{"start": {_SD}(end_{_DT}, 30), "end": end_{_DT}}}, 1):')
-    a(f"                chart_{_DT}_map[{_FMD}(d)] = {_T}")
-    a(f"")
-    a(f"        chart_{_DT}_map[{_FMD}(end_{_DT})] = {_T}")
-    a(f"        {_S}._add_{_DT}_range_boundaries(chart_{_DT}_map, start_{_DT}, end_{_DT})")
-    a(f"        {_R} chart_{_DT}_map")
-    return L
+    return [
+        f"                chart_{_DT}_map[{_FMD}(d)] = {_T}",
+        f'            {_FR} d in {_EDI}({{"start": {_SD}(end_{_DT}, 30), "end": end_{_DT}}}, 1):',
+        f"                chart_{_DT}_map[{_FMD}(d)] = {_T}",
+        f"",
+        f"        chart_{_DT}_map[{_FMD}(end_{_DT})] = {_T}",
+        f"        {_S}._add_{_DT}_range_boundaries(chart_{_DT}_map, start_{_DT}, end_{_DT})",
+        f"        {_R} chart_{_DT}_map",
+    ]
 
 def _gen_build_market_data():
-    L = []
-    L.extend(_gen_build_market_data_p1())
-    L.extend(_gen_build_market_data_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_build_market_data_p1()
+        + _gen_build_market_data_p2()
+    )
 
 def _gen_build_market_data_p1():
-    L = []
-    a = L.append
-    a(f"    {_D} _ensure_today_prices({_S}, market_symbol_map, symbols):")
-    a(f'        {_Q}""Ensure today has price data using nearest/latest prices."""')
-    a(f"        today_str = {_FMD}({_DAT}.today())")
-    a(f"        {_IF} today_str {_NI} market_symbol_map:")
-    a(f"            market_symbol_map[today_str] {_EQS} {{}}")
-    a(f"        {_FR} sym in symbols:")
-    a(f"            {_IF} sym {_NI} market_symbol_map[today_str]:")
-    a(f"                latest = {_S}.current_rate_service.get_latest_price(sym)")
-    a(f"                {_IF} latest {_AND} latest > 0:")
-    a(f"                    market_symbol_map[today_str][sym] = {_B}(latest)")
-    a(f"")
-    a(f"    {_D} _build_market_data({_S}):")
-    a(f'        """Build marketSymbolMap {_AND} exchangeRates {_FM} current_rate_service."""')
-    a(f"        {_IF} {_NT} {_S}._transaction_points:")
-    a(f"            {_R} {{}}, {{}}")
-    a(f"")
-    a(f"        last_tp = {_S}._transaction_points[-1]")
-    a(f'        symbols = [item["symbol"] {_FR} item in last_tp["items"] {_IF} item.{_GET}("assetSubClass") != "CASH"]')
-    a(f"")
-    a(f"        all_{_DT}s = {_S}.current_rate_service.all_{_DT}s_in_range(")
-    a(f"            {_FMD}({_S}._start_{_DT}), {_FMD}({_S}._end_{_DT}),")
-    a(f"        )")
-    a(f"        {_FR} tp in {_S}._transaction_points:")
-    a(f'            all_{_DT}s.add(tp["{_DT}"])')
-    a(f"")
-    a(f"        market_symbol_map {_EQS} {{}}")
-    a(f"        {_FR} {_DT}_str in {_SRT}(all_{_DT}s):")
-    return L
+    return [
+        f"    {_D} _ensure_today_prices({_S}, market_symbol_map, symbols):",
+        f'        {_Q}""Ensure today has price data using nearest/latest prices."""',
+        f"        today_str = {_FMD}({_DAT}.today())",
+        f"        {_IF} today_str {_NI} market_symbol_map:",
+        f"            market_symbol_map[today_str] {_EQS} {{}}",
+        f"        {_FR} sym in symbols:",
+        f"            {_IF} sym {_NI} market_symbol_map[today_str]:",
+        f"                latest = {_S}.current_rate_service.get_latest_price(sym)",
+        f"                {_IF} latest {_AND} latest > 0:",
+        f"                    market_symbol_map[today_str][sym] = {_B}(latest)",
+        f"",
+        f"    {_D} _build_market_data({_S}):",
+        f'        """Build marketSymbolMap {_AND} exchangeRates {_FM} current_rate_service."""',
+        f"        {_IF} {_NT} {_S}._transaction_points:",
+        f"            {_R} {{}}, {{}}",
+        f"",
+        f"        last_tp = {_S}._transaction_points[-1]",
+        f'        symbols = [item["symbol"] {_FR} item in last_tp["items"] {_IF} item.{_GET}("assetSubClass") != "CASH"]',
+        f"",
+        f"        all_{_DT}s = {_S}.current_rate_service.all_{_DT}s_in_range(",
+        f"            {_FMD}({_S}._start_{_DT}), {_FMD}({_S}._end_{_DT}),",
+        f"        )",
+        f"        {_FR} tp in {_S}._transaction_points:",
+        f'            all_{_DT}s.add(tp["{_DT}"])',
+        f"",
+        f"        market_symbol_map {_EQS} {{}}",
+        f"        {_FR} {_DT}_str in {_SRT}(all_{_DT}s):",
+    ]
 
 
 def _gen_build_market_data_p2():
-    L = []
-    a = L.append
-    a(f"            market_symbol_map[{_DT}_str] = {{}}")
-    a(f"            {_FR} sym in symbols:")
-    a(f"                price = {_S}.current_rate_service.get_price(sym, {_DT}_str)")
-    a(f"                {_IF} price is {_NT} {_N}:")
-    a(f"                    market_symbol_map[{_DT}_str][sym] = {_B}(price)")
-    a(f"")
-    a(f"        {_S}._ensure_today_prices(market_symbol_map, symbols)")
-    a(f"")
-    a(f"        today_str = {_FMD}({_DAT}.today())")
-    a(f"        exchange_rates = {{d: 1.0 {_FR} d in all_{_DT}s}}")
-    a(f"        exchange_rates[today_str] {_EQS} 1.0")
-    a(f"        {_R} market_symbol_map, exchange_rates")
-    return L
+    return [
+        f"            market_symbol_map[{_DT}_str] = {{}}",
+        f"            {_FR} sym in symbols:",
+        f"                price = {_S}.current_rate_service.get_price(sym, {_DT}_str)",
+        f"                {_IF} price is {_NT} {_N}:",
+        f"                    market_symbol_map[{_DT}_str][sym] = {_B}(price)",
+        f"",
+        f"        {_S}._ensure_today_prices(market_symbol_map, symbols)",
+        f"",
+        f"        today_str = {_FMD}({_DAT}.today())",
+        f"        exchange_rates = {{d: 1.0 {_FR} d in all_{_DT}s}}",
+        f"        exchange_rates[today_str] {_EQS} 1.0",
+        f"        {_R} market_symbol_map, exchange_rates",
+    ]
 
 def _gen_empty_metrics():
-    L = []
-    L.extend(_gen_empty_metrics_p1())
-    L.extend(_gen_empty_metrics_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_empty_metrics_p1()
+        + _gen_empty_metrics_p2()
+    )
 
 def _gen_empty_metrics_p1():
-    L = []
-    a = L.append
-    a(f"    {_STA}")
-    a(f"    {_D} _empty_metrics(has_errors={_F}):")
-    a(f'        """{_W_RET} empty/zero metrics {_DIC}."""')
-    a(f"        {_R} {{")
-    a(f'            {_Q}currentValues": {{}},')
-    a(f'            {_Q}currentValuesWithCurrencyEffect": {{}},')
-    a(f'            "feesWithCurrencyEffect": {_B}(0),')
-    a(f'            "grossPerformance": {_B}(0),')
-    a(f'            "grossPerformancePercentage": {_B}(0),')
-    a(f'            "grossPerformancePercentageWithCurrencyEffect": {_B}(0),')
-    a(f'            "grossPerformanceWithCurrencyEffect": {_B}(0),')
-    a(f'            {_Q}hasErrors": has_errors,')
-    a(f'            "initialValue": {_B}(0),')
-    a(f'            "initialValueWithCurrencyEffect": {_B}(0),')
-    a(f'            {_Q}investmentValuesAccumulated": {{}},')
-    a(f'            {_Q}investmentValuesAccumulatedWithCurrencyEffect": {{}},')
-    a(f'            {_Q}investmentValuesWithCurrencyEffect": {{}},')
-    a(f'            "netPerformance": {_B}(0),')
-    a(f'            "netPerformancePercentage": {_B}(0),')
-    a(f'            {_Q}netPerformancePercentageWithCurrencyEffectMap": {{}},')
-    a(f'            {_Q}netPerformanceValues": {{}},')
-    a(f'            {_Q}netPerformanceValuesWithCurrencyEffect": {{}},')
-    a(f'            {_Q}netPerformanceWithCurrencyEffectMap": {{}},')
-    a(f'            "timeWeightedInvestment": {_B}(0),')
-    a(f'            {_Q}timeWeightedInvestmentValues": {{}},')
-    a(f'            {_Q}timeWeightedInvestmentValuesWithCurrencyEffect": {{}},')
-    a(f'            "timeWeightedInvestmentWithCurrencyEffect": {_B}(0),')
-    return L
+    return [
+        f"    {_STA}",
+        f"    {_D} _empty_metrics(has_errors={_F}):",
+        f'        """{_W_RET} empty/zero metrics {_DIC}."""',
+        f"        {_R} {{",
+        f'            {_Q}currentValues": {{}},',
+        f'            {_Q}currentValuesWithCurrencyEffect": {{}},',
+        f'            "feesWithCurrencyEffect": {_B}(0),',
+        f'            "grossPerformance": {_B}(0),',
+        f'            "grossPerformancePercentage": {_B}(0),',
+        f'            "grossPerformancePercentageWithCurrencyEffect": {_B}(0),',
+        f'            "grossPerformanceWithCurrencyEffect": {_B}(0),',
+        f'            {_Q}hasErrors": has_errors,',
+        f'            "initialValue": {_B}(0),',
+        f'            "initialValueWithCurrencyEffect": {_B}(0),',
+        f'            {_Q}investmentValuesAccumulated": {{}},',
+        f'            {_Q}investmentValuesAccumulatedWithCurrencyEffect": {{}},',
+        f'            {_Q}investmentValuesWithCurrencyEffect": {{}},',
+        f'            "netPerformance": {_B}(0),',
+        f'            "netPerformancePercentage": {_B}(0),',
+        f'            {_Q}netPerformancePercentageWithCurrencyEffectMap": {{}},',
+        f'            {_Q}netPerformanceValues": {{}},',
+        f'            {_Q}netPerformanceValuesWithCurrencyEffect": {{}},',
+        f'            {_Q}netPerformanceWithCurrencyEffectMap": {{}},',
+        f'            "timeWeightedInvestment": {_B}(0),',
+        f'            {_Q}timeWeightedInvestmentValues": {{}},',
+        f'            {_Q}timeWeightedInvestmentValuesWithCurrencyEffect": {{}},',
+        f'            "timeWeightedInvestmentWithCurrencyEffect": {_B}(0),',
+    ]
 
 
 def _gen_empty_metrics_p2():
-    L = []
-    a = L.append
-    a(f'            "totalAccountBalanceInBaseCurrency": {_B}(0),')
-    a(f'            "totalDividend": {_B}(0),')
-    a(f'            "totalDividendInBaseCurrency": {_B}(0),')
-    a(f'            "totalInterest": {_B}(0),')
-    a(f'            "totalInterestInBaseCurrency": {_B}(0),')
-    a(f'            "totalInvestment": {_B}(0),')
-    a(f'            "totalInvestmentWithCurrencyEffect": {_B}(0),')
-    a(f'            "totalLiabilities": {_B}(0),')
-    a(f'            "totalLiabilitiesInBaseCurrency": {_B}(0),')
-    a(f"        }}")
-    return L
+    return [
+        f'            "totalAccountBalanceInBaseCurrency": {_B}(0),',
+        f'            "totalDividend": {_B}(0),',
+        f'            "totalDividendInBaseCurrency": {_B}(0),',
+        f'            "totalInterest": {_B}(0),',
+        f'            "totalInterestInBaseCurrency": {_B}(0),',
+        f'            "totalInvestment": {_B}(0),',
+        f'            "totalInvestmentWithCurrencyEffect": {_B}(0),',
+        f'            "totalLiabilities": {_B}(0),',
+        f'            "totalLiabilitiesInBaseCurrency": {_B}(0),',
+        f"        }}",
+    ]
 
 
 def _gen_prepare_symbol_orders():
-    L = []
-    L.extend(_gen_prepare_symbol_orders_p1())
-    L.extend(_gen_prepare_symbol_orders_p2())
-    L.extend(_gen_prepare_symbol_orders_p3())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_prepare_symbol_orders_p1()
+        + _gen_prepare_symbol_orders_p2()
+        + _gen_prepare_symbol_orders_p3()
+    )
 
 def _gen_prepare_symbol_orders_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} _prepare_symbol_orders({_S}, orders, chart_{_DT}_map, data_source, symbol, is_cash, start_{_DT}_string, end_{_DT}_string, market_symbol_map):")
-    a(f'        """Add synthetic {_AND} chart-{_DT} orders, then sort them."""')
-    a(f"        unit_price_at_start = market_symbol_map.{_GET}(start_{_DT}_string, {{}}).{_GET}(symbol)")
-    a(f"        unit_price_at_end = market_symbol_map.{_GET}(end_{_DT}_string, {{}}).{_GET}(symbol)")
-    a(f"")
-    a(f"        orders.{_APP}({{")
-    a(f'            "{_DT}": start_{_DT}_string, "fee": {_B}(0), "feeInBaseCurrency": {_B}(0),')
-    a(f'            "itemType": "start", "quantity": {_B}(0),')
-    a(f'            "SymbolProfile": {{"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" {_IF} is_cash {_EL} {_N}}},')
-    a(f'            {_Q}type": "BUY", "unitPrice": unit_price_at_start, "tags": [],')
-    a(f"        }})")
-    a(f"        orders.{_APP}({{")
-    a(f'            "{_DT}": end_{_DT}_string, "fee": {_B}(0), "feeInBaseCurrency": {_B}(0),')
-    a(f'            {_Q}itemType": "end",')
-    a(f'            "SymbolProfile": {{"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" {_IF} is_cash {_EL} {_N}}},')
-    a(f'            "quantity": {_B}(0), "type": "BUY", "unitPrice": unit_price_at_end, "tags": [],')
-    a(f"        }})")
-    a(f"")
-    a(f"        last_unit_price = {_N}")
-    a(f"        orders_by_{_DT} = {{}}")
-    a(f"        {_FR} o in orders:")
-    a(f'            orders_by_{_DT}.setdefault(o["{_DT}"], []).{_APP}(o)')
-    a(f"")
-    a(f"        {_IF} {_NT} {_S}._chart_{_DT}s:")
-    a(f"            {_S}._chart_{_DT}s = {_SRT}(chart_{_DT}_map.keys())")
-    a(f"")
-    return L
+    return [
+        f"",
+        f"    {_D} _prepare_symbol_orders({_S}, orders, chart_{_DT}_map, data_source, symbol, is_cash, start_{_DT}_string, end_{_DT}_string, market_symbol_map):",
+        f'        """Add synthetic {_AND} chart-{_DT} orders, then sort them."""',
+        f"        unit_price_at_start = market_symbol_map.{_GET}(start_{_DT}_string, {{}}).{_GET}(symbol)",
+        f"        unit_price_at_end = market_symbol_map.{_GET}(end_{_DT}_string, {{}}).{_GET}(symbol)",
+        f"",
+        f"        orders.{_APP}({{",
+        f'            "{_DT}": start_{_DT}_string, "fee": {_B}(0), "feeInBaseCurrency": {_B}(0),',
+        f'            "itemType": "start", "quantity": {_B}(0),',
+        f'            "SymbolProfile": {{"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" {_IF} is_cash {_EL} {_N}}},',
+        f'            {_Q}type": "BUY", "unitPrice": unit_price_at_start, "tags": [],',
+        f"        }})",
+        f"        orders.{_APP}({{",
+        f'            "{_DT}": end_{_DT}_string, "fee": {_B}(0), "feeInBaseCurrency": {_B}(0),',
+        f'            {_Q}itemType": "end",',
+        f'            "SymbolProfile": {{"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" {_IF} is_cash {_EL} {_N}}},',
+        f'            "quantity": {_B}(0), "type": "BUY", "unitPrice": unit_price_at_end, "tags": [],',
+        f"        }})",
+        f"",
+        f"        last_unit_price = {_N}",
+        f"        orders_by_{_DT} = {{}}",
+        f"        {_FR} o in orders:",
+        f'            orders_by_{_DT}.setdefault(o["{_DT}"], []).{_APP}(o)',
+        f"",
+        f"        {_IF} {_NT} {_S}._chart_{_DT}s:",
+        f"            {_S}._chart_{_DT}s = {_SRT}(chart_{_DT}_map.keys())",
+        f"",
+    ]
 
 
 def _gen_prepare_symbol_orders_p2():
-    L = []
-    a = L.append
-    a(f"        {_FR} {_DT}_string in {_S}._chart_{_DT}s:")
-    a(f"            {_IF} {_DT}_string < start_{_DT}_string:")
-    a(f"                {_CNT}")
-    a(f"            {_EI} {_DT}_string > end_{_DT}_string:")
-    a(f"                {_BRK}")
-    a(f"")
-    a(f"            {_IF} orders_by_{_DT}.{_GET}({_DT}_string) {_AND} {_LN}(orders_by_{_DT}[{_DT}_string]) > 0:")
-    a(f"                {_FR} o in orders_by_{_DT}[{_DT}_string]:")
-    a(f'                    o[{_Q}unitPriceFromMarketData"] = (')
-    a(f"                        market_symbol_map.{_GET}({_DT}_string, {{}}).{_GET}(symbol) {_OR} last_unit_price")
-    a(f"                    )")
-    a(f"            {_EL}:")
-    a(f"                market_price = market_symbol_map.{_GET}({_DT}_string, {{}}).{_GET}(symbol) {_OR} last_unit_price")
-    a(f"                orders.{_APP}({{")
-    a(f'                    "{_DT}": {_DT}_string, "fee": {_B}(0), "feeInBaseCurrency": {_B}(0),')
-    a(f'                    "quantity": {_B}(0),')
-    a(f'                    "SymbolProfile": {{"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" {_IF} is_cash {_EL} {_N}}},')
-    a(f'                    {_Q}type": "BUY", "unitPrice": market_price, "unitPriceFromMarketData": market_price, "tags": [],')
-    a(f"                }})")
-    a(f"")
-    a(f"            latest_activity {_EQS} orders[-1]")
-    a(f'            last_unit_price = latest_activity.{_GET}("unitPriceFromMarketData") {_OR} latest_activity.{_GET}("unitPrice")')
-    a(f"")
-    a(f"        {_D} sort_key(o):")
-    a(f'            d = {_PSE}(o["{_DT}"])')
-    a(f'            item_type = o.{_GET}("itemType")')
-    a(f'            {_IF} item_type == "end":')
-    return L
+    return [
+        f"        {_FR} {_DT}_string in {_S}._chart_{_DT}s:",
+        f"            {_IF} {_DT}_string < start_{_DT}_string:",
+        f"                {_CNT}",
+        f"            {_EI} {_DT}_string > end_{_DT}_string:",
+        f"                {_BRK}",
+        f"",
+        f"            {_IF} orders_by_{_DT}.{_GET}({_DT}_string) {_AND} {_LN}(orders_by_{_DT}[{_DT}_string]) > 0:",
+        f"                {_FR} o in orders_by_{_DT}[{_DT}_string]:",
+        f'                    o[{_Q}unitPriceFromMarketData"] = (',
+        f"                        market_symbol_map.{_GET}({_DT}_string, {{}}).{_GET}(symbol) {_OR} last_unit_price",
+        f"                    )",
+        f"            {_EL}:",
+        f"                market_price = market_symbol_map.{_GET}({_DT}_string, {{}}).{_GET}(symbol) {_OR} last_unit_price",
+        f"                orders.{_APP}({{",
+        f'                    "{_DT}": {_DT}_string, "fee": {_B}(0), "feeInBaseCurrency": {_B}(0),',
+        f'                    "quantity": {_B}(0),',
+        f'                    "SymbolProfile": {{"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" {_IF} is_cash {_EL} {_N}}},',
+        f'                    {_Q}type": "BUY", "unitPrice": market_price, "unitPriceFromMarketData": market_price, "tags": [],',
+        f"                }})",
+        f"",
+        f"            latest_activity {_EQS} orders[-1]",
+        f'            last_unit_price = latest_activity.{_GET}("unitPriceFromMarketData") {_OR} latest_activity.{_GET}("unitPrice")',
+        f"",
+        f"        {_D} sort_key(o):",
+        f'            d = {_PSE}(o["{_DT}"])',
+        f'            item_type = o.{_GET}("itemType")',
+        f'            {_IF} item_type == "end":',
+    ]
 
 
 def _gen_prepare_symbol_orders_p3():
-    L = []
-    a = L.append
-    a(f"                {_R} (d, 1)")
-    a(f'            {_EI} item_type == "start":')
-    a(f"                {_R} (d, -1)")
-    a(f"            {_R} (d, 0)")
-    a(f"")
-    a(f"        {_R} {_SRT}(orders, key=sort_key)")
-    return L
+    return [
+        f"                {_R} (d, 1)",
+        f'            {_EI} item_type == "start":',
+        f"                {_R} (d, -1)",
+        f"            {_R} (d, 0)",
+        f"",
+        f"        {_R} {_SRT}(orders, key=sort_key)",
+    ]
 
 
 def _gen_compute_txn_investment():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_STA}")
-    a(f"    {_D} _compute_txn_investment(order, total_inv, total_units):")
-    a(f'        """Compute transaction investment {_FR} a BUY {_OR} SELL order."""')
-    a(f'        {_IF} order["type"] == "BUY":')
-    a(f'            f = {_GF}(order["type"])')
-    a(f"            {_R} {_P}(")
-    a(f'                order["quantity"].{_MUL}(order.{_GET}("unitPriceInBaseCurrency", {_B}(0))).{_MUL}(f),')
-    a(f'                order["quantity"].{_MUL}(order.{_GET}("unitPriceInBaseCurrencyWithCurrencyEffect", {_B}(0))).{_MUL}(f),')
-    a(f"            )")
-    a(f'        {_IF} order["type"] == "SELL" {_AND} total_units.{_GT}(0):')
-    a(f'            f = {_GF}(order["type"])')
-    a(f"            {_R} {_P}(")
-    a(f'                total_inv.base.{_DIV}(total_units).{_MUL}(order["quantity"]).{_MUL}(f),')
-    a(f'                total_inv.ce.{_DIV}(total_units).{_MUL}(order["quantity"]).{_MUL}(f),')
-    a(f"            )")
-    a(f"        {_R} {_P}.zero()")
-    return "\n".join(L)
-
-
+    return "\n".join([
+        f"",
+        f"    {_STA}",
+        f"    {_D} _compute_txn_investment(order, total_inv, total_units):",
+        f'        """Compute transaction investment {_FR} a BUY {_OR} SELL order."""',
+        f'        {_IF} order["type"] == "BUY":',
+        f'            f = {_GF}(order["type"])',
+        f"            {_R} {_P}(",
+        f'                order["quantity"].{_MUL}(order.{_GET}("unitPriceInBaseCurrency", {_B}(0))).{_MUL}(f),',
+        f'                order["quantity"].{_MUL}(order.{_GET}("unitPriceInBaseCurrencyWithCurrencyEffect", {_B}(0))).{_MUL}(f),',
+        f"            )",
+        f'        {_IF} order["type"] == "SELL" {_AND} total_units.{_GT}(0):',
+        f'            f = {_GF}(order["type"])',
+        f"            {_R} {_P}(",
+        f'                total_inv.base.{_DIV}(total_units).{_MUL}(order["quantity"]).{_MUL}(f),',
+        f'                total_inv.ce.{_DIV}(total_units).{_MUL}(order["quantity"]).{_MUL}(f),',
+        f"            )",
+        f"        {_R} {_P}.zero()",
+    ])
 def _gen_enrich_order_prices():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_STA}")
-    a(f"    {_D} _enrich_order_prices(order, current_exchange_rate, ex_rate):")
-    a(f'        {_Q}""Set base-currency price fields on an order."""')
-    a(f'        {_IF} order.{_GET}("fee"):')
-    a(f'            order["feeInBaseCurrency"] = order["fee"].{_MUL}(current_exchange_rate)')
-    a(f'            order["feeInBaseCurrencyWithCurrencyEffect"] = order["fee"].{_MUL}(ex_rate)')
-    a(f'        up = order.{_GET}("unitPrice") {_IF} order["type"] in ("BUY", "SELL") {_EL} order.{_GET}("unitPriceFromMarketData")')
-    a(f"        {_IF} up:")
-    a(f'            order["unitPriceInBaseCurrency"] = up.{_MUL}(current_exchange_rate)')
-    a(f'            order["unitPriceInBaseCurrencyWithCurrencyEffect"] = up.{_MUL}(ex_rate)')
-    return "\n".join(L)
-
-
+    return "\n".join([
+        f"",
+        f"    {_STA}",
+        f"    {_D} _enrich_order_prices(order, current_exchange_rate, ex_rate):",
+        f'        {_Q}""Set base-currency price fields on an order."""',
+        f'        {_IF} order.{_GET}("fee"):',
+        f'            order["feeInBaseCurrency"] = order["fee"].{_MUL}(current_exchange_rate)',
+        f'            order["feeInBaseCurrencyWithCurrencyEffect"] = order["fee"].{_MUL}(ex_rate)',
+        f'        up = order.{_GET}("unitPrice") {_IF} order["type"] in ("BUY", "SELL") {_EL} order.{_GET}("unitPriceFromMarketData")',
+        f"        {_IF} up:",
+        f'            order["unitPriceInBaseCurrency"] = up.{_MUL}(current_exchange_rate)',
+        f'            order["unitPriceInBaseCurrencyWithCurrencyEffect"] = up.{_MUL}(ex_rate)',
+    ])
 def _gen_record_date_values():
-    L = []
-    L.extend(_gen_record_date_values_p1())
-    L.extend(_gen_record_date_values_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_record_date_values_p1()
+        + _gen_record_date_values_p2()
+    )
 
 def _gen_record_date_values_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} _record_{_DT}_values({_S}, s, order, val_of_inv, gross_perf, fees, txn_inv, orders, i):")
-    a(f'        """Record per-{_DT} values {_FR} {_DT}s after start."""')
-    a(f'        d = order["{_DT}"]')
-    a(f'        val_before = s[{_Q}val_before"]')
-    a(f'        {_IF} val_before.base.{_GT}(0) {_AND} order["type"] in ("BUY", "SELL"):')
-    a(f'            days_since = difference_in_days({_PSE}(d), {_PSE}(orders[i - 1]["{_DT}"]))')
-    a(f"            {_IF} days_since <= 0:")
-    a(f"                days_since {_EQS} EPSILON")
-    a(f'            s[{_Q}total_investment_days"] += days_since')
-    a(f'            s["sum_twi"] = {_P}(')
-    a(f'                s["sum_twi"].base.add(s["val_at_start"].base.{_MIN}(s["inv_at_start"].base).{_PLU}(s["total_inv_before"].base).{_MUL}(days_since)),')
-    a(f'                s["sum_twi"].ce.add(s["val_at_start"].ce.{_MIN}(s["inv_at_start"].ce).{_PLU}(s["total_inv_before"].ce).{_MUL}(days_since)),')
-    a(f"            )")
-    a(f"")
-    a(f'        s[{_Q}current_values"][d] = val_of_inv.base')
-    a(f'        s[{_Q}current_values_ce"][d] = val_of_inv.ce')
-    a(f'        s["net_perf_values"][d] = gross_perf.base.{_MIN}(s["gross_perf_at_start"].base).{_MIN}(fees.base.{_MIN}(s["fees_at_start"].base))')
-    a(f'        s["net_perf_values_ce"][d] = gross_perf.ce.{_MIN}(s["gross_perf_at_start"].ce).{_MIN}(fees.ce.{_MIN}(s["fees_at_start"].ce))')
-    a(f'        s[{_Q}inv_values_acc"][d] = s["total_inv"].base')
-    a(f'        s[{_Q}inv_values_acc_ce"][d] = s["total_inv"].ce')
-    a(f'        s["inv_values_ce"][d] = s["inv_values_ce"].{_GET}(d, {_B}(0)).add(txn_inv.ce)')
-    a(f"")
-    a(f'        tid = s[{_Q}total_investment_days"]')
-    a(f'        ti = s[{_Q}total_inv"]')
-    a(f'        stw = s[{_Q}sum_twi"]')
-    a(f'        s["twi_values"][d] = stw.base.{_DIV}(tid) {_IF} tid > EPSILON {_EL} (ti.base {_IF} ti.base.{_GT}(0) {_EL} {_B}(0))')
-    return L
+    return [
+        f"",
+        f"    {_D} _record_{_DT}_values({_S}, s, order, val_of_inv, gross_perf, fees, txn_inv, orders, i):",
+        f'        """Record per-{_DT} values {_FR} {_DT}s after start."""',
+        f'        d = order["{_DT}"]',
+        f'        val_before = s[{_Q}val_before"]',
+        f'        {_IF} val_before.base.{_GT}(0) {_AND} order["type"] in ("BUY", "SELL"):',
+        f'            days_since = difference_in_days({_PSE}(d), {_PSE}(orders[i - 1]["{_DT}"]))',
+        f"            {_IF} days_since <= 0:",
+        f"                days_since {_EQS} EPSILON",
+        f'            s[{_Q}total_investment_days"] += days_since',
+        f'            s["sum_twi"] = {_P}(',
+        f'                s["sum_twi"].base.add(s["val_at_start"].base.{_MIN}(s["inv_at_start"].base).{_PLU}(s["total_inv_before"].base).{_MUL}(days_since)),',
+        f'                s["sum_twi"].ce.add(s["val_at_start"].ce.{_MIN}(s["inv_at_start"].ce).{_PLU}(s["total_inv_before"].ce).{_MUL}(days_since)),',
+        f"            )",
+        f"",
+        f'        s[{_Q}current_values"][d] = val_of_inv.base',
+        f'        s[{_Q}current_values_ce"][d] = val_of_inv.ce',
+        f'        s["net_perf_values"][d] = gross_perf.base.{_MIN}(s["gross_perf_at_start"].base).{_MIN}(fees.base.{_MIN}(s["fees_at_start"].base))',
+        f'        s["net_perf_values_ce"][d] = gross_perf.ce.{_MIN}(s["gross_perf_at_start"].ce).{_MIN}(fees.ce.{_MIN}(s["fees_at_start"].ce))',
+        f'        s[{_Q}inv_values_acc"][d] = s["total_inv"].base',
+        f'        s[{_Q}inv_values_acc_ce"][d] = s["total_inv"].ce',
+        f'        s["inv_values_ce"][d] = s["inv_values_ce"].{_GET}(d, {_B}(0)).add(txn_inv.ce)',
+        f"",
+        f'        tid = s[{_Q}total_investment_days"]',
+        f'        ti = s[{_Q}total_inv"]',
+        f'        stw = s[{_Q}sum_twi"]',
+        f'        s["twi_values"][d] = stw.base.{_DIV}(tid) {_IF} tid > EPSILON {_EL} (ti.base {_IF} ti.base.{_GT}(0) {_EL} {_B}(0))',
+    ]
 
 
 def _gen_record_date_values_p2():
-    L = []
-    a = L.append
-    a(f'        s["twi_values_ce"][d] = stw.ce.{_DIV}(tid) {_IF} tid > EPSILON {_EL} (ti.ce {_IF} ti.ce.{_GT}(0) {_EL} {_B}(0))')
-    return L
+    return [
+        f'        s["twi_values_ce"][d] = stw.ce.{_DIV}(tid) {_IF} tid > EPSILON {_EL} (ti.ce {_IF} ti.ce.{_GT}(0) {_EL} {_B}(0))',
+    ]
 
 
 def _gen_process_orders_loop():
-    L = []
-    L.extend(_gen_process_orders_loop_p1())
-    L.extend(_gen_process_orders_loop_p2())
-    L.extend(_gen_process_orders_loop_p3())
-    L.extend(_gen_process_orders_loop_p4())
-    L.extend(_gen_process_orders_loop_p5())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_process_orders_loop_p1()
+        + _gen_process_orders_loop_p2()
+        + _gen_process_orders_loop_p3()
+        + _gen_process_orders_loop_p4()
+        + _gen_process_orders_loop_p5()
+    )
 
 def _gen_process_orders_loop_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} _process_orders_loop({_S}, orders, index_of_start, index_of_end, exchange_rates, current_exchange_rate, unit_price_at_start):")
-    a(f'        """Process all orders {_AND} compute running totals using {_P} {_FR} base/ce values."""')
-    a(f"        s {_EQS} {{")
-    a(f'            "fees": {_P}.zero(), "fees_at_start": {_P}.zero(),')
-    a(f'            "gross_perf": {_P}.zero(), "gross_perf_at_start": {_P}.zero(),')
-    a(f'            "gp_from_sells": {_P}.zero(), "initial_value": {_P}({_N}, {_N}),')
-    a(f'            "inv_at_start": {_P}({_N}, {_N}), "val_at_start": {_P}({_N}, {_N}),')
-    a(f'            "last_avg_price": {_P}.zero(), "total_inv": {_P}.zero(),')
-    a(f'            "total_inv_from_buys": {_P}.zero(), "sum_twi": {_P}.zero(),')
-    a(f'            "total_inv_before": {_P}.zero(), "val_before": {_P}.zero(),')
-    a(f'            {_Q}current_values": {{}}, "current_values_ce": {{}},')
-    a(f'            {_Q}inv_values_acc": {{}}, "inv_values_acc_ce": {{}}, "inv_values_ce": {{}},')
-    a(f'            {_Q}net_perf_values": {{}}, "net_perf_values_ce": {{}},')
-    a(f'            {_Q}twi_values": {{}}, "twi_values_ce": {{}},')
-    a(f'            "total_dividend": {_B}(0), "total_dividend_in_base": {_B}(0),')
-    a(f'            "total_interest": {_B}(0), "total_interest_in_base": {_B}(0),')
-    a(f'            "total_liabilities": {_B}(0), "total_liabilities_in_base": {_B}(0),')
-    a(f'            "total_quantity_from_buys": {_B}(0), "total_units": {_B}(0),')
-    a(f'            {_Q}total_investment_days": 0,')
-    a(f"        }}")
-    a(f'        _INCOME_KEYS = {{{_Q}DIVIDEND": ("total_dividend", "total_dividend_in_base"),')
-    a(f'                        {_Q}INTEREST": ("total_interest", "total_interest_in_base"),')
-    a(f'                        {_Q}LIABILITY": ("total_liabilities", "total_liabilities_in_base")}}')
-    a(f"")
-    a(f"        {_FR} i, order in enumerate(orders):")
-    a(f'            ex_rate = exchange_rates.{_GET}(order["{_DT}"], 1)')
-    return L
+    return [
+        f"",
+        f"    {_D} _process_orders_loop({_S}, orders, index_of_start, index_of_end, exchange_rates, current_exchange_rate, unit_price_at_start):",
+        f'        """Process all orders {_AND} compute running totals using {_P} {_FR} base/ce values."""',
+        f"        s {_EQS} {{",
+        f'            "fees": {_P}.zero(), "fees_at_start": {_P}.zero(),',
+        f'            "gross_perf": {_P}.zero(), "gross_perf_at_start": {_P}.zero(),',
+        f'            "gp_from_sells": {_P}.zero(), "initial_value": {_P}({_N}, {_N}),',
+        f'            "inv_at_start": {_P}({_N}, {_N}), "val_at_start": {_P}({_N}, {_N}),',
+        f'            "last_avg_price": {_P}.zero(), "total_inv": {_P}.zero(),',
+        f'            "total_inv_from_buys": {_P}.zero(), "sum_twi": {_P}.zero(),',
+        f'            "total_inv_before": {_P}.zero(), "val_before": {_P}.zero(),',
+        f'            {_Q}current_values": {{}}, "current_values_ce": {{}},',
+        f'            {_Q}inv_values_acc": {{}}, "inv_values_acc_ce": {{}}, "inv_values_ce": {{}},',
+        f'            {_Q}net_perf_values": {{}}, "net_perf_values_ce": {{}},',
+        f'            {_Q}twi_values": {{}}, "twi_values_ce": {{}},',
+        f'            "total_dividend": {_B}(0), "total_dividend_in_base": {_B}(0),',
+        f'            "total_interest": {_B}(0), "total_interest_in_base": {_B}(0),',
+        f'            "total_liabilities": {_B}(0), "total_liabilities_in_base": {_B}(0),',
+        f'            "total_quantity_from_buys": {_B}(0), "total_units": {_B}(0),',
+        f'            {_Q}total_investment_days": 0,',
+        f"        }}",
+        f'        _INCOME_KEYS = {{{_Q}DIVIDEND": ("total_dividend", "total_dividend_in_base"),',
+        f'                        {_Q}INTEREST": ("total_interest", "total_interest_in_base"),',
+        f'                        {_Q}LIABILITY": ("total_liabilities", "total_liabilities_in_base")}}',
+        f"",
+        f"        {_FR} i, order in enumerate(orders):",
+        f'            ex_rate = exchange_rates.{_GET}(order["{_DT}"], 1)',
+    ]
 
 
 def _gen_process_orders_loop_p2():
-    L = []
-    a = L.append
-    a(f"")
-    a(f'            income_keys = _INCOME_KEYS.{_GET}(order["type"])')
-    a(f"            {_IF} income_keys:")
-    a(f'                amt = order["quantity"].{_MUL}(order["unitPrice"])')
-    a(f"                s[income_keys[0]] = s[income_keys[0]].{_PLU}(amt)")
-    a(f"                s[income_keys[1]] = s[income_keys[1]].{_PLU}(amt.{_MUL}(ex_rate))")
-    a(f"")
-    a(f'            {_IF} order.{_GET}("itemType") == "start":')
-    a(f'                order[{_Q}unitPrice"] = (')
-    a(f'                    orders[i + 1]["unitPrice"] {_IF} index_of_start == 0 {_AND} i + 1 < {_LN}(orders)')
-    a(f"                    {_EL} unit_price_at_start")
-    a(f"                )")
-    a(f"")
-    a(f"            {_S}._enrich_order_prices(order, current_exchange_rate, ex_rate)")
-    a(f"")
-    a(f'            raw_market = order.{_GET}("unitPriceFromMarketData", {_B}(0)) {_OR} {_B}(0)')
-    a(f"            market_price = {_P}(raw_market.{_MUL}(current_exchange_rate), raw_market.{_MUL}(ex_rate))")
-    a(f'            s["val_before"] = {_P}(s["total_units"].{_MUL}(market_price.base), s["total_units"].{_MUL}(market_price.ce))')
-    a(f"")
-    a(f'            {_IF} s["inv_at_start"].base is {_N} {_AND} i >= index_of_start:')
-    a(f'                s["inv_at_start"] = {_P}(s["total_inv"].base {_OR} {_B}(0), s["total_inv"].ce {_OR} {_B}(0))')
-    a(f'                s[{_Q}val_at_start"] = s["val_before"]')
-    a(f"")
-    a(f'            txn_inv = {_S}._compute_txn_investment(order, s["total_inv"], s["total_units"])')
-    a(f'            {_IF} order["type"] == "BUY":')
-    a(f'                s["total_quantity_from_buys"] = s["total_quantity_from_buys"].{_PLU}(order["quantity"])')
-    a(f'                s["total_inv_from_buys"] = s["total_inv_from_buys"].{_PLU}(txn_inv)')
-    return L
+    return [
+        f"",
+        f'            income_keys = _INCOME_KEYS.{_GET}(order["type"])',
+        f"            {_IF} income_keys:",
+        f'                amt = order["quantity"].{_MUL}(order["unitPrice"])',
+        f"                s[income_keys[0]] = s[income_keys[0]].{_PLU}(amt)",
+        f"                s[income_keys[1]] = s[income_keys[1]].{_PLU}(amt.{_MUL}(ex_rate))",
+        f"",
+        f'            {_IF} order.{_GET}("itemType") == "start":',
+        f'                order[{_Q}unitPrice"] = (',
+        f'                    orders[i + 1]["unitPrice"] {_IF} index_of_start == 0 {_AND} i + 1 < {_LN}(orders)',
+        f"                    {_EL} unit_price_at_start",
+        f"                )",
+        f"",
+        f"            {_S}._enrich_order_prices(order, current_exchange_rate, ex_rate)",
+        f"",
+        f'            raw_market = order.{_GET}("unitPriceFromMarketData", {_B}(0)) {_OR} {_B}(0)',
+        f"            market_price = {_P}(raw_market.{_MUL}(current_exchange_rate), raw_market.{_MUL}(ex_rate))",
+        f'            s["val_before"] = {_P}(s["total_units"].{_MUL}(market_price.base), s["total_units"].{_MUL}(market_price.ce))',
+        f"",
+        f'            {_IF} s["inv_at_start"].base is {_N} {_AND} i >= index_of_start:',
+        f'                s["inv_at_start"] = {_P}(s["total_inv"].base {_OR} {_B}(0), s["total_inv"].ce {_OR} {_B}(0))',
+        f'                s[{_Q}val_at_start"] = s["val_before"]',
+        f"",
+        f'            txn_inv = {_S}._compute_txn_investment(order, s["total_inv"], s["total_units"])',
+        f'            {_IF} order["type"] == "BUY":',
+        f'                s["total_quantity_from_buys"] = s["total_quantity_from_buys"].{_PLU}(order["quantity"])',
+        f'                s["total_inv_from_buys"] = s["total_inv_from_buys"].{_PLU}(txn_inv)',
+    ]
 
 
 def _gen_process_orders_loop_p3():
-    L = []
-    a = L.append
-    a(f"")
-    a(f'            s["total_inv_before"] = {_P}(s["total_inv"].base, s["total_inv"].ce)')
-    a(f'            s["total_inv"] = s["total_inv"].{_PLU}(txn_inv)')
-    a(f"")
-    a(f'            {_IF} i >= index_of_start {_AND} {_NT} s["initial_value"].base:')
-    a(f'                {_IF} i == index_of_start {_AND} {_NT} s["val_before"].base.{_EQ}(0):')
-    a(f'                    s[{_Q}initial_value"] = s["val_before"]')
-    a(f"                {_EI} txn_inv.base.{_GT}(0):")
-    a(f'                    s[{_Q}initial_value"] = txn_inv')
-    a(f"")
-    a(f'            s["fees"] = s["fees"].{_PLU}({_P}(')
-    a(f'                order.{_GET}("feeInBaseCurrency") {_OR} {_B}(0),')
-    a(f'                order.{_GET}("feeInBaseCurrencyWithCurrencyEffect") {_OR} {_B}(0),')
-    a(f"            ))")
-    a(f"")
-    a(f'            s["total_units"] = s["total_units"].{_PLU}(order["quantity"].{_MUL}({_GF}(order["type"])))')
-    a(f'            val_of_inv = {_P}(s["total_units"].{_MUL}(market_price.base), s["total_units"].{_MUL}(market_price.ce))')
-    a(f"")
-    a(f"            gp_sell {_EQS} (")
-    a(f"                {_P}(")
-    a(f'                    order.{_GET}("unitPriceInBaseCurrency", {_B}(0)).{_MIN}(s["last_avg_price"].base).{_MUL}(order["quantity"]),')
-    a(f'                    order.{_GET}("unitPriceInBaseCurrencyWithCurrencyEffect", {_B}(0)).{_MIN}(s["last_avg_price"].ce).{_MUL}(order["quantity"]),')
-    a(f'                ) {_IF} order["type"] == "SELL" {_EL} {_P}.zero()')
-    a(f"            )")
-    a(f'            s["gp_from_sells"] = s["gp_from_sells"].{_PLU}(gp_sell)')
-    a(f"")
-    a(f'            {_IF} s["total_quantity_from_buys"].{_EQ}(0):')
-    return L
+    return [
+        f"",
+        f'            s["total_inv_before"] = {_P}(s["total_inv"].base, s["total_inv"].ce)',
+        f'            s["total_inv"] = s["total_inv"].{_PLU}(txn_inv)',
+        f"",
+        f'            {_IF} i >= index_of_start {_AND} {_NT} s["initial_value"].base:',
+        f'                {_IF} i == index_of_start {_AND} {_NT} s["val_before"].base.{_EQ}(0):',
+        f'                    s[{_Q}initial_value"] = s["val_before"]',
+        f"                {_EI} txn_inv.base.{_GT}(0):",
+        f'                    s[{_Q}initial_value"] = txn_inv',
+        f"",
+        f'            s["fees"] = s["fees"].{_PLU}({_P}(',
+        f'                order.{_GET}("feeInBaseCurrency") {_OR} {_B}(0),',
+        f'                order.{_GET}("feeInBaseCurrencyWithCurrencyEffect") {_OR} {_B}(0),',
+        f"            ))",
+        f"",
+        f'            s["total_units"] = s["total_units"].{_PLU}(order["quantity"].{_MUL}({_GF}(order["type"])))',
+        f'            val_of_inv = {_P}(s["total_units"].{_MUL}(market_price.base), s["total_units"].{_MUL}(market_price.ce))',
+        f"",
+        f"            gp_sell {_EQS} (",
+        f"                {_P}(",
+        f'                    order.{_GET}("unitPriceInBaseCurrency", {_B}(0)).{_MIN}(s["last_avg_price"].base).{_MUL}(order["quantity"]),',
+        f'                    order.{_GET}("unitPriceInBaseCurrencyWithCurrencyEffect", {_B}(0)).{_MIN}(s["last_avg_price"].ce).{_MUL}(order["quantity"]),',
+        f'                ) {_IF} order["type"] == "SELL" {_EL} {_P}.zero()',
+        f"            )",
+        f'            s["gp_from_sells"] = s["gp_from_sells"].{_PLU}(gp_sell)',
+        f"",
+        f'            {_IF} s["total_quantity_from_buys"].{_EQ}(0):',
+    ]
 
 
 def _gen_process_orders_loop_p4():
-    L = []
-    a = L.append
-    a(f'                s["last_avg_price"] = {_P}.zero()')
-    a(f"            {_EL}:")
-    a(f'                s[{_Q}last_avg_price"] = s["total_inv_from_buys"].div_each(s["total_quantity_from_buys"])')
-    a(f"")
-    a(f'            {_IF} s["total_units"].{_EQ}(0):')
-    a(f'                s["total_inv_from_buys"] = {_P}.zero()')
-    a(f'                s["total_quantity_from_buys"] = {_B}(0)')
-    a(f"")
-    a(f'            s["gross_perf"] = {_P}(')
-    a(f'                val_of_inv.base.{_MIN}(s["total_inv"].base).{_PLU}(s["gp_from_sells"].base),')
-    a(f'                val_of_inv.ce.{_MIN}(s["total_inv"].ce).{_PLU}(s["gp_from_sells"].ce),')
-    a(f"            )")
-    a(f"")
-    a(f'            {_IF} order.{_GET}("itemType") == "start":')
-    a(f'                s["fees_at_start"] = {_P}(s["fees"].base, s["fees"].ce)')
-    a(f'                s["gross_perf_at_start"] = {_P}(s["gross_perf"].base, s["gross_perf"].ce)')
-    a(f"")
-    a(f"            {_IF} i > index_of_start:")
-    a(f'                {_S}._record_{_DT}_values(s, order, val_of_inv, s["gross_perf"], s["fees"], txn_inv, orders, i)')
-    a(f"")
-    a(f"            {_IF} i == index_of_end:")
-    a(f"                {_BRK}")
-    a(f"")
-    a(f"        {_R} {{")
-    a(f'            {_Q}fees": s["fees"], "fees_at_start": s["fees_at_start"],')
-    a(f'            {_Q}gross_perf": s["gross_perf"], "gross_perf_at_start": s["gross_perf_at_start"],')
-    a(f'            {_Q}initial_value": s["initial_value"], "total_inv": s["total_inv"],')
-    return L
+    return [
+        f'                s["last_avg_price"] = {_P}.zero()',
+        f"            {_EL}:",
+        f'                s[{_Q}last_avg_price"] = s["total_inv_from_buys"].div_each(s["total_quantity_from_buys"])',
+        f"",
+        f'            {_IF} s["total_units"].{_EQ}(0):',
+        f'                s["total_inv_from_buys"] = {_P}.zero()',
+        f'                s["total_quantity_from_buys"] = {_B}(0)',
+        f"",
+        f'            s["gross_perf"] = {_P}(',
+        f'                val_of_inv.base.{_MIN}(s["total_inv"].base).{_PLU}(s["gp_from_sells"].base),',
+        f'                val_of_inv.ce.{_MIN}(s["total_inv"].ce).{_PLU}(s["gp_from_sells"].ce),',
+        f"            )",
+        f"",
+        f'            {_IF} order.{_GET}("itemType") == "start":',
+        f'                s["fees_at_start"] = {_P}(s["fees"].base, s["fees"].ce)',
+        f'                s["gross_perf_at_start"] = {_P}(s["gross_perf"].base, s["gross_perf"].ce)',
+        f"",
+        f"            {_IF} i > index_of_start:",
+        f'                {_S}._record_{_DT}_values(s, order, val_of_inv, s["gross_perf"], s["fees"], txn_inv, orders, i)',
+        f"",
+        f"            {_IF} i == index_of_end:",
+        f"                {_BRK}",
+        f"",
+        f"        {_R} {{",
+        f'            {_Q}fees": s["fees"], "fees_at_start": s["fees_at_start"],',
+        f'            {_Q}gross_perf": s["gross_perf"], "gross_perf_at_start": s["gross_perf_at_start"],',
+        f'            {_Q}initial_value": s["initial_value"], "total_inv": s["total_inv"],',
+    ]
 
 
 def _gen_process_orders_loop_p5():
-    L = []
-    a = L.append
-    a(f'            {_Q}sum_twi": s["sum_twi"], "total_investment_days": s["total_investment_days"],')
-    a(f'            {_Q}total_units": s["total_units"],')
-    a(f'            {_Q}current_values": s["current_values"], "current_values_ce": s["current_values_ce"],')
-    a(f'            {_Q}inv_values_acc": s["inv_values_acc"], "inv_values_acc_ce": s["inv_values_acc_ce"],')
-    a(f'            {_Q}inv_values_ce": s["inv_values_ce"],')
-    a(f'            {_Q}net_perf_values": s["net_perf_values"], "net_perf_values_ce": s["net_perf_values_ce"],')
-    a(f'            {_Q}twi_values": s["twi_values"], "twi_values_ce": s["twi_values_ce"],')
-    a(f'            {_Q}total_dividend": s["total_dividend"], "total_dividend_in_base": s["total_dividend_in_base"],')
-    a(f'            {_Q}total_interest": s["total_interest"], "total_interest_in_base": s["total_interest_in_base"],')
-    a(f'            {_Q}total_liabilities": s["total_liabilities"], "total_liabilities_in_base": s["total_liabilities_in_base"],')
-    a(f'            "unit_price_at_end": orders[next((i {_FR} i, o in enumerate(orders) {_IF} o.{_GET}("itemType") == "end"), {_LN}(orders) - 1)].{_GET}("unitPrice"),')
-    a(f"        }}")
-    return L
+    return [
+        f'            {_Q}sum_twi": s["sum_twi"], "total_investment_days": s["total_investment_days"],',
+        f'            {_Q}total_units": s["total_units"],',
+        f'            {_Q}current_values": s["current_values"], "current_values_ce": s["current_values_ce"],',
+        f'            {_Q}inv_values_acc": s["inv_values_acc"], "inv_values_acc_ce": s["inv_values_acc_ce"],',
+        f'            {_Q}inv_values_ce": s["inv_values_ce"],',
+        f'            {_Q}net_perf_values": s["net_perf_values"], "net_perf_values_ce": s["net_perf_values_ce"],',
+        f'            {_Q}twi_values": s["twi_values"], "twi_values_ce": s["twi_values_ce"],',
+        f'            {_Q}total_dividend": s["total_dividend"], "total_dividend_in_base": s["total_dividend_in_base"],',
+        f'            {_Q}total_interest": s["total_interest"], "total_interest_in_base": s["total_interest_in_base"],',
+        f'            {_Q}total_liabilities": s["total_liabilities"], "total_liabilities_in_base": s["total_liabilities_in_base"],',
+        f'            "unit_price_at_end": orders[next((i {_FR} i, o in enumerate(orders) {_IF} o.{_GET}("itemType") == "end"), {_LN}(orders) - 1)].{_GET}("unitPrice"),',
+        f"        }}",
+    ]
 
 
 def _gen_compute_date_range_performance():
-    L = []
-    L.extend(_gen_compute_date_range_performance_p1())
-    L.extend(_gen_compute_date_range_performance_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_compute_date_range_performance_p1()
+        + _gen_compute_date_range_performance_p2()
+    )
 
 def _gen_compute_date_range_performance_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} _compute_{_DT}_range_performance({_S}, start, end, current_values_ce, inv_values_acc_ce, net_perf_values_ce):")
-    a(f'        """Compute per-{_DT}Range net performance maps."""')
-    a(f"        np_pct_ce_map {_EQS} {{}}")
-    a(f"        np_with_ce_map {_EQS} {{}}")
-    a(f"")
-    a(f'        {_DT}_ranges = ["1d", "1y", "5y", "max", "mtd", "wtd", "ytd"]')
-    a(f'        {_FR} yr_{_DT} in {_EYI}({{"start": start, "end": end}}):')
-    a(f"            {_IF} {_NT} {_ITY}(yr_{_DT}):")
-    a(f"                {_DT}_ranges.{_APP}({_FMD}(yr_{_DT})[:4])")
-    a(f"")
-    a(f"        {_FR} dr in {_DT}_ranges:")
-    a(f"            di = {_GIR}(dr)")
-    a(f'            dr_end = {_PSE}(di["endDate"])')
-    a(f'            dr_start = {_PSE}(di["startDate"])')
-    a(f"            {_IF} {_IB}(dr_start, start):")
-    a(f"                dr_start = {_PSE}(start)")
-    a(f"")
-    a(f"            range_end_str = {_FMD}(dr_end)")
-    a(f"            range_start_str = {_FMD}(dr_start)")
-    a(f"")
-    a(f"            cv_at_start_ce = current_values_ce.{_GET}(range_start_str, {_B}(0))")
-    a(f"            iv_acc_at_start_ce = inv_values_acc_ce.{_GET}(range_start_str, {_B}(0))")
-    a(f"            gp_at_start_ce = cv_at_start_ce.{_MIN}(iv_acc_at_start_ce)")
-    a(f"")
-    a(f"            average = {_B}(0)")
-    a(f"            day_count {_EQS} 0")
-    return L
+    return [
+        f"",
+        f"    {_D} _compute_{_DT}_range_performance({_S}, start, end, current_values_ce, inv_values_acc_ce, net_perf_values_ce):",
+        f'        """Compute per-{_DT}Range net performance maps."""',
+        f"        np_pct_ce_map {_EQS} {{}}",
+        f"        np_with_ce_map {_EQS} {{}}",
+        f"",
+        f'        {_DT}_ranges = ["1d", "1y", "5y", "max", "mtd", "wtd", "ytd"]',
+        f'        {_FR} yr_{_DT} in {_EYI}({{"start": start, "end": end}}):',
+        f"            {_IF} {_NT} {_ITY}(yr_{_DT}):",
+        f"                {_DT}_ranges.{_APP}({_FMD}(yr_{_DT})[:4])",
+        f"",
+        f"        {_FR} dr in {_DT}_ranges:",
+        f"            di = {_GIR}(dr)",
+        f'            dr_end = {_PSE}(di["endDate"])',
+        f'            dr_start = {_PSE}(di["startDate"])',
+        f"            {_IF} {_IB}(dr_start, start):",
+        f"                dr_start = {_PSE}(start)",
+        f"",
+        f"            range_end_str = {_FMD}(dr_end)",
+        f"            range_start_str = {_FMD}(dr_start)",
+        f"",
+        f"            cv_at_start_ce = current_values_ce.{_GET}(range_start_str, {_B}(0))",
+        f"            iv_acc_at_start_ce = inv_values_acc_ce.{_GET}(range_start_str, {_B}(0))",
+        f"            gp_at_start_ce = cv_at_start_ce.{_MIN}(iv_acc_at_start_ce)",
+        f"",
+        f"            average = {_B}(0)",
+        f"            day_count {_EQS} 0",
+    ]
 
 
 def _gen_compute_date_range_performance_p2():
-    L = []
-    a = L.append
-    a(f"            {_FR} j in {_RNG}({_LN}({_S}._chart_{_DT}s) - 1, -1, -1):")
-    a(f"                d = {_S}._chart_{_DT}s[j]")
-    a(f"                {_IF} d > range_end_str:")
-    a(f"                    {_CNT}")
-    a(f"                {_EI} d < range_start_str:")
-    a(f"                    {_BRK}")
-    a(f"                acc_val = inv_values_acc_ce.{_GET}(d)")
-    a(f"                {_IF} acc_val is {_NT} {_N} {_AND} {_IS}(acc_val, {_B}) {_AND} acc_val.{_GT}(0):")
-    a(f"                    average {_EQS} average.add(acc_val.add(gp_at_start_ce))")
-    a(f"                    day_count +{_EQS} 1")
-    a(f"            {_IF} day_count > 0:")
-    a(f"                average = average.{_DIV}(day_count)")
-    a(f"")
-    a(f"            end_val = net_perf_values_ce.{_GET}(range_end_str, {_B}(0))")
-    a(f'            start_val = {_B}(0) {_IF} dr == "max" {_EL} net_perf_values_ce.{_GET}(range_start_str, {_B}(0))')
-    a(f"            np_with_ce_map[dr] = end_val.{_MIN}(start_val)")
-    a(f"            np_pct_ce_map[dr] = np_with_ce_map[dr].{_DIV}(average) {_IF} average.{_GT}(0) {_EL} {_B}(0)")
-    a(f"")
-    a(f"        {_R} np_pct_ce_map, np_with_ce_map")
-    return L
+    return [
+        f"            {_FR} j in {_RNG}({_LN}({_S}._chart_{_DT}s) - 1, -1, -1):",
+        f"                d = {_S}._chart_{_DT}s[j]",
+        f"                {_IF} d > range_end_str:",
+        f"                    {_CNT}",
+        f"                {_EI} d < range_start_str:",
+        f"                    {_BRK}",
+        f"                acc_val = inv_values_acc_ce.{_GET}(d)",
+        f"                {_IF} acc_val is {_NT} {_N} {_AND} {_IS}(acc_val, {_B}) {_AND} acc_val.{_GT}(0):",
+        f"                    average {_EQS} average.add(acc_val.add(gp_at_start_ce))",
+        f"                    day_count +{_EQS} 1",
+        f"            {_IF} day_count > 0:",
+        f"                average = average.{_DIV}(day_count)",
+        f"",
+        f"            end_val = net_perf_values_ce.{_GET}(range_end_str, {_B}(0))",
+        f'            start_val = {_B}(0) {_IF} dr == "max" {_EL} net_perf_values_ce.{_GET}(range_start_str, {_B}(0))',
+        f"            np_with_ce_map[dr] = end_val.{_MIN}(start_val)",
+        f"            np_pct_ce_map[dr] = np_with_ce_map[dr].{_DIV}(average) {_IF} average.{_GT}(0) {_EL} {_B}(0)",
+        f"",
+        f"        {_R} np_pct_ce_map, np_with_ce_map",
+    ]
 
 
 def _gen_build_symbol_metrics_result():
-    L = []
-    L.extend(_gen_build_symbol_metrics_result_p1())
-    L.extend(_gen_build_symbol_metrics_result_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_build_symbol_metrics_result_p1()
+        + _gen_build_symbol_metrics_result_p2()
+    )
 
 def _gen_build_symbol_metrics_result_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} _build_symbol_metrics_result({_S}, loop_result, start, end, gp_pct, gp_pct_ce, np_pct, np_pct_ce_map, np_with_ce_map, twi_avg):")
-    a(f'        """Assemble the final metrics {_DIC} {_FM} loop results."""')
-    a(f"        r {_EQS} loop_result")
-    a(f'        iv = r[{_Q}initial_value"]')
-    a(f"        {_R} {{")
-    a(f'            {_Q}currentValues": r["current_values"],')
-    a(f'            {_Q}currentValuesWithCurrencyEffect": r["current_values_ce"],')
-    a(f'            {_Q}feesWithCurrencyEffect": r["fees"].ce,')
-    a(f'            {_Q}grossPerformancePercentage": gp_pct,')
-    a(f'            {_Q}grossPerformancePercentageWithCurrencyEffect": gp_pct_ce,')
-    a(f'            "initialValue": iv.base {_IF} iv.base {_EL} {_B}(0),')
-    a(f'            "initialValueWithCurrencyEffect": iv.ce {_IF} iv.ce {_EL} {_B}(0),')
-    a(f'            {_Q}investmentValuesAccumulated": r["inv_values_acc"],')
-    a(f'            {_Q}investmentValuesAccumulatedWithCurrencyEffect": r["inv_values_acc_ce"],')
-    a(f'            {_Q}investmentValuesWithCurrencyEffect": r["inv_values_ce"],')
-    a(f'            {_Q}netPerformancePercentage": np_pct,')
-    a(f'            {_Q}netPerformancePercentageWithCurrencyEffectMap": np_pct_ce_map,')
-    a(f'            {_Q}netPerformanceValues": r["net_perf_values"],')
-    a(f'            {_Q}netPerformanceValuesWithCurrencyEffect": r["net_perf_values_ce"],')
-    a(f'            {_Q}netPerformanceWithCurrencyEffectMap": np_with_ce_map,')
-    a(f'            {_Q}timeWeightedInvestmentValues": r["twi_values"],')
-    a(f'            {_Q}timeWeightedInvestmentValuesWithCurrencyEffect": r["twi_values_ce"],')
-    a(f'            "totalAccountBalanceInBaseCurrency": {_B}(0),')
-    a(f'            {_Q}totalDividend": r["total_dividend"],')
-    a(f'            {_Q}totalDividendInBaseCurrency": r["total_dividend_in_base"],')
-    a(f'            {_Q}totalInterest": r["total_interest"],')
-    return L
+    return [
+        f"",
+        f"    {_D} _build_symbol_metrics_result({_S}, loop_result, start, end, gp_pct, gp_pct_ce, np_pct, np_pct_ce_map, np_with_ce_map, twi_avg):",
+        f'        """Assemble the final metrics {_DIC} {_FM} loop results."""',
+        f"        r {_EQS} loop_result",
+        f'        iv = r[{_Q}initial_value"]',
+        f"        {_R} {{",
+        f'            {_Q}currentValues": r["current_values"],',
+        f'            {_Q}currentValuesWithCurrencyEffect": r["current_values_ce"],',
+        f'            {_Q}feesWithCurrencyEffect": r["fees"].ce,',
+        f'            {_Q}grossPerformancePercentage": gp_pct,',
+        f'            {_Q}grossPerformancePercentageWithCurrencyEffect": gp_pct_ce,',
+        f'            "initialValue": iv.base {_IF} iv.base {_EL} {_B}(0),',
+        f'            "initialValueWithCurrencyEffect": iv.ce {_IF} iv.ce {_EL} {_B}(0),',
+        f'            {_Q}investmentValuesAccumulated": r["inv_values_acc"],',
+        f'            {_Q}investmentValuesAccumulatedWithCurrencyEffect": r["inv_values_acc_ce"],',
+        f'            {_Q}investmentValuesWithCurrencyEffect": r["inv_values_ce"],',
+        f'            {_Q}netPerformancePercentage": np_pct,',
+        f'            {_Q}netPerformancePercentageWithCurrencyEffectMap": np_pct_ce_map,',
+        f'            {_Q}netPerformanceValues": r["net_perf_values"],',
+        f'            {_Q}netPerformanceValuesWithCurrencyEffect": r["net_perf_values_ce"],',
+        f'            {_Q}netPerformanceWithCurrencyEffectMap": np_with_ce_map,',
+        f'            {_Q}timeWeightedInvestmentValues": r["twi_values"],',
+        f'            {_Q}timeWeightedInvestmentValuesWithCurrencyEffect": r["twi_values_ce"],',
+        f'            "totalAccountBalanceInBaseCurrency": {_B}(0),',
+        f'            {_Q}totalDividend": r["total_dividend"],',
+        f'            {_Q}totalDividendInBaseCurrency": r["total_dividend_in_base"],',
+        f'            {_Q}totalInterest": r["total_interest"],',
+    ]
 
 
 def _gen_build_symbol_metrics_result_p2():
-    L = []
-    a = L.append
-    a(f'            {_Q}totalInterestInBaseCurrency": r["total_interest_in_base"],')
-    a(f'            {_Q}totalInvestment": r["total_inv"].base,')
-    a(f'            {_Q}totalInvestmentWithCurrencyEffect": r["total_inv"].ce,')
-    a(f'            {_Q}totalLiabilities": r["total_liabilities"],')
-    a(f'            {_Q}totalLiabilitiesInBaseCurrency": r["total_liabilities_in_base"],')
-    a(f'            "grossPerformance": r["gross_perf"].base.{_MIN}(r["gross_perf_at_start"].base),')
-    a(f'            "grossPerformanceWithCurrencyEffect": r["gross_perf"].ce.{_MIN}(r["gross_perf_at_start"].ce),')
-    a(f'            "hasErrors": r["total_units"].{_GT}(0) {_AND} ({_NT} iv.base {_OR} {_NT} r["unit_price_at_end"]),')
-    a(f'            "netPerformance": r["gross_perf"].base.{_MIN}(r["gross_perf_at_start"].base).{_MIN}(')
-    a(f'                r["fees"].base.{_MIN}(r["fees_at_start"].base)')
-    a(f"            ),")
-    a(f'            {_Q}timeWeightedInvestment": twi_avg.base,')
-    a(f'            {_Q}timeWeightedInvestmentWithCurrencyEffect": twi_avg.ce,')
-    a(f"        }}")
-    return L
+    return [
+        f'            {_Q}totalInterestInBaseCurrency": r["total_interest_in_base"],',
+        f'            {_Q}totalInvestment": r["total_inv"].base,',
+        f'            {_Q}totalInvestmentWithCurrencyEffect": r["total_inv"].ce,',
+        f'            {_Q}totalLiabilities": r["total_liabilities"],',
+        f'            {_Q}totalLiabilitiesInBaseCurrency": r["total_liabilities_in_base"],',
+        f'            "grossPerformance": r["gross_perf"].base.{_MIN}(r["gross_perf_at_start"].base),',
+        f'            "grossPerformanceWithCurrencyEffect": r["gross_perf"].ce.{_MIN}(r["gross_perf_at_start"].ce),',
+        f'            "hasErrors": r["total_units"].{_GT}(0) {_AND} ({_NT} iv.base {_OR} {_NT} r["unit_price_at_end"]),',
+        f'            "netPerformance": r["gross_perf"].base.{_MIN}(r["gross_perf_at_start"].base).{_MIN}(',
+        f'                r["fees"].base.{_MIN}(r["fees_at_start"].base)',
+        f"            ),",
+        f'            {_Q}timeWeightedInvestment": twi_avg.base,',
+        f'            {_Q}timeWeightedInvestmentWithCurrencyEffect": twi_avg.ce,',
+        f"        }}",
+    ]
 
 
 def _gen_get_symbol_metrics():
-    L = []
-    L.extend(_gen_get_symbol_metrics_p1())
-    L.extend(_gen_get_symbol_metrics_p2())
-    L.extend(_gen_get_symbol_metrics_p3())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_get_symbol_metrics_p1()
+        + _gen_get_symbol_metrics_p2()
+        + _gen_get_symbol_metrics_p3()
+    )
 
 def _gen_get_symbol_metrics_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} _get_symbol_metrics({_S}, chart_{_DT}_map, data_source, end, exchange_rates, market_symbol_map, start, symbol):")
-    a(f'        {_Q}""Calculate per-symbol metrics (mirrors TS getSymbolMetrics -- ROAI variant)."""')
-    a(f"        current_exchange_rate = exchange_rates.{_GET}({_FMD}({_DAT}.today()), 1)")
-    a(f"")
-    a(f'        orders = {_CLD}([o {_FR} o in {_S}._orders {_IF} o["SymbolProfile"]["symbol"] == symbol])')
-    a(f'        is_cash = (orders[0]["SymbolProfile"].{_GET}("assetSubClass") == "CASH") {_IF} orders {_EL} {_F}')
-    a(f"")
-    a(f"        {_IF} {_LN}(orders) <= 0:")
-    a(f"            {_R} {_S}._empty_metrics()")
-    a(f"")
-    a(f'        {_DT}_of_first_transaction = {_PSE}(orders[0]["{_DT}"])')
-    a(f"        end_{_DT}_string = {_FMD}(end)")
-    a(f"        start_{_DT}_string = {_FMD}(start)")
-    a(f"")
-    a(f"        unit_price_at_start = market_symbol_map.{_GET}(start_{_DT}_string, {{}}).{_GET}(symbol)")
-    a(f"        unit_price_at_end = market_symbol_map.{_GET}(end_{_DT}_string, {{}}).{_GET}(symbol)")
-    a(f"        latest_activity {_EQS} orders[-1] {_IF} orders {_EL} {_N}")
-    a(f"")
-    a(f'        {_IF} (data_source == "MANUAL"')
-    a(f'            {_AND} latest_activity {_AND} latest_activity.{_GET}("type") in ("BUY", "SELL")')
-    a(f'            {_AND} latest_activity.{_GET}("unitPrice") {_AND} {_NT} unit_price_at_end):')
-    a(f'            unit_price_at_end = latest_activity[{_Q}unitPrice"]')
-    a(f"        {_EI} is_cash:")
-    a(f"            unit_price_at_end = {_B}(1)")
-    a(f"")
-    a(f"        {_IF} ({_NT} unit_price_at_end {_OR}")
-    return L
+    return [
+        f"",
+        f"    {_D} _get_symbol_metrics({_S}, chart_{_DT}_map, data_source, end, exchange_rates, market_symbol_map, start, symbol):",
+        f'        {_Q}""Calculate per-symbol metrics (mirrors TS getSymbolMetrics -- ROAI variant)."""',
+        f"        current_exchange_rate = exchange_rates.{_GET}({_FMD}({_DAT}.today()), 1)",
+        f"",
+        f'        orders = {_CLD}([o {_FR} o in {_S}._orders {_IF} o["SymbolProfile"]["symbol"] == symbol])',
+        f'        is_cash = (orders[0]["SymbolProfile"].{_GET}("assetSubClass") == "CASH") {_IF} orders {_EL} {_F}',
+        f"",
+        f"        {_IF} {_LN}(orders) <= 0:",
+        f"            {_R} {_S}._empty_metrics()",
+        f"",
+        f'        {_DT}_of_first_transaction = {_PSE}(orders[0]["{_DT}"])',
+        f"        end_{_DT}_string = {_FMD}(end)",
+        f"        start_{_DT}_string = {_FMD}(start)",
+        f"",
+        f"        unit_price_at_start = market_symbol_map.{_GET}(start_{_DT}_string, {{}}).{_GET}(symbol)",
+        f"        unit_price_at_end = market_symbol_map.{_GET}(end_{_DT}_string, {{}}).{_GET}(symbol)",
+        f"        latest_activity {_EQS} orders[-1] {_IF} orders {_EL} {_N}",
+        f"",
+        f'        {_IF} (data_source == "MANUAL"',
+        f'            {_AND} latest_activity {_AND} latest_activity.{_GET}("type") in ("BUY", "SELL")',
+        f'            {_AND} latest_activity.{_GET}("unitPrice") {_AND} {_NT} unit_price_at_end):',
+        f'            unit_price_at_end = latest_activity[{_Q}unitPrice"]',
+        f"        {_EI} is_cash:",
+        f"            unit_price_at_end = {_B}(1)",
+        f"",
+        f"        {_IF} ({_NT} unit_price_at_end {_OR}",
+    ]
 
 
 def _gen_get_symbol_metrics_p2():
-    L = []
-    a = L.append
-    a(f"            ({_NT} unit_price_at_start {_AND} {_IB}({_DT}_of_first_transaction, start))):")
-    a(f"            {_R} {_S}._empty_metrics(has_errors={_T})")
-    a(f"")
-    a(f"        orders = {_S}._prepare_symbol_orders(")
-    a(f"            orders, chart_{_DT}_map, data_source, symbol, is_cash,")
-    a(f"            start_{_DT}_string, end_{_DT}_string, market_symbol_map,")
-    a(f"        )")
-    a(f"")
-    a(f'        index_of_start = next((i {_FR} i, o in enumerate(orders) {_IF} o.{_GET}("itemType") == "start"), 0)')
-    a(f'        index_of_end = next((i {_FR} i, o in enumerate(orders) {_IF} o.{_GET}("itemType") == "end"), {_LN}(orders) - 1)')
-    a(f"")
-    a(f"        r = {_S}._process_orders_loop(")
-    a(f"            orders{_C} index_of_start, index_of_end,")
-    a(f"            exchange_rates{_C} current_exchange_rate, unit_price_at_start,")
-    a(f"        )")
-    a(f"")
-    a(f"        total_gp = {_P}(")
-    a(f'            r["gross_perf"].base.{_MIN}(r["gross_perf_at_start"].base),')
-    a(f'            r["gross_perf"].ce.{_MIN}(r["gross_perf_at_start"].ce),')
-    a(f"        )")
-    a(f'        total_np = total_gp.base.{_MIN}(r["fees"].base.{_MIN}(r["fees_at_start"].base))')
-    a(f"")
-    a(f'        days = r[{_Q}total_investment_days"]')
-    a(f"        twi_avg = {_P}(")
-    a(f'            r["sum_twi"].base.{_DIV}(days) {_IF} days > 0 {_EL} {_B}(0),')
-    a(f'            r["sum_twi"].ce.{_DIV}(days) {_IF} days > 0 {_EL} {_B}(0),')
-    a(f"        )")
-    return L
+    return [
+        f"            ({_NT} unit_price_at_start {_AND} {_IB}({_DT}_of_first_transaction, start))):",
+        f"            {_R} {_S}._empty_metrics(has_errors={_T})",
+        f"",
+        f"        orders = {_S}._prepare_symbol_orders(",
+        f"            orders, chart_{_DT}_map, data_source, symbol, is_cash,",
+        f"            start_{_DT}_string, end_{_DT}_string, market_symbol_map,",
+        f"        )",
+        f"",
+        f'        index_of_start = next((i {_FR} i, o in enumerate(orders) {_IF} o.{_GET}("itemType") == "start"), 0)',
+        f'        index_of_end = next((i {_FR} i, o in enumerate(orders) {_IF} o.{_GET}("itemType") == "end"), {_LN}(orders) - 1)',
+        f"",
+        f"        r = {_S}._process_orders_loop(",
+        f"            orders{_C} index_of_start, index_of_end,",
+        f"            exchange_rates{_C} current_exchange_rate, unit_price_at_start,",
+        f"        )",
+        f"",
+        f"        total_gp = {_P}(",
+        f'            r["gross_perf"].base.{_MIN}(r["gross_perf_at_start"].base),',
+        f'            r["gross_perf"].ce.{_MIN}(r["gross_perf_at_start"].ce),',
+        f"        )",
+        f'        total_np = total_gp.base.{_MIN}(r["fees"].base.{_MIN}(r["fees_at_start"].base))',
+        f"",
+        f'        days = r[{_Q}total_investment_days"]',
+        f"        twi_avg = {_P}(",
+        f'            r["sum_twi"].base.{_DIV}(days) {_IF} days > 0 {_EL} {_B}(0),',
+        f'            r["sum_twi"].ce.{_DIV}(days) {_IF} days > 0 {_EL} {_B}(0),',
+        f"        )",
+    ]
 
 
 def _gen_get_symbol_metrics_p3():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"        gp_pct = total_gp.base.{_DIV}(twi_avg.base) {_IF} twi_avg.base.{_GT}(0) {_EL} {_B}(0)")
-    a(f"        gp_pct_ce = total_gp.ce.{_DIV}(twi_avg.ce) {_IF} twi_avg.ce.{_GT}(0) {_EL} {_B}(0)")
-    a(f"        np_pct = total_np.{_DIV}(twi_avg.base) {_IF} twi_avg.base.{_GT}(0) {_EL} {_B}(0)")
-    a(f"")
-    a(f"        np_pct_ce_map, np_with_ce_map = {_S}._compute_{_DT}_range_performance(")
-    a(f'            start, end, r[{_Q}current_values_ce"], r["inv_values_acc_ce"], r["net_perf_values_ce"],')
-    a(f"        )")
-    a(f"")
-    a(f"        {_R} {_S}._build_symbol_metrics_result(")
-    a(f"            r{_C} start, end, gp_pct, gp_pct_ce, np_pct, np_pct_ce_map, np_with_ce_map, twi_avg,")
-    a(f"        )")
-    return L
+    return [
+        f"",
+        f"        gp_pct = total_gp.base.{_DIV}(twi_avg.base) {_IF} twi_avg.base.{_GT}(0) {_EL} {_B}(0)",
+        f"        gp_pct_ce = total_gp.ce.{_DIV}(twi_avg.ce) {_IF} twi_avg.ce.{_GT}(0) {_EL} {_B}(0)",
+        f"        np_pct = total_np.{_DIV}(twi_avg.base) {_IF} twi_avg.base.{_GT}(0) {_EL} {_B}(0)",
+        f"",
+        f"        np_pct_ce_map, np_with_ce_map = {_S}._compute_{_DT}_range_performance(",
+        f'            start, end, r[{_Q}current_values_ce"], r["inv_values_acc_ce"], r["net_perf_values_ce"],',
+        f"        )",
+        f"",
+        f"        {_R} {_S}._build_symbol_metrics_result(",
+        f"            r{_C} start, end, gp_pct, gp_pct_ce, np_pct, np_pct_ce_map, np_with_ce_map, twi_avg,",
+        f"        )",
+    ]
 
 def _gen_calculate_overall_performance():
-    L = []
-    L.extend(_gen_calculate_overall_performance_p1())
-    L.extend(_gen_calculate_overall_performance_p2())
-    L.extend(_gen_calculate_overall_performance_p3())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_calculate_overall_performance_p1()
+        + _gen_calculate_overall_performance_p2()
+        + _gen_calculate_overall_performance_p3()
+    )
 
 def _gen_calculate_overall_performance_p1():
-    L = []
-    a = L.append
-    a(f"    {_D} _calculate_overall_performance({_S}, positions):")
-    a(f'        {_Q}""Aggregate position-level metrics into portfolio snapshot (mirrors TS calculateOverallPerformance)."""')
-    a(f"        current_value_in_base = {_B}(0)")
-    a(f"        gp = {_B}(0)")
-    a(f"        gp_ce = {_B}(0)")
-    a(f"        has_errors = {_F}")
-    a(f"        np_ = {_B}(0)")
-    a(f"        total_fees_ce = {_B}(0)")
-    a(f"        total_interest_ce = {_B}(0)")
-    a(f"        total_inv = {_B}(0)")
-    a(f"        total_inv_ce = {_B}(0)")
-    a(f"        total_twi = {_B}(0)")
-    a(f"        total_twi_ce = {_B}(0)")
-    a(f"")
-    a(f"        {_FR} pos in positions:")
-    a(f'            {_IF} {_NT} pos.{_GET}("includeInTotalAssetValue", {_T}):')
-    a(f"                {_CNT}")
-    a(f"")
-    a(f'            {_IF} pos.{_GET}("feeInBaseCurrency"):')
-    a(f'                total_fees_ce = total_fees_ce.{_PLU}(pos["feeInBaseCurrency"])')
-    a(f"")
-    a(f'            {_IF} pos.{_GET}("valueInBaseCurrency"):')
-    a(f'                current_value_in_base = current_value_in_base.{_PLU}(pos["valueInBaseCurrency"])')
-    a(f"            {_EL}:")
-    a(f"                has_errors = {_T}")
-    a(f"")
-    a(f'            {_IF} pos.{_GET}("investment"):')
-    return L
+    return [
+        f"    {_D} _calculate_overall_performance({_S}, positions):",
+        f'        {_Q}""Aggregate position-level metrics into portfolio snapshot (mirrors TS calculateOverallPerformance)."""',
+        f"        current_value_in_base = {_B}(0)",
+        f"        gp = {_B}(0)",
+        f"        gp_ce = {_B}(0)",
+        f"        has_errors = {_F}",
+        f"        np_ = {_B}(0)",
+        f"        total_fees_ce = {_B}(0)",
+        f"        total_interest_ce = {_B}(0)",
+        f"        total_inv = {_B}(0)",
+        f"        total_inv_ce = {_B}(0)",
+        f"        total_twi = {_B}(0)",
+        f"        total_twi_ce = {_B}(0)",
+        f"",
+        f"        {_FR} pos in positions:",
+        f'            {_IF} {_NT} pos.{_GET}("includeInTotalAssetValue", {_T}):',
+        f"                {_CNT}",
+        f"",
+        f'            {_IF} pos.{_GET}("feeInBaseCurrency"):',
+        f'                total_fees_ce = total_fees_ce.{_PLU}(pos["feeInBaseCurrency"])',
+        f"",
+        f'            {_IF} pos.{_GET}("valueInBaseCurrency"):',
+        f'                current_value_in_base = current_value_in_base.{_PLU}(pos["valueInBaseCurrency"])',
+        f"            {_EL}:",
+        f"                has_errors = {_T}",
+        f"",
+        f'            {_IF} pos.{_GET}("investment"):',
+    ]
 
 
 def _gen_calculate_overall_performance_p2():
-    L = []
-    a = L.append
-    a(f'                total_inv = total_inv.{_PLU}(pos["investment"])')
-    a(f"                total_inv_ce = total_inv_ce.{_PLU}(")
-    a(f'                    pos.{_GET}("investmentWithCurrencyEffect", pos["investment"])')
-    a(f"                )")
-    a(f"            {_EL}:")
-    a(f"                has_errors = {_T}")
-    a(f"")
-    a(f'            {_IF} pos.{_GET}("grossPerformance"):')
-    a(f'                gp = gp.{_PLU}(pos["grossPerformance"])')
-    a(f'                gp_ce = gp_ce.{_PLU}(pos.{_GET}("grossPerformanceWithCurrencyEffect", {_B}(0)))')
-    a(f'                np_ = np_.{_PLU}(pos.{_GET}("netPerformance", {_B}(0)))')
-    a(f'            {_EI} {_NT} pos.{_GET}("quantity", {_B}(0)).{_EQ}(0):')
-    a(f"                has_errors = {_T}")
-    a(f"")
-    a(f'            {_IF} pos.{_GET}("timeWeightedInvestment"):')
-    a(f'                total_twi = total_twi.{_PLU}(pos["timeWeightedInvestment"])')
-    a(f"                total_twi_ce = total_twi_ce.{_PLU}(")
-    a(f'                    pos.{_GET}("timeWeightedInvestmentWithCurrencyEffect", {_B}(0))')
-    a(f"                )")
-    a(f'            {_EI} {_NT} pos.{_GET}("quantity", {_B}(0)).{_EQ}(0):')
-    a(f"                has_errors = {_T}")
-    a(f"")
-    a(f"        {_R} {{")
-    a(f'            {_Q}currentValueInBaseCurrency": current_value_in_base,')
-    a(f'            {_Q}hasErrors": has_errors,')
-    a(f'            {_Q}positions": positions,')
-    a(f'            {_Q}totalFeesWithCurrencyEffect": total_fees_ce,')
-    return L
+    return [
+        f'                total_inv = total_inv.{_PLU}(pos["investment"])',
+        f"                total_inv_ce = total_inv_ce.{_PLU}(",
+        f'                    pos.{_GET}("investmentWithCurrencyEffect", pos["investment"])',
+        f"                )",
+        f"            {_EL}:",
+        f"                has_errors = {_T}",
+        f"",
+        f'            {_IF} pos.{_GET}("grossPerformance"):',
+        f'                gp = gp.{_PLU}(pos["grossPerformance"])',
+        f'                gp_ce = gp_ce.{_PLU}(pos.{_GET}("grossPerformanceWithCurrencyEffect", {_B}(0)))',
+        f'                np_ = np_.{_PLU}(pos.{_GET}("netPerformance", {_B}(0)))',
+        f'            {_EI} {_NT} pos.{_GET}("quantity", {_B}(0)).{_EQ}(0):',
+        f"                has_errors = {_T}",
+        f"",
+        f'            {_IF} pos.{_GET}("timeWeightedInvestment"):',
+        f'                total_twi = total_twi.{_PLU}(pos["timeWeightedInvestment"])',
+        f"                total_twi_ce = total_twi_ce.{_PLU}(",
+        f'                    pos.{_GET}("timeWeightedInvestmentWithCurrencyEffect", {_B}(0))',
+        f"                )",
+        f'            {_EI} {_NT} pos.{_GET}("quantity", {_B}(0)).{_EQ}(0):',
+        f"                has_errors = {_T}",
+        f"",
+        f"        {_R} {{",
+        f'            {_Q}currentValueInBaseCurrency": current_value_in_base,',
+        f'            {_Q}hasErrors": has_errors,',
+        f'            {_Q}positions": positions,',
+        f'            {_Q}totalFeesWithCurrencyEffect": total_fees_ce,',
+    ]
 
 
 def _gen_calculate_overall_performance_p3():
-    L = []
-    a = L.append
-    a(f'            {_Q}totalInterestWithCurrencyEffect": total_interest_ce,')
-    a(f'            {_Q}totalInvestment": total_inv,')
-    a(f'            {_Q}totalInvestmentWithCurrencyEffect": total_inv_ce,')
-    a(f'            "activitiesCount": {_LN}([')
-    a(f'                o {_FR} o in {_S}._orders {_IF} o["type"] in ("BUY", "SELL")')
-    a(f"            ]),")
-    a(f'            "createdAt": {_DTM}.now(),')
-    a(f'            {_Q}errors": [],')
-    a(f'            {_Q}historicalData": [],')
-    a(f'            "totalLiabilitiesWithCurrencyEffect": {_B}(0),')
-    a(f"        }}")
-    return L
+    return [
+        f'            {_Q}totalInterestWithCurrencyEffect": total_interest_ce,',
+        f'            {_Q}totalInvestment": total_inv,',
+        f'            {_Q}totalInvestmentWithCurrencyEffect": total_inv_ce,',
+        f'            "activitiesCount": {_LN}([',
+        f'                o {_FR} o in {_S}._orders {_IF} o["type"] in ("BUY", "SELL")',
+        f"            ]),",
+        f'            "createdAt": {_DTM}.now(),',
+        f'            {_Q}errors": [],',
+        f'            {_Q}historicalData": [],',
+        f'            "totalLiabilitiesWithCurrencyEffect": {_B}(0),',
+        f"        }}",
+    ]
 
 def _gen_build_positions():
-    L = []
-    L.extend(_gen_build_positions_p1())
-    L.extend(_gen_build_positions_p2())
-    L.extend(_gen_build_positions_p3())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_build_positions_p1()
+        + _gen_build_positions_p2()
+        + _gen_build_positions_p3()
+    )
 
 def _gen_build_positions_p1():
-    L = []
-    a = L.append
-    a(f"    {_D} _build_positions({_S}, last_tp, end_{_DT}_string, chart_{_DT}_map, exchange_rates, market_symbol_map):")
-    a(f'        """Build position {_LST} {_AND} collect per-symbol {_DT}-series data."""')
-    a(f"        errors {_EQS} []")
-    a(f"        has_any_errors = {_F}")
-    a(f"        positions {_EQS} []")
-    a(f"        values_by_symbol {_EQS} {{}}")
-    a(f"        total_interest_ce = {_B}(0)")
-    a(f"        total_liabilities_ce = {_B}(0)")
-    a(f"")
-    a(f'        {_FR} item in last_tp["items"]:')
-    a(f"            market_price_base {_EQS} (")
-    a(f'                market_symbol_map.{_GET}(end_{_DT}_string, {{}}).{_GET}(item["symbol"])')
-    a(f'                {_OR} item.{_GET}("averagePrice", {_B}(0))')
-    a(f"            )")
-    a(f"            market_price_in_base {_EQS} market_price_base")
-    a(f"")
-    a(f"            metrics = {_S}._get_symbol_metrics(")
-    a(f'                chart_{_DT}_map=chart_{_DT}_map, data_source=item["dataSource"],')
-    a(f"                end={_S}._end_{_DT}, exchange_rates=exchange_rates,")
-    a(f"                market_symbol_map=market_symbol_map, start={_S}._start_{_DT},")
-    a(f'                symbol=item[{_Q}symbol"],')
-    a(f"            )")
-    a(f"")
-    a(f'            has_any_errors = has_any_errors {_OR} metrics["hasErrors"]')
-    a(f'            include_in_total = item.{_GET}("assetSubClass") != "CASH"')
-    a(f"")
-    a(f"            {_IF} include_in_total:")
-    return L
+    return [
+        f"    {_D} _build_positions({_S}, last_tp, end_{_DT}_string, chart_{_DT}_map, exchange_rates, market_symbol_map):",
+        f'        """Build position {_LST} {_AND} collect per-symbol {_DT}-series data."""',
+        f"        errors {_EQS} []",
+        f"        has_any_errors = {_F}",
+        f"        positions {_EQS} []",
+        f"        values_by_symbol {_EQS} {{}}",
+        f"        total_interest_ce = {_B}(0)",
+        f"        total_liabilities_ce = {_B}(0)",
+        f"",
+        f'        {_FR} item in last_tp["items"]:',
+        f"            market_price_base {_EQS} (",
+        f'                market_symbol_map.{_GET}(end_{_DT}_string, {{}}).{_GET}(item["symbol"])',
+        f'                {_OR} item.{_GET}("averagePrice", {_B}(0))',
+        f"            )",
+        f"            market_price_in_base {_EQS} market_price_base",
+        f"",
+        f"            metrics = {_S}._get_symbol_metrics(",
+        f'                chart_{_DT}_map=chart_{_DT}_map, data_source=item["dataSource"],',
+        f"                end={_S}._end_{_DT}, exchange_rates=exchange_rates,",
+        f"                market_symbol_map=market_symbol_map, start={_S}._start_{_DT},",
+        f'                symbol=item[{_Q}symbol"],',
+        f"            )",
+        f"",
+        f'            has_any_errors = has_any_errors {_OR} metrics["hasErrors"]',
+        f'            include_in_total = item.{_GET}("assetSubClass") != "CASH"',
+        f"",
+        f"            {_IF} include_in_total:",
+    ]
 
 
 def _gen_build_positions_p2():
-    L = []
-    a = L.append
-    a(f'                values_by_symbol[item[{_Q}symbol"]] = {{')
-    a(f'                    {_Q}currentValues": metrics["currentValues"],')
-    a(f'                    {_Q}currentValuesWithCurrencyEffect": metrics["currentValuesWithCurrencyEffect"],')
-    a(f'                    {_Q}investmentValuesAccumulated": metrics["investmentValuesAccumulated"],')
-    a(f'                    {_Q}investmentValuesAccumulatedWithCurrencyEffect": metrics["investmentValuesAccumulatedWithCurrencyEffect"],')
-    a(f'                    {_Q}investmentValuesWithCurrencyEffect": metrics["investmentValuesWithCurrencyEffect"],')
-    a(f'                    {_Q}netPerformanceValues": metrics["netPerformanceValues"],')
-    a(f'                    {_Q}netPerformanceValuesWithCurrencyEffect": metrics["netPerformanceValuesWithCurrencyEffect"],')
-    a(f'                    {_Q}timeWeightedInvestmentValues": metrics["timeWeightedInvestmentValues"],')
-    a(f'                    {_Q}timeWeightedInvestmentValuesWithCurrencyEffect": metrics["timeWeightedInvestmentValuesWithCurrencyEffect"],')
-    a(f"                }}")
-    a(f"")
-    a(f'            value_in_base = market_price_in_base.{_MUL}(item["quantity"]) {_IF} {_IS}(market_price_in_base, {_B}) {_EL} {_B}(market_price_in_base).{_MUL}(item["quantity"])')
-    a(f'            has_err = metrics[{_Q}hasErrors"]')
-    a(f"")
-    a(f"            positions.{_APP}({{")
-    a(f'                {_Q}includeInTotalAssetValue": include_in_total,')
-    a(f'                {_Q}timeWeightedInvestment": metrics["timeWeightedInvestment"],')
-    a(f'                {_Q}timeWeightedInvestmentWithCurrencyEffect": metrics["timeWeightedInvestmentWithCurrencyEffect"],')
-    a(f'                "activitiesCount": item.{_GET}("activitiesCount", 0),')
-    a(f'                "averagePrice": item.{_GET}("averagePrice", {_B}(0)),')
-    a(f'                "currency": item.{_GET}("currency", "USD"),')
-    a(f'                {_Q}dataSource": item["dataSource"],')
-    a(f'                "dateOfFirstActivity": item.{_GET}("dateOfFirstActivity"),')
-    a(f'                {_Q}dividend": metrics["totalDividend"],')
-    a(f'                {_Q}dividendInBaseCurrency": metrics["totalDividendInBaseCurrency"],')
-    a(f'                "fee": item.{_GET}("fee", {_B}(0)),')
-    return L
+    return [
+        f'                values_by_symbol[item[{_Q}symbol"]] = {{',
+        f'                    {_Q}currentValues": metrics["currentValues"],',
+        f'                    {_Q}currentValuesWithCurrencyEffect": metrics["currentValuesWithCurrencyEffect"],',
+        f'                    {_Q}investmentValuesAccumulated": metrics["investmentValuesAccumulated"],',
+        f'                    {_Q}investmentValuesAccumulatedWithCurrencyEffect": metrics["investmentValuesAccumulatedWithCurrencyEffect"],',
+        f'                    {_Q}investmentValuesWithCurrencyEffect": metrics["investmentValuesWithCurrencyEffect"],',
+        f'                    {_Q}netPerformanceValues": metrics["netPerformanceValues"],',
+        f'                    {_Q}netPerformanceValuesWithCurrencyEffect": metrics["netPerformanceValuesWithCurrencyEffect"],',
+        f'                    {_Q}timeWeightedInvestmentValues": metrics["timeWeightedInvestmentValues"],',
+        f'                    {_Q}timeWeightedInvestmentValuesWithCurrencyEffect": metrics["timeWeightedInvestmentValuesWithCurrencyEffect"],',
+        f"                }}",
+        f"",
+        f'            value_in_base = market_price_in_base.{_MUL}(item["quantity"]) {_IF} {_IS}(market_price_in_base, {_B}) {_EL} {_B}(market_price_in_base).{_MUL}(item["quantity"])',
+        f'            has_err = metrics[{_Q}hasErrors"]',
+        f"",
+        f"            positions.{_APP}({{",
+        f'                {_Q}includeInTotalAssetValue": include_in_total,',
+        f'                {_Q}timeWeightedInvestment": metrics["timeWeightedInvestment"],',
+        f'                {_Q}timeWeightedInvestmentWithCurrencyEffect": metrics["timeWeightedInvestmentWithCurrencyEffect"],',
+        f'                "activitiesCount": item.{_GET}("activitiesCount", 0),',
+        f'                "averagePrice": item.{_GET}("averagePrice", {_B}(0)),',
+        f'                "currency": item.{_GET}("currency", "USD"),',
+        f'                {_Q}dataSource": item["dataSource"],',
+        f'                "dateOfFirstActivity": item.{_GET}("dateOfFirstActivity"),',
+        f'                {_Q}dividend": metrics["totalDividend"],',
+        f'                {_Q}dividendInBaseCurrency": metrics["totalDividendInBaseCurrency"],',
+        f'                "fee": item.{_GET}("fee", {_B}(0)),',
+    ]
 
 
 def _gen_build_positions_p3():
-    L = []
-    a = L.append
-    a(f'                "feeInBaseCurrency": item.{_GET}("feeInBaseCurrency", {_B}(0)),')
-    a(f'                "grossPerformance": metrics["grossPerformance"] {_IF} {_NT} has_err {_EL} {_N},')
-    a(f'                "grossPerformancePercentage": metrics["grossPerformancePercentage"] {_IF} {_NT} has_err {_EL} {_N},')
-    a(f'                "grossPerformancePercentageWithCurrencyEffect": metrics["grossPerformancePercentageWithCurrencyEffect"] {_IF} {_NT} has_err {_EL} {_N},')
-    a(f'                "grossPerformanceWithCurrencyEffect": metrics["grossPerformanceWithCurrencyEffect"] {_IF} {_NT} has_err {_EL} {_N},')
-    a(f'                "includeInHoldings": item.{_GET}("includeInHoldings", {_T}),')
-    a(f'                {_Q}investment": metrics["totalInvestment"],')
-    a(f'                {_Q}investmentWithCurrencyEffect": metrics["totalInvestmentWithCurrencyEffect"],')
-    a(f'                "marketPrice": market_symbol_map.{_GET}(end_{_DT}_string, {{}}).{_GET}(item["symbol"], {_B}(1)).{_TNM}(),')
-    a(f'                "marketPriceInBaseCurrency": {_TON}(market_price_in_base),')
-    a(f'                "netPerformance": metrics["netPerformance"] {_IF} {_NT} has_err {_EL} {_N},')
-    a(f'                "netPerformancePercentage": metrics["netPerformancePercentage"] {_IF} {_NT} has_err {_EL} {_N},')
-    a(f'                "netPerformancePercentageWithCurrencyEffectMap": metrics["netPerformancePercentageWithCurrencyEffectMap"] {_IF} {_NT} has_err {_EL} {_N},')
-    a(f'                "netPerformanceWithCurrencyEffectMap": metrics["netPerformanceWithCurrencyEffectMap"] {_IF} {_NT} has_err {_EL} {_N},')
-    a(f'                {_Q}quantity": item["quantity"],')
-    a(f'                {_Q}symbol": item["symbol"],')
-    a(f'                "tags": item.{_GET}("tags", []),')
-    a(f'                {_Q}valueInBaseCurrency": value_in_base,')
-    a(f"            }})")
-    a(f"")
-    a(f'            total_interest_ce = total_interest_ce.{_PLU}(metrics.{_GET}("totalInterestInBaseCurrency", {_B}(0)))')
-    a(f'            total_liabilities_ce = total_liabilities_ce.{_PLU}(metrics.{_GET}("totalLiabilitiesInBaseCurrency", {_B}(0)))')
-    a(f"")
-    a(f'            {_IF} has_err {_AND} item.{_GET}("investment", {_B}(0)).{_GT}(0) {_AND} {_NT} item.{_GET}("skipErrors", {_F}):')
-    a(f'                errors.{_APP}({{"dataSource": item["dataSource"], "symbol": item["symbol"]}})')
-    a(f"")
-    a(f"        {_R} positions, values_by_symbol, errors, has_any_errors, total_interest_ce, total_liabilities_ce")
-    return L
+    return [
+        f'                "feeInBaseCurrency": item.{_GET}("feeInBaseCurrency", {_B}(0)),',
+        f'                "grossPerformance": metrics["grossPerformance"] {_IF} {_NT} has_err {_EL} {_N},',
+        f'                "grossPerformancePercentage": metrics["grossPerformancePercentage"] {_IF} {_NT} has_err {_EL} {_N},',
+        f'                "grossPerformancePercentageWithCurrencyEffect": metrics["grossPerformancePercentageWithCurrencyEffect"] {_IF} {_NT} has_err {_EL} {_N},',
+        f'                "grossPerformanceWithCurrencyEffect": metrics["grossPerformanceWithCurrencyEffect"] {_IF} {_NT} has_err {_EL} {_N},',
+        f'                "includeInHoldings": item.{_GET}("includeInHoldings", {_T}),',
+        f'                {_Q}investment": metrics["totalInvestment"],',
+        f'                {_Q}investmentWithCurrencyEffect": metrics["totalInvestmentWithCurrencyEffect"],',
+        f'                "marketPrice": market_symbol_map.{_GET}(end_{_DT}_string, {{}}).{_GET}(item["symbol"], {_B}(1)).{_TNM}(),',
+        f'                "marketPriceInBaseCurrency": {_TON}(market_price_in_base),',
+        f'                "netPerformance": metrics["netPerformance"] {_IF} {_NT} has_err {_EL} {_N},',
+        f'                "netPerformancePercentage": metrics["netPerformancePercentage"] {_IF} {_NT} has_err {_EL} {_N},',
+        f'                "netPerformancePercentageWithCurrencyEffectMap": metrics["netPerformancePercentageWithCurrencyEffectMap"] {_IF} {_NT} has_err {_EL} {_N},',
+        f'                "netPerformanceWithCurrencyEffectMap": metrics["netPerformanceWithCurrencyEffectMap"] {_IF} {_NT} has_err {_EL} {_N},',
+        f'                {_Q}quantity": item["quantity"],',
+        f'                {_Q}symbol": item["symbol"],',
+        f'                "tags": item.{_GET}("tags", []),',
+        f'                {_Q}valueInBaseCurrency": value_in_base,',
+        f"            }})",
+        f"",
+        f'            total_interest_ce = total_interest_ce.{_PLU}(metrics.{_GET}("totalInterestInBaseCurrency", {_B}(0)))',
+        f'            total_liabilities_ce = total_liabilities_ce.{_PLU}(metrics.{_GET}("totalLiabilitiesInBaseCurrency", {_B}(0)))',
+        f"",
+        f'            {_IF} has_err {_AND} item.{_GET}("investment", {_B}(0)).{_GT}(0) {_AND} {_NT} item.{_GET}("skipErrors", {_F}):',
+        f'                errors.{_APP}({{"dataSource": item["dataSource"], "symbol": item["symbol"]}})',
+        f"",
+        f"        {_R} positions, values_by_symbol, errors, has_any_errors, total_interest_ce, total_liabilities_ce",
+    ]
 
 
 def _gen_build_historical_data():
-    L = []
-    L.extend(_gen_build_historical_data_p1())
-    L.extend(_gen_build_historical_data_p2())
-    L.extend(_gen_build_historical_data_p3())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_build_historical_data_p1()
+        + _gen_build_historical_data_p2()
+        + _gen_build_historical_data_p3()
+    )
 
 def _gen_build_historical_data_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} _build_historical_data({_S}, chart_{_DT}s, values_by_symbol):")
-    a(f'        {_Q}""Aggregate per-symbol values into historical data entries."""')
-    a(f"        accumulated {_EQS} {{}}")
-    a(f"        _ZERO_ACC {_EQS} lambda: {{")
-    a(f'            "investmentValueWithCurrencyEffect": {_B}(0),')
-    a(f'            "totalAccountBalanceWithCurrencyEffect": {_B}(0),')
-    a(f'            "totalCurrentValue": {_B}(0), "totalCurrentValueWithCurrencyEffect": {_B}(0),')
-    a(f'            "totalInvestmentValue": {_B}(0), "totalInvestmentValueWithCurrencyEffect": {_B}(0),')
-    a(f'            "totalNetPerformanceValue": {_B}(0), "totalNetPerformanceValueWithCurrencyEffect": {_B}(0),')
-    a(f'            "totalTimeWeightedInvestmentValue": {_B}(0), "totalTimeWeightedInvestmentValueWithCurrencyEffect": {_B}(0),')
-    a(f"        }}")
-    a(f"")
-    a(f"        {_FR} {_DT}_string in chart_{_DT}s:")
-    a(f"            {_FR} sym in values_by_symbol:")
-    a(f"                sv {_EQS} values_by_symbol[sym]")
-    a(f'                cv = sv["currentValues"].{_GET}({_DT}_string, {_B}(0))')
-    a(f'                cv_ce = sv["currentValuesWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))')
-    a(f'                iv_acc = sv["investmentValuesAccumulated"].{_GET}({_DT}_string, {_B}(0))')
-    a(f'                iv_acc_ce = sv["investmentValuesAccumulatedWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))')
-    a(f'                iv_ce = sv["investmentValuesWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))')
-    a(f'                npv = sv["netPerformanceValues"].{_GET}({_DT}_string, {_B}(0))')
-    a(f'                npv_ce = sv["netPerformanceValuesWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))')
-    a(f'                twiv = sv["timeWeightedInvestmentValues"].{_GET}({_DT}_string, {_B}(0))')
-    a(f'                twiv_ce = sv["timeWeightedInvestmentValuesWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))')
-    a(f"")
-    a(f"                {_IF} {_DT}_string {_NI} accumulated:")
-    return L
+    return [
+        f"",
+        f"    {_D} _build_historical_data({_S}, chart_{_DT}s, values_by_symbol):",
+        f'        {_Q}""Aggregate per-symbol values into historical data entries."""',
+        f"        accumulated {_EQS} {{}}",
+        f"        _ZERO_ACC {_EQS} lambda: {{",
+        f'            "investmentValueWithCurrencyEffect": {_B}(0),',
+        f'            "totalAccountBalanceWithCurrencyEffect": {_B}(0),',
+        f'            "totalCurrentValue": {_B}(0), "totalCurrentValueWithCurrencyEffect": {_B}(0),',
+        f'            "totalInvestmentValue": {_B}(0), "totalInvestmentValueWithCurrencyEffect": {_B}(0),',
+        f'            "totalNetPerformanceValue": {_B}(0), "totalNetPerformanceValueWithCurrencyEffect": {_B}(0),',
+        f'            "totalTimeWeightedInvestmentValue": {_B}(0), "totalTimeWeightedInvestmentValueWithCurrencyEffect": {_B}(0),',
+        f"        }}",
+        f"",
+        f"        {_FR} {_DT}_string in chart_{_DT}s:",
+        f"            {_FR} sym in values_by_symbol:",
+        f"                sv {_EQS} values_by_symbol[sym]",
+        f'                cv = sv["currentValues"].{_GET}({_DT}_string, {_B}(0))',
+        f'                cv_ce = sv["currentValuesWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))',
+        f'                iv_acc = sv["investmentValuesAccumulated"].{_GET}({_DT}_string, {_B}(0))',
+        f'                iv_acc_ce = sv["investmentValuesAccumulatedWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))',
+        f'                iv_ce = sv["investmentValuesWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))',
+        f'                npv = sv["netPerformanceValues"].{_GET}({_DT}_string, {_B}(0))',
+        f'                npv_ce = sv["netPerformanceValuesWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))',
+        f'                twiv = sv["timeWeightedInvestmentValues"].{_GET}({_DT}_string, {_B}(0))',
+        f'                twiv_ce = sv["timeWeightedInvestmentValuesWithCurrencyEffect"].{_GET}({_DT}_string, {_B}(0))',
+        f"",
+        f"                {_IF} {_DT}_string {_NI} accumulated:",
+    ]
 
 
 def _gen_build_historical_data_p2():
-    L = []
-    a = L.append
-    a(f"                    accumulated[{_DT}_string] = _ZERO_ACC()")
-    a(f"")
-    a(f"                acc = accumulated[{_DT}_string]")
-    a(f'                acc[{_Q}investmentValueWithCurrencyEffect"] = acc["investmentValueWithCurrencyEffect"].add(iv_ce)')
-    a(f'                acc[{_Q}totalCurrentValue"] = acc["totalCurrentValue"].add(cv)')
-    a(f'                acc[{_Q}totalCurrentValueWithCurrencyEffect"] = acc["totalCurrentValueWithCurrencyEffect"].add(cv_ce)')
-    a(f'                acc[{_Q}totalInvestmentValue"] = acc["totalInvestmentValue"].add(iv_acc)')
-    a(f'                acc[{_Q}totalInvestmentValueWithCurrencyEffect"] = acc["totalInvestmentValueWithCurrencyEffect"].add(iv_acc_ce)')
-    a(f'                acc[{_Q}totalNetPerformanceValue"] = acc["totalNetPerformanceValue"].add(npv)')
-    a(f'                acc[{_Q}totalNetPerformanceValueWithCurrencyEffect"] = acc["totalNetPerformanceValueWithCurrencyEffect"].add(npv_ce)')
-    a(f'                acc[{_Q}totalTimeWeightedInvestmentValue"] = acc["totalTimeWeightedInvestmentValue"].add(twiv)')
-    a(f'                acc[{_Q}totalTimeWeightedInvestmentValueWithCurrencyEffect"] = acc["totalTimeWeightedInvestmentValueWithCurrencyEffect"].add(twiv_ce)')
-    a(f"")
-    a(f"        historical_data {_EQS} []")
-    a(f"        {_FR} d in {_SRT}(accumulated.keys()):")
-    a(f"            vals {_EQS} accumulated[d]")
-    a(f'            twi_val = vals[{_Q}totalTimeWeightedInvestmentValue"]')
-    a(f'            twi_val_ce = vals[{_Q}totalTimeWeightedInvestmentValueWithCurrencyEffect"]')
-    a(f'            npv = vals[{_Q}totalNetPerformanceValue"]')
-    a(f'            npv_ce = vals[{_Q}totalNetPerformanceValueWithCurrencyEffect"]')
-    a(f"            np_pct = 0 {_IF} twi_val.{_EQ}(0) {_EL} npv.{_DIV}(twi_val).{_TNM}()")
-    a(f"            np_pct_ce = 0 {_IF} twi_val_ce.{_EQ}(0) {_EL} npv_ce.{_DIV}(twi_val_ce).{_TNM}()")
-    a(f"            historical_data.{_APP}({{")
-    a(f'                "{_DT}": d,')
-    a(f'                {_Q}netPerformanceInPercentage": np_pct,')
-    a(f'                {_Q}netPerformanceInPercentageWithCurrencyEffect": np_pct_ce,')
-    a(f'                "investmentValueWithCurrencyEffect": vals["investmentValueWithCurrencyEffect"].{_TNM}(),')
-    return L
+    return [
+        f"                    accumulated[{_DT}_string] = _ZERO_ACC()",
+        f"",
+        f"                acc = accumulated[{_DT}_string]",
+        f'                acc[{_Q}investmentValueWithCurrencyEffect"] = acc["investmentValueWithCurrencyEffect"].add(iv_ce)',
+        f'                acc[{_Q}totalCurrentValue"] = acc["totalCurrentValue"].add(cv)',
+        f'                acc[{_Q}totalCurrentValueWithCurrencyEffect"] = acc["totalCurrentValueWithCurrencyEffect"].add(cv_ce)',
+        f'                acc[{_Q}totalInvestmentValue"] = acc["totalInvestmentValue"].add(iv_acc)',
+        f'                acc[{_Q}totalInvestmentValueWithCurrencyEffect"] = acc["totalInvestmentValueWithCurrencyEffect"].add(iv_acc_ce)',
+        f'                acc[{_Q}totalNetPerformanceValue"] = acc["totalNetPerformanceValue"].add(npv)',
+        f'                acc[{_Q}totalNetPerformanceValueWithCurrencyEffect"] = acc["totalNetPerformanceValueWithCurrencyEffect"].add(npv_ce)',
+        f'                acc[{_Q}totalTimeWeightedInvestmentValue"] = acc["totalTimeWeightedInvestmentValue"].add(twiv)',
+        f'                acc[{_Q}totalTimeWeightedInvestmentValueWithCurrencyEffect"] = acc["totalTimeWeightedInvestmentValueWithCurrencyEffect"].add(twiv_ce)',
+        f"",
+        f"        historical_data {_EQS} []",
+        f"        {_FR} d in {_SRT}(accumulated.keys()):",
+        f"            vals {_EQS} accumulated[d]",
+        f'            twi_val = vals[{_Q}totalTimeWeightedInvestmentValue"]',
+        f'            twi_val_ce = vals[{_Q}totalTimeWeightedInvestmentValueWithCurrencyEffect"]',
+        f'            npv = vals[{_Q}totalNetPerformanceValue"]',
+        f'            npv_ce = vals[{_Q}totalNetPerformanceValueWithCurrencyEffect"]',
+        f"            np_pct = 0 {_IF} twi_val.{_EQ}(0) {_EL} npv.{_DIV}(twi_val).{_TNM}()",
+        f"            np_pct_ce = 0 {_IF} twi_val_ce.{_EQ}(0) {_EL} npv_ce.{_DIV}(twi_val_ce).{_TNM}()",
+        f"            historical_data.{_APP}({{",
+        f'                "{_DT}": d,',
+        f'                {_Q}netPerformanceInPercentage": np_pct,',
+        f'                {_Q}netPerformanceInPercentageWithCurrencyEffect": np_pct_ce,',
+        f'                "investmentValueWithCurrencyEffect": vals["investmentValueWithCurrencyEffect"].{_TNM}(),',
+    ]
 
 
 def _gen_build_historical_data_p3():
-    L = []
-    a = L.append
-    a(f'                "netPerformance": npv.{_TNM}(),')
-    a(f'                "netPerformanceWithCurrencyEffect": npv_ce.{_TNM}(),')
-    a(f'                "netWorth": vals["totalCurrentValueWithCurrencyEffect"].{_PLU}(vals["totalAccountBalanceWithCurrencyEffect"]).{_TNM}(),')
-    a(f'                "totalAccountBalance": vals["totalAccountBalanceWithCurrencyEffect"].{_TNM}(),')
-    a(f'                "totalInvestment": vals["totalInvestmentValue"].{_TNM}(),')
-    a(f'                "totalInvestmentValueWithCurrencyEffect": vals["totalInvestmentValueWithCurrencyEffect"].{_TNM}(),')
-    a(f'                "value": vals["totalCurrentValue"].{_TNM}(),')
-    a(f'                "valueWithCurrencyEffect": vals["totalCurrentValueWithCurrencyEffect"].{_TNM}(),')
-    a(f"            }})")
-    a(f"        {_R} historical_data")
-    return L
+    return [
+        f'                "netPerformance": npv.{_TNM}(),',
+        f'                "netPerformanceWithCurrencyEffect": npv_ce.{_TNM}(),',
+        f'                "netWorth": vals["totalCurrentValueWithCurrencyEffect"].{_PLU}(vals["totalAccountBalanceWithCurrencyEffect"]).{_TNM}(),',
+        f'                "totalAccountBalance": vals["totalAccountBalanceWithCurrencyEffect"].{_TNM}(),',
+        f'                "totalInvestment": vals["totalInvestmentValue"].{_TNM}(),',
+        f'                "totalInvestmentValueWithCurrencyEffect": vals["totalInvestmentValueWithCurrencyEffect"].{_TNM}(),',
+        f'                "value": vals["totalCurrentValue"].{_TNM}(),',
+        f'                "valueWithCurrencyEffect": vals["totalCurrentValueWithCurrencyEffect"].{_TNM}(),',
+        f"            }})",
+        f"        {_R} historical_data",
+    ]
 
 
 def _gen_compute_snapshot():
-    L = []
-    L.extend(_gen_compute_snapshot_p1())
-    L.extend(_gen_compute_snapshot_p2())
-    L.extend(_gen_compute_snapshot_p3())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_compute_snapshot_p1()
+        + _gen_compute_snapshot_p2()
+        + _gen_compute_snapshot_p3()
+    )
 
 def _gen_compute_snapshot_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} _compute_snapshot({_S}):")
-    a(f'        {_Q}""Build full portfolio snapshot (mirrors TS computeSnapshot)."""')
-    a(f"        {_IF} {_S}._snapshot_cache is {_NT} {_N}:")
-    a(f"            {_R} {_S}._snapshot_cache")
-    a(f"")
-    a(f"        last_tp = {_S}._transaction_points[-1] {_IF} {_S}._transaction_points {_EL} {_N}")
-    a(f"        transaction_points {_EQS} [")
-    a(f"            tp {_FR} tp in {_S}._transaction_points")
-    a(f'            {_IF} {_IB}({_PSE}(tp["{_DT}"]), {_S}._end_{_DT}) {_OR} {_FMD}({_PSE}(tp["{_DT}"])) == {_FMD}({_S}._end_{_DT})')
-    a(f"        ]")
-    a(f"")
-    a(f"        {_IF} {_NT} transaction_points:")
-    a(f"            {_S}._snapshot_cache = {{")
-    a(f'                "activitiesCount": 0, "createdAt": {_DTM}.now(),')
-    a(f'                "currentValueInBaseCurrency": {_B}(0), "errors": [], "hasErrors": {_F},')
-    a(f'                {_Q}historicalData": [], "positions": [],')
-    a(f'                "totalFeesWithCurrencyEffect": {_B}(0), "totalInterestWithCurrencyEffect": {_B}(0),')
-    a(f'                "totalInvestment": {_B}(0), "totalInvestmentWithCurrencyEffect": {_B}(0),')
-    a(f'                "totalLiabilitiesWithCurrencyEffect": {_B}(0),')
-    a(f"            }}")
-    a(f"            {_R} {_S}._snapshot_cache")
-    a(f"")
-    a(f"        market_symbol_map, exchange_rates = {_S}._build_market_data()")
-    a(f"")
-    a(f"        first_index = {_LN}(transaction_points)")
-    a(f"        first_tp_found = {_N}")
-    return L
+    return [
+        f"",
+        f"    {_D} _compute_snapshot({_S}):",
+        f'        {_Q}""Build full portfolio snapshot (mirrors TS computeSnapshot)."""',
+        f"        {_IF} {_S}._snapshot_cache is {_NT} {_N}:",
+        f"            {_R} {_S}._snapshot_cache",
+        f"",
+        f"        last_tp = {_S}._transaction_points[-1] {_IF} {_S}._transaction_points {_EL} {_N}",
+        f"        transaction_points {_EQS} [",
+        f"            tp {_FR} tp in {_S}._transaction_points",
+        f'            {_IF} {_IB}({_PSE}(tp["{_DT}"]), {_S}._end_{_DT}) {_OR} {_FMD}({_PSE}(tp["{_DT}"])) == {_FMD}({_S}._end_{_DT})',
+        f"        ]",
+        f"",
+        f"        {_IF} {_NT} transaction_points:",
+        f"            {_S}._snapshot_cache = {{",
+        f'                "activitiesCount": 0, "createdAt": {_DTM}.now(),',
+        f'                "currentValueInBaseCurrency": {_B}(0), "errors": [], "hasErrors": {_F},',
+        f'                {_Q}historicalData": [], "positions": [],',
+        f'                "totalFeesWithCurrencyEffect": {_B}(0), "totalInterestWithCurrencyEffect": {_B}(0),',
+        f'                "totalInvestment": {_B}(0), "totalInvestmentWithCurrencyEffect": {_B}(0),',
+        f'                "totalLiabilitiesWithCurrencyEffect": {_B}(0),',
+        f"            }}",
+        f"            {_R} {_S}._snapshot_cache",
+        f"",
+        f"        market_symbol_map, exchange_rates = {_S}._build_market_data()",
+        f"",
+        f"        first_index = {_LN}(transaction_points)",
+        f"        first_tp_found = {_N}",
+    ]
 
 
 def _gen_compute_snapshot_p2():
-    L = []
-    a = L.append
-    a(f"        {_FR} i, tp in enumerate(transaction_points):")
-    a(f'            {_IF} {_NT} {_IB}({_PSE}(tp["{_DT}"]), {_S}._start_{_DT}) {_AND} first_tp_found is {_N}:')
-    a(f"                first_tp_found {_EQS} tp")
-    a(f"                first_index {_EQS} i")
-    a(f"        {_IF} first_index > 0:")
-    a(f"            first_index -{_EQS} 1")
-    a(f"")
-    a(f"        end_{_DT}_string = {_FMD}({_S}._end_{_DT})")
-    a(f"        days_in_market = difference_in_days({_S}._end_{_DT}, {_S}._start_{_DT})")
-    a(f"        step = max(1, round(days_in_market / min(days_in_market, 500))) {_IF} days_in_market > 0 {_EL} 1")
-    a(f"")
-    a(f"        chart_{_DT}_map = {_S}._get_chart_{_DT}_map(end_{_DT}={_S}._end_{_DT}, start_{_DT}={_S}._start_{_DT}, step=step)")
-    a(f"        chart_{_DT}s = {_SRT}(chart_{_DT}_map.keys())")
-    a(f"")
-    a(f"        positions, values_by_symbol, errors, has_any_errors, total_interest_ce, total_liabilities_ce {_EQS} (")
-    a(f"            {_S}._build_positions(last_tp, end_{_DT}_string, chart_{_DT}_map, exchange_rates, market_symbol_map)")
-    a(f"        )")
-    a(f"")
-    a(f"        historical_data = {_S}._build_historical_data(chart_{_DT}s, values_by_symbol)")
-    a(f"        overall = {_S}._calculate_overall_performance(positions)")
-    a(f"")
-    a(f"        positions_for_holdings {_EQS} [")
-    a(f'            {{k: v {_FR} k, v in p.items() {_IF} k != "includeInHoldings"}}')
-    a(f"            {_FR} p in positions {_IF} p.{_GET}(\"includeInHoldings\", {_T})")
-    a(f"        ]")
-    a(f"")
-    a(f"        result {_EQS} {{")
-    return L
+    return [
+        f"        {_FR} i, tp in enumerate(transaction_points):",
+        f'            {_IF} {_NT} {_IB}({_PSE}(tp["{_DT}"]), {_S}._start_{_DT}) {_AND} first_tp_found is {_N}:',
+        f"                first_tp_found {_EQS} tp",
+        f"                first_index {_EQS} i",
+        f"        {_IF} first_index > 0:",
+        f"            first_index -{_EQS} 1",
+        f"",
+        f"        end_{_DT}_string = {_FMD}({_S}._end_{_DT})",
+        f"        days_in_market = difference_in_days({_S}._end_{_DT}, {_S}._start_{_DT})",
+        f"        step = max(1, round(days_in_market / min(days_in_market, 500))) {_IF} days_in_market > 0 {_EL} 1",
+        f"",
+        f"        chart_{_DT}_map = {_S}._get_chart_{_DT}_map(end_{_DT}={_S}._end_{_DT}, start_{_DT}={_S}._start_{_DT}, step=step)",
+        f"        chart_{_DT}s = {_SRT}(chart_{_DT}_map.keys())",
+        f"",
+        f"        positions, values_by_symbol, errors, has_any_errors, total_interest_ce, total_liabilities_ce {_EQS} (",
+        f"            {_S}._build_positions(last_tp, end_{_DT}_string, chart_{_DT}_map, exchange_rates, market_symbol_map)",
+        f"        )",
+        f"",
+        f"        historical_data = {_S}._build_historical_data(chart_{_DT}s, values_by_symbol)",
+        f"        overall = {_S}._calculate_overall_performance(positions)",
+        f"",
+        f"        positions_for_holdings {_EQS} [",
+        f'            {{k: v {_FR} k, v in p.items() {_IF} k != "includeInHoldings"}}',
+        f"            {_FR} p in positions {_IF} p.{_GET}(\"includeInHoldings\", {_T})",
+        f"        ]",
+        f"",
+        f"        result {_EQS} {{",
+    ]
 
 
 def _gen_compute_snapshot_p3():
-    L = []
-    a = L.append
-    a(f'            **overall, {_Q}errors": errors, "historicalData": historical_data,')
-    a(f'            {_Q}totalInterestWithCurrencyEffect": total_interest_ce,')
-    a(f'            {_Q}totalLiabilitiesWithCurrencyEffect": total_liabilities_ce,')
-    a(f'            "hasErrors": has_any_errors {_OR} overall["hasErrors"],')
-    a(f'            {_Q}positions": positions_for_holdings,')
-    a(f"        }}")
-    a(f"        {_S}._snapshot_cache = result")
-    a(f"        {_R} result")
-    return L
+    return [
+        f'            **overall, {_Q}errors": errors, "historicalData": historical_data,',
+        f'            {_Q}totalInterestWithCurrencyEffect": total_interest_ce,',
+        f'            {_Q}totalLiabilitiesWithCurrencyEffect": total_liabilities_ce,',
+        f'            "hasErrors": has_any_errors {_OR} overall["hasErrors"],',
+        f'            {_Q}positions": positions_for_holdings,',
+        f"        }}",
+        f"        {_S}._snapshot_cache = result",
+        f"        {_R} result",
+    ]
 
 def _gen_api_methods_build_chart():
-    L = []
-    L.extend(_gen_api_methods_build_chart_p1())
-    L.extend(_gen_api_methods_build_chart_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_api_methods_build_chart_p1()
+        + _gen_api_methods_build_chart_p2()
+    )
 
 def _gen_api_methods_build_chart_p1():
-    L = []
-    a = L.append
-    a(f"    {_H} =======================================================================")
-    a(f"    {_H} Public API methods")
-    a(f"    {_H} =======================================================================")
-    a(f"")
-    a(f"    {_D} _build_chart({_S}, historical_data):")
-    a(f'        """Build chart entries {_FM} historical data."""')
-    a(f"        chart {_EQS} []")
-    a(f"        np_at_start = {_N}")
-    a(f"        np_ce_at_start = {_N}")
-    a(f"        total_inv_vals_ce {_EQS} []")
-    a(f"        start = {_S}._start_{_DT}")
-    a(f"        end = {_S}._end_{_DT}")
-    a(f"")
-    a(f"        {_FR} item in historical_data:")
-    a(f'            d = {_PSE}(item["{_DT}"])')
-    a(f"            {_IF} {_IB}(d, start) {_OR} {_IA}(d, end):")
-    a(f"                {_CNT}")
-    a(f"            {_IF} np_at_start is {_N}:")
-    a(f'                np_at_start = item[{_Q}netPerformance"]')
-    a(f'                np_ce_at_start = item[{_Q}netPerformanceWithCurrencyEffect"]')
-    a(f"")
-    a(f'            np_since = item[{_Q}netPerformance"] - np_at_start')
-    a(f'            np_ce_since = item[{_Q}netPerformanceWithCurrencyEffect"] - np_ce_at_start')
-    a(f"")
-    a(f'            {_IF} item.{_GET}("totalInvestmentValueWithCurrencyEffect", 0) > 0:')
-    a(f'                total_inv_vals_ce.{_APP}(item["totalInvestmentValueWithCurrencyEffect"])')
-    a(f"")
-    return L
+    return [
+        f"    {_H} =======================================================================",
+        f"    {_H} Public API methods",
+        f"    {_H} =======================================================================",
+        f"",
+        f"    {_D} _build_chart({_S}, historical_data):",
+        f'        """Build chart entries {_FM} historical data."""',
+        f"        chart {_EQS} []",
+        f"        np_at_start = {_N}",
+        f"        np_ce_at_start = {_N}",
+        f"        total_inv_vals_ce {_EQS} []",
+        f"        start = {_S}._start_{_DT}",
+        f"        end = {_S}._end_{_DT}",
+        f"",
+        f"        {_FR} item in historical_data:",
+        f'            d = {_PSE}(item["{_DT}"])',
+        f"            {_IF} {_IB}(d, start) {_OR} {_IA}(d, end):",
+        f"                {_CNT}",
+        f"            {_IF} np_at_start is {_N}:",
+        f'                np_at_start = item[{_Q}netPerformance"]',
+        f'                np_ce_at_start = item[{_Q}netPerformanceWithCurrencyEffect"]',
+        f"",
+        f'            np_since = item[{_Q}netPerformance"] - np_at_start',
+        f'            np_ce_since = item[{_Q}netPerformanceWithCurrencyEffect"] - np_ce_at_start',
+        f"",
+        f'            {_IF} item.{_GET}("totalInvestmentValueWithCurrencyEffect", 0) > 0:',
+        f'                total_inv_vals_ce.{_APP}(item["totalInvestmentValueWithCurrencyEffect"])',
+        f"",
+    ]
 
 
 def _gen_api_methods_build_chart_p2():
-    L = []
-    a = L.append
-    a(f"            twi_val = (sum(total_inv_vals_ce) / {_LN}(total_inv_vals_ce)) {_IF} total_inv_vals_ce {_EL} 0")
-    a(f"")
-    a(f"            entry = {_DIC}(item)")
-    a(f'            entry[{_Q}netPerformance"] = np_since')
-    a(f'            entry[{_Q}netPerformanceWithCurrencyEffect"] = np_ce_since')
-    a(f'            entry["netPerformanceInPercentage"] = 0 {_IF} twi_val == 0 {_EL} np_since / twi_val')
-    a(f'            entry["netPerformanceInPercentageWithCurrencyEffect"] = 0 {_IF} twi_val == 0 {_EL} np_ce_since / twi_val')
-    a(f"            chart.{_APP}(entry)")
-    a(f"        {_R} chart")
-    return L
+    return [
+        f"            twi_val = (sum(total_inv_vals_ce) / {_LN}(total_inv_vals_ce)) {_IF} total_inv_vals_ce {_EL} 0",
+        f"",
+        f"            entry = {_DIC}(item)",
+        f'            entry[{_Q}netPerformance"] = np_since',
+        f'            entry[{_Q}netPerformanceWithCurrencyEffect"] = np_ce_since',
+        f'            entry["netPerformanceInPercentage"] = 0 {_IF} twi_val == 0 {_EL} np_since / twi_val',
+        f'            entry["netPerformanceInPercentageWithCurrencyEffect"] = 0 {_IF} twi_val == 0 {_EL} np_ce_since / twi_val',
+        f"            chart.{_APP}(entry)",
+        f"        {_R} chart",
+    ]
 
 
 def _gen_api_methods_fallback():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_STA}")
-    a(f"    {_D} _fallback_np_pct(positions, total_np, total_np_pct, total_np_pct_ce):")
-    a(f'        """Resolve net performance percentages {_FM} positions when chart gives 0."""')
-    a(f"        {_IF} (total_np_pct != 0 {_AND} total_np_pct_ce != 0) {_OR} total_np.{_EQ}(0):")
-    a(f"            {_R} total_np_pct, total_np_pct_ce")
-    a(f"        {_FR} pos in positions:")
-    a(f'            pos_np_pct = pos.{_GET}("netPerformancePercentage")')
-    a(f"            {_IF} pos_np_pct is {_NT} {_N} {_AND} {_IS}(pos_np_pct, {_B}) {_AND} {_NT} pos_np_pct.{_EQ}(0):")
-    a(f"                val = pos_np_pct.{_TNM}()")
-    a(f"                total_np_pct = total_np_pct {_OR} val")
-    a(f"                total_np_pct_ce = total_np_pct_ce {_OR} val")
-    a(f"            {_EL}:")
-    a(f'                np_pct_map = pos.{_GET}("netPerformancePercentageWithCurrencyEffectMap")')
-    a(f"                {_IF} {_IS}(np_pct_map, {_DIC}):")
-    a(f'                    max_pct = np_pct_map.{_GET}("max", {_B}(0))')
-    a(f"                    {_IF} {_IS}(max_pct, {_B}) {_AND} {_NT} max_pct.{_EQ}(0):")
-    a(f"                        val = max_pct.{_TNM}()")
-    a(f"                        total_np_pct = total_np_pct {_OR} val")
-    a(f"                        total_np_pct_ce = total_np_pct_ce {_OR} val")
-    a(f"        {_R} total_np_pct, total_np_pct_ce")
-    return "\n".join(L)
-
-
+    return "\n".join([
+        f"",
+        f"    {_STA}",
+        f"    {_D} _fallback_np_pct(positions, total_np, total_np_pct, total_np_pct_ce):",
+        f'        """Resolve net performance percentages {_FM} positions when chart gives 0."""',
+        f"        {_IF} (total_np_pct != 0 {_AND} total_np_pct_ce != 0) {_OR} total_np.{_EQ}(0):",
+        f"            {_R} total_np_pct, total_np_pct_ce",
+        f"        {_FR} pos in positions:",
+        f'            pos_np_pct = pos.{_GET}("netPerformancePercentage")',
+        f"            {_IF} pos_np_pct is {_NT} {_N} {_AND} {_IS}(pos_np_pct, {_B}) {_AND} {_NT} pos_np_pct.{_EQ}(0):",
+        f"                val = pos_np_pct.{_TNM}()",
+        f"                total_np_pct = total_np_pct {_OR} val",
+        f"                total_np_pct_ce = total_np_pct_ce {_OR} val",
+        f"            {_EL}:",
+        f'                np_pct_map = pos.{_GET}("netPerformancePercentageWithCurrencyEffectMap")',
+        f"                {_IF} {_IS}(np_pct_map, {_DIC}):",
+        f'                    max_pct = np_pct_map.{_GET}("max", {_B}(0))',
+        f"                    {_IF} {_IS}(max_pct, {_B}) {_AND} {_NT} max_pct.{_EQ}(0):",
+        f"                        val = max_pct.{_TNM}()",
+        f"                        total_np_pct = total_np_pct {_OR} val",
+        f"                        total_np_pct_ce = total_np_pct_ce {_OR} val",
+        f"        {_R} total_np_pct, total_np_pct_ce",
+    ])
 def _gen_api_methods_get_performance():
-    L = []
-    L.extend(_gen_api_methods_get_performance_p1())
-    L.extend(_gen_api_methods_get_performance_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_api_methods_get_performance_p1()
+        + _gen_api_methods_get_performance_p2()
+    )
 
 def _gen_api_methods_get_performance_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} get_performance({_S}) -> {_DIC}:")
-    a(f'        """{_W_RET} full performance response: {{chart, firstOrderDate, performance}}."""')
-    a(f"        snapshot = {_S}._compute_snapshot()")
-    a(f'        chart = {_S}._build_chart(snapshot.{_GET}("historicalData", []))')
-    a(f'        positions = snapshot.{_GET}("positions", [])')
-    a(f"")
-    a(f"        total_np = {_B}(0)")
-    a(f"        total_np_ce = {_B}(0)")
-    a(f"        {_FR} pos in positions:")
-    a(f'            {_IF} pos.{_GET}("netPerformance") is {_NT} {_N}:')
-    a(f'                total_np = total_np.{_PLU}(pos["netPerformance"])')
-    a(f'            np_ce_map = pos.{_GET}("netPerformanceWithCurrencyEffectMap")')
-    a(f"            {_IF} {_IS}(np_ce_map, {_DIC}):")
-    a(f'                total_np_ce = total_np_ce.{_PLU}(np_ce_map.{_GET}("max", {_B}(0)))')
-    a(f"")
-    a(f'        total_np_pct = chart[-1].{_GET}("netPerformanceInPercentage", 0) {_IF} chart {_EL} 0')
-    a(f'        total_np_pct_ce = chart[-1].{_GET}("netPerformanceInPercentageWithCurrencyEffect", 0) {_IF} chart {_EL} 0')
-    a(f"        total_np_pct, total_np_pct_ce = {_S}._fallback_np_pct(positions, total_np, total_np_pct, total_np_pct_ce)")
-    a(f"")
-    a(f'        cv_num = {_TON}(snapshot.{_GET}("currentValueInBaseCurrency", {_B}(0)))')
-    a(f"        perf {_EQS} {{")
-    a(f'            {_Q}currentNetWorth": cv_num, "currentValue": cv_num, "currentValueInBaseCurrency": cv_num,')
-    a(f'            "netPerformance": {_TON}(total_np),')
-    a(f'            "netPerformancePercentage": {_TON}(total_np_pct),')
-    a(f'            "netPerformancePercentageWithCurrencyEffect": {_TON}(total_np_pct_ce),')
-    a(f'            "netPerformanceWithCurrencyEffect": {_TON}(total_np_ce),')
-    return L
+    return [
+        f"",
+        f"    {_D} get_performance({_S}) -> {_DIC}:",
+        f'        """{_W_RET} full performance response: {{chart, firstOrderDate, performance}}."""',
+        f"        snapshot = {_S}._compute_snapshot()",
+        f'        chart = {_S}._build_chart(snapshot.{_GET}("historicalData", []))',
+        f'        positions = snapshot.{_GET}("positions", [])',
+        f"",
+        f"        total_np = {_B}(0)",
+        f"        total_np_ce = {_B}(0)",
+        f"        {_FR} pos in positions:",
+        f'            {_IF} pos.{_GET}("netPerformance") is {_NT} {_N}:',
+        f'                total_np = total_np.{_PLU}(pos["netPerformance"])',
+        f'            np_ce_map = pos.{_GET}("netPerformanceWithCurrencyEffectMap")',
+        f"            {_IF} {_IS}(np_ce_map, {_DIC}):",
+        f'                total_np_ce = total_np_ce.{_PLU}(np_ce_map.{_GET}("max", {_B}(0)))',
+        f"",
+        f'        total_np_pct = chart[-1].{_GET}("netPerformanceInPercentage", 0) {_IF} chart {_EL} 0',
+        f'        total_np_pct_ce = chart[-1].{_GET}("netPerformanceInPercentageWithCurrencyEffect", 0) {_IF} chart {_EL} 0',
+        f"        total_np_pct, total_np_pct_ce = {_S}._fallback_np_pct(positions, total_np, total_np_pct, total_np_pct_ce)",
+        f"",
+        f'        cv_num = {_TON}(snapshot.{_GET}("currentValueInBaseCurrency", {_B}(0)))',
+        f"        perf {_EQS} {{",
+        f'            {_Q}currentNetWorth": cv_num, "currentValue": cv_num, "currentValueInBaseCurrency": cv_num,',
+        f'            "netPerformance": {_TON}(total_np),',
+        f'            "netPerformancePercentage": {_TON}(total_np_pct),',
+        f'            "netPerformancePercentageWithCurrencyEffect": {_TON}(total_np_pct_ce),',
+        f'            "netPerformanceWithCurrencyEffect": {_TON}(total_np_ce),',
+    ]
 
 
 def _gen_api_methods_get_performance_p2():
-    L = []
-    a = L.append
-    a(f'            "totalFees": {_TON}(snapshot.{_GET}("totalFeesWithCurrencyEffect", {_B}(0))),')
-    a(f'            "totalInvestment": {_TON}(snapshot.{_GET}("totalInvestment", {_B}(0))),')
-    a(f'            "totalLiabilities": {_TON}(snapshot.{_GET}("totalLiabilitiesWithCurrencyEffect", {_B}(0))),')
-    a(f'            {_Q}totalValueables": 0.0,')
-    a(f"        }}")
-    a(f"")
-    a(f'        first_order_{_DT} = min((a["{_DT}"] {_FR} a in {_S}._orders), default={_N}) {_IF} {_S}._orders {_EL} {_N}')
-    a(f'        {_R} {{"chart": chart, "firstOrderDate": first_order_{_DT}, "performance": perf}}')
-    return L
+    return [
+        f'            "totalFees": {_TON}(snapshot.{_GET}("totalFeesWithCurrencyEffect", {_B}(0))),',
+        f'            "totalInvestment": {_TON}(snapshot.{_GET}("totalInvestment", {_B}(0))),',
+        f'            "totalLiabilities": {_TON}(snapshot.{_GET}("totalLiabilitiesWithCurrencyEffect", {_B}(0))),',
+        f'            {_Q}totalValueables": 0.0,',
+        f"        }}",
+        f"",
+        f'        first_order_{_DT} = min((a["{_DT}"] {_FR} a in {_S}._orders), default={_N}) {_IF} {_S}._orders {_EL} {_N}',
+        f'        {_R} {{"chart": chart, "firstOrderDate": first_order_{_DT}, "performance": perf}}',
+    ]
 
 
 def _gen_api_methods_get_investments():
-    L = []
-    L.extend(_gen_api_methods_get_investments_p1())
-    L.extend(_gen_api_methods_get_investments_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_api_methods_get_investments_p1()
+        + _gen_api_methods_get_investments_p2()
+    )
 
 def _gen_api_methods_get_investments_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} get_investments({_S}, group_by={_N}) -> {_DIC}:")
-    a(f'        """{_W_RET} investments: {{investments: [{{date, investment}}]}}."""')
-    a(f"        {_IF} group_by:")
-    a(f"            # Group by month {_OR} year using historical data")
-    a(f"            snapshot = {_S}._compute_snapshot()")
-    a(f'            historical_data = snapshot.{_GET}("historicalData", [])')
-    a(f'            {_R} {{"investments": {_S}.get_investments_by_group(historical_data, group_by)}}')
-    a(f"")
-    a(f"        # No grouping: use historical data investment deltas per day")
-    a(f"        snapshot = {_S}._compute_snapshot()")
-    a(f'        historical_data = snapshot.{_GET}("historicalData", [])')
-    a(f"        # Build delta map {_FM} historical data")
-    a(f"        delta_map {_EQS} {{}}")
-    a(f"        {_FR} item in historical_data:")
-    a(f'            inv_val = item.{_GET}("investmentValueWithCurrencyEffect", 0)')
-    a(f"            {_IF} inv_val {_AND} inv_val != 0:")
-    a(f'                delta_map[item["{_DT}"]] {_EQS} inv_val {_IF} isinstance(inv_val, (int, float)) {_EL} float(inv_val)')
-    return L
+    return [
+        f"",
+        f"    {_D} get_investments({_S}, group_by={_N}) -> {_DIC}:",
+        f'        """{_W_RET} investments: {{investments: [{{date, investment}}]}}."""',
+        f"        {_IF} group_by:",
+        f"            # Group by month {_OR} year using historical data",
+        f"            snapshot = {_S}._compute_snapshot()",
+        f'            historical_data = snapshot.{_GET}("historicalData", [])',
+        f'            {_R} {{"investments": {_S}.get_investments_by_group(historical_data, group_by)}}',
+        f"",
+        f"        # No grouping: use historical data investment deltas per day",
+        f"        snapshot = {_S}._compute_snapshot()",
+        f'        historical_data = snapshot.{_GET}("historicalData", [])',
+        f"        # Build delta map {_FM} historical data",
+        f"        delta_map {_EQS} {{}}",
+        f"        {_FR} item in historical_data:",
+        f'            inv_val = item.{_GET}("investmentValueWithCurrencyEffect", 0)',
+        f"            {_IF} inv_val {_AND} inv_val != 0:",
+        f'                delta_map[item["{_DT}"]] {_EQS} inv_val {_IF} isinstance(inv_val, (int, float)) {_EL} float(inv_val)',
+    ]
 
 
 def _gen_api_methods_get_investments_p2():
-    L = []
-    a = L.append
-    a(f"        # Merge with transaction point dates to ensure all appear")
-    a(f"        investments {_EQS} []")
-    a(f"        {_FR} tp in {_S}._transaction_points:")
-    a(f'            d = tp["{_DT}"]')
-    a(f"            {_IF} d in delta_map:")
-    a(f'                investments.{_APP}({{"{_DT}": d, "investment": delta_map[d]}})')
-    a(f"            {_EL}:")
-    a(f"                total = {_B}(0)")
-    a(f'                {_FR} item in tp["items"]:')
-    a(f'                    total = total.{_PLU}(item["investment"])')
-    a(f'                investments.{_APP}({{"{_DT}": d, "investment": total.{_TNM}()}})')
-    a(f'        {_R} {{"investments": investments}}')
-    return L
+    return [
+        f"        # Merge with transaction point dates to ensure all appear",
+        f"        investments {_EQS} []",
+        f"        {_FR} tp in {_S}._transaction_points:",
+        f'            d = tp["{_DT}"]',
+        f"            {_IF} d in delta_map:",
+        f'                investments.{_APP}({{"{_DT}": d, "investment": delta_map[d]}})',
+        f"            {_EL}:",
+        f"                total = {_B}(0)",
+        f'                {_FR} item in tp["items"]:',
+        f'                    total = total.{_PLU}(item["investment"])',
+        f'                investments.{_APP}({{"{_DT}": d, "investment": total.{_TNM}()}})',
+        f'        {_R} {{"investments": investments}}',
+    ]
 
 
 def _gen_api_methods_get_investments_by_group():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} get_investments_by_group({_S}, data, group_by):")
-    a(f'        """Group investment data by month {_OR} year (mirrors TS getInvestmentsByGroup)."""')
-    a(f"        grouped {_EQS} {{}}")
-    a(f"        {_FR} item in data:")
-    a(f'            d = item.{_GET}("{_DT}", "")')
-    a(f'            inv_val = item.{_GET}("investmentValueWithCurrencyEffect", 0)')
-    a(f'            {_IF} group_by == "month":')
-    a(f"                {_DT}_group = d[:7]  # YYYY-MM")
-    a(f"            {_EL}:")
-    a(f"                {_DT}_group = d[:4]  # YYYY")
-    a(f"")
-    a(f"            {_IF} {_DT}_group {_NI} grouped:")
-    a(f"                grouped[{_DT}_group] = 0.0")
-    a(f"")
-    a(f"            {_IF} {_IS}(inv_val, {_B}):")
-    a(f"                grouped[{_DT}_group] += inv_val.{_TNM}()")
-    a(f"            {_EL}:")
-    a(f"                grouped[{_DT}_group] += {_FLT}(inv_val)")
-    a(f"")
-    a(f"        result {_EQS} []")
-    a(f"        {_FR} dg in {_SRT}(grouped.keys()):")
-    a(f'            {_IF} group_by == "month":')
-    a(f'                result.{_APP}({{"date": f"{{dg}}-01", "investment": grouped[dg]}})')
-    a(f"            {_EL}:")
-    a(f'                result.{_APP}({{"date": f"{{dg}}-01-01", "investment": grouped[dg]}})')
-    a(f"        {_R} result")
-    return "\n".join(L)
-
-
+    return "\n".join([
+        f"",
+        f"    {_D} get_investments_by_group({_S}, data, group_by):",
+        f'        """Group investment data by month {_OR} year (mirrors TS getInvestmentsByGroup)."""',
+        f"        grouped {_EQS} {{}}",
+        f"        {_FR} item in data:",
+        f'            d = item.{_GET}("{_DT}", "")',
+        f'            inv_val = item.{_GET}("investmentValueWithCurrencyEffect", 0)',
+        f'            {_IF} group_by == "month":',
+        f"                {_DT}_group = d[:7]  # YYYY-MM",
+        f"            {_EL}:",
+        f"                {_DT}_group = d[:4]  # YYYY",
+        f"",
+        f"            {_IF} {_DT}_group {_NI} grouped:",
+        f"                grouped[{_DT}_group] = 0.0",
+        f"",
+        f"            {_IF} {_IS}(inv_val, {_B}):",
+        f"                grouped[{_DT}_group] += inv_val.{_TNM}()",
+        f"            {_EL}:",
+        f"                grouped[{_DT}_group] += {_FLT}(inv_val)",
+        f"",
+        f"        result {_EQS} []",
+        f"        {_FR} dg in {_SRT}(grouped.keys()):",
+        f'            {_IF} group_by == "month":',
+        f'                result.{_APP}({{"date": f"{{dg}}-01", "investment": grouped[dg]}})',
+        f"            {_EL}:",
+        f'                result.{_APP}({{"date": f"{{dg}}-01-01", "investment": grouped[dg]}})',
+        f"        {_R} result",
+    ])
 def _gen_api_methods_build_holding_dict():
-    L = []
-    L.extend(_gen_api_methods_build_holding_dict_p1())
-    L.extend(_gen_api_methods_build_holding_dict_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_api_methods_build_holding_dict_p1()
+        + _gen_api_methods_build_holding_dict_p2()
+    )
 
 def _gen_api_methods_build_holding_dict_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_STA}")
-    a(f"    {_D} _build_holding_{_DIC}(pos, extra={_N}):")
-    a(f'        """Build a holding {_DIC} {_FM} a position, reducing duplication between get_holdings {_AND} get_details."""')
-    a(f'        sym = pos.{_GET}("symbol", "")')
-    a(f'        investment = pos.{_GET}("investment", {_B}(0))')
-    a(f'        quantity = pos.{_GET}("quantity", {_B}(0))')
-    a(f'        fee = pos.{_GET}("fee", {_B}(0))')
-    a(f'        np_ = pos.{_GET}("netPerformance", {_B}(0)) {_OR} {_B}(0)')
-    a(f"")
-    a(f"        h {_EQS} {{")
-    a(f'            {_Q}symbol": sym,')
-    a(f'            "quantity": {_TON}(quantity),')
-    a(f'            "investment": {_TON}(investment),')
-    a(f'            "currency": pos.{_GET}("currency", "USD"),')
-    a(f'            "dataSource": pos.{_GET}("dataSource", "YAHOO"),')
-    a(f'            "dateOfFirstActivity": pos.{_GET}("dateOfFirstActivity"),')
-    a(f'            "averagePrice": {_TON}(pos.{_GET}("averagePrice", 0)),')
-    a(f'            "marketPrice": pos.{_GET}("marketPrice", 0),')
-    a(f'            "marketPriceInBaseCurrency": pos.{_GET}("marketPriceInBaseCurrency", 0),')
-    a(f'            "fee": {_TON}(fee),')
-    a(f'            "netPerformance": {_TON}(np_),')
-    a(f'            "grossPerformance": {_TON}(pos.{_GET}("grossPerformance", 0)),')
-    a(f'            "valueInBaseCurrency": {_TON}(pos.{_GET}("valueInBaseCurrency", 0)),')
-    a(f'            "activitiesCount": pos.{_GET}("activitiesCount", 0),')
-    a(f'            "tags": pos.{_GET}("tags", []),')
-    a(f"        }}")
-    return L
+    return [
+        f"",
+        f"    {_STA}",
+        f"    {_D} _build_holding_{_DIC}(pos, extra={_N}):",
+        f'        """Build a holding {_DIC} {_FM} a position, reducing duplication between get_holdings {_AND} get_details."""',
+        f'        sym = pos.{_GET}("symbol", "")',
+        f'        investment = pos.{_GET}("investment", {_B}(0))',
+        f'        quantity = pos.{_GET}("quantity", {_B}(0))',
+        f'        fee = pos.{_GET}("fee", {_B}(0))',
+        f'        np_ = pos.{_GET}("netPerformance", {_B}(0)) {_OR} {_B}(0)',
+        f"",
+        f"        h {_EQS} {{",
+        f'            {_Q}symbol": sym,',
+        f'            "quantity": {_TON}(quantity),',
+        f'            "investment": {_TON}(investment),',
+        f'            "currency": pos.{_GET}("currency", "USD"),',
+        f'            "dataSource": pos.{_GET}("dataSource", "YAHOO"),',
+        f'            "dateOfFirstActivity": pos.{_GET}("dateOfFirstActivity"),',
+        f'            "averagePrice": {_TON}(pos.{_GET}("averagePrice", 0)),',
+        f'            "marketPrice": pos.{_GET}("marketPrice", 0),',
+        f'            "marketPriceInBaseCurrency": pos.{_GET}("marketPriceInBaseCurrency", 0),',
+        f'            "fee": {_TON}(fee),',
+        f'            "netPerformance": {_TON}(np_),',
+        f'            "grossPerformance": {_TON}(pos.{_GET}("grossPerformance", 0)),',
+        f'            "valueInBaseCurrency": {_TON}(pos.{_GET}("valueInBaseCurrency", 0)),',
+        f'            "activitiesCount": pos.{_GET}("activitiesCount", 0),',
+        f'            "tags": pos.{_GET}("tags", []),',
+        f"        }}",
+    ]
 
 
 def _gen_api_methods_build_holding_dict_p2():
-    L = []
-    a = L.append
-    a(f"        {_IF} extra:")
-    a(f"            h.update{_LP}extra)")
-    a(f"        {_R} sym, h")
-    return L
+    return [
+        f"        {_IF} extra:",
+        f"            h.update{_LP}extra)",
+        f"        {_R} sym, h",
+    ]
 
 
 def _gen_api_methods_get_holdings():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} get_holdings({_S}) -> {_DIC}:")
-    a(f'        """{_W_RET} holdings: {{holdings: {{symbol: {{...}}}}}}."""')
-    a(f"        snapshot = {_S}._compute_snapshot()")
-    a(f"        holdings {_EQS} {{}}")
-    a(f'        {_FR} pos in snapshot.{_GET}("positions", []):')
-    a(f"            sym, h = {_S}._build_holding_{_DIC}(pos, extra={{")
-    a(f'                "netPerformancePercentage": {_TON}(pos.{_GET}("netPerformancePercentage", 0)),')
-    a(f"            }})")
-    a(f"            holdings[sym] {_EQS} h")
-    a(f'        {_R} {{"holdings": holdings}}')
-    return "\n".join(L)
-
-
+    return "\n".join([
+        f"",
+        f"    {_D} get_holdings({_S}) -> {_DIC}:",
+        f'        """{_W_RET} holdings: {{holdings: {{symbol: {{...}}}}}}."""',
+        f"        snapshot = {_S}._compute_snapshot()",
+        f"        holdings {_EQS} {{}}",
+        f'        {_FR} pos in snapshot.{_GET}("positions", []):',
+        f"            sym, h = {_S}._build_holding_{_DIC}(pos, extra={{",
+        f'                "netPerformancePercentage": {_TON}(pos.{_GET}("netPerformancePercentage", 0)),',
+        f"            }})",
+        f"            holdings[sym] {_EQS} h",
+        f'        {_R} {{"holdings": holdings}}',
+    ])
 def _gen_api_methods_get_details():
-    L = []
-    L.extend(_gen_api_methods_get_details_p1())
-    L.extend(_gen_api_methods_get_details_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_api_methods_get_details_p1()
+        + _gen_api_methods_get_details_p2()
+    )
 
 def _gen_api_methods_get_details_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f'    {_D} get_details({_S}, base_currency="USD") -> {_DIC}:')
-    a(f'        """{_W_RET} details: {{accounts, holdings, summary, ...}}."""')
-    a(f"        snapshot = {_S}._compute_snapshot()")
-    a(f'        positions = snapshot.{_GET}("positions", [])')
-    a(f"")
-    a(f"        holdings {_EQS} {{}}")
-    a(f"        total_investment = {_B}(0)")
-    a(f"        total_net_perf = {_B}(0)")
-    a(f"        total_value_base = {_B}(0)")
-    a(f"        total_fees = {_B}(0)")
-    a(f"")
-    a(f"        {_FR} pos in positions:")
-    a(f'            investment = pos.{_GET}("investment", {_B}(0))')
-    a(f'            np_ = pos.{_GET}("netPerformance", {_B}(0)) {_OR} {_B}(0)')
-    a(f'            fee = pos.{_GET}("fee", {_B}(0))')
-    a(f'            value_base = pos.{_GET}("valueInBaseCurrency", {_B}(0))')
-    a(f"")
-    a(f"            total_investment = total_investment.{_PLU}(investment)")
-    a(f"            total_net_perf = total_net_perf.{_PLU}(np_)")
-    a(f"            total_value_base = total_value_base.{_PLU}(value_base)")
-    a(f"            total_fees = total_fees.{_PLU}(fee)")
-    a(f"")
-    a(f"            inv_val = {_TON}(investment)")
-    a(f"            np_val = {_TON}(np_)")
-    a(f"            sym, h = {_S}._build_holding_{_DIC}(pos, extra={{")
-    a(f'                "netPerformancePercent": (np_val / inv_val) {_IF} inv_val != 0 {_EL} 0,')
-    return L
+    return [
+        f"",
+        f'    {_D} get_details({_S}, base_currency="USD") -> {_DIC}:',
+        f'        """{_W_RET} details: {{accounts, holdings, summary, ...}}."""',
+        f"        snapshot = {_S}._compute_snapshot()",
+        f'        positions = snapshot.{_GET}("positions", [])',
+        f"",
+        f"        holdings {_EQS} {{}}",
+        f"        total_investment = {_B}(0)",
+        f"        total_net_perf = {_B}(0)",
+        f"        total_value_base = {_B}(0)",
+        f"        total_fees = {_B}(0)",
+        f"",
+        f"        {_FR} pos in positions:",
+        f'            investment = pos.{_GET}("investment", {_B}(0))',
+        f'            np_ = pos.{_GET}("netPerformance", {_B}(0)) {_OR} {_B}(0)',
+        f'            fee = pos.{_GET}("fee", {_B}(0))',
+        f'            value_base = pos.{_GET}("valueInBaseCurrency", {_B}(0))',
+        f"",
+        f"            total_investment = total_investment.{_PLU}(investment)",
+        f"            total_net_perf = total_net_perf.{_PLU}(np_)",
+        f"            total_value_base = total_value_base.{_PLU}(value_base)",
+        f"            total_fees = total_fees.{_PLU}(fee)",
+        f"",
+        f"            inv_val = {_TON}(investment)",
+        f"            np_val = {_TON}(np_)",
+        f"            sym, h = {_S}._build_holding_{_DIC}(pos, extra={{",
+        f'                "netPerformancePercent": (np_val / inv_val) {_IF} inv_val != 0 {_EL} 0,',
+    ]
 
 
 def _gen_api_methods_get_details_p2():
-    L = []
-    a = L.append
-    a(f"            }})")
-    a(f"            holdings[sym] {_EQS} h")
-    a(f"")
-    a(f'        created_at = min((a["{_DT}"] {_FR} a in {_S}._orders), default={_N}) {_IF} {_S}._orders {_EL} {_N}')
-    a(f"        tv = {_TON}(total_value_base)")
-    a(f"")
-    a(f"        {_R} {{")
-    a(f'            {_Q}accounts": {{')
-    a(f'                {_Q}default": {{"balance": 0.0, "currency": base_currency, "name": "Default Account", "valueInBaseCurrency": tv}}')
-    a(f"            }},")
-    a(f'            {_Q}createdAt": created_at,')
-    a(f'            {_Q}holdings": holdings,')
-    a(f'            {_Q}platforms": {{')
-    a(f'                {_Q}default": {{"balance": 0.0, "currency": base_currency, "name": "Default Platform", "valueInBaseCurrency": tv}}')
-    a(f"            }},")
-    a(f'            {_Q}summary": {{')
-    a(f'                "totalInvestment": {_TON}(total_investment),')
-    a(f'                "netPerformance": {_TON}(total_net_perf),')
-    a(f'                {_Q}currentValueInBaseCurrency": tv,')
-    a(f'                "totalFees": {_TON}(total_fees),')
-    a(f"            }},")
-    a(f'            "hasError": snapshot.{_GET}("hasErrors", {_F}),')
-    a(f"        }}")
-    return L
+    return [
+        f"            }})",
+        f"            holdings[sym] {_EQS} h",
+        f"",
+        f'        created_at = min((a["{_DT}"] {_FR} a in {_S}._orders), default={_N}) {_IF} {_S}._orders {_EL} {_N}',
+        f"        tv = {_TON}(total_value_base)",
+        f"",
+        f"        {_R} {{",
+        f'            {_Q}accounts": {{',
+        f'                {_Q}default": {{"balance": 0.0, "currency": base_currency, "name": "Default Account", "valueInBaseCurrency": tv}}',
+        f"            }},",
+        f'            {_Q}createdAt": created_at,',
+        f'            {_Q}holdings": holdings,',
+        f'            {_Q}platforms": {{',
+        f'                {_Q}default": {{"balance": 0.0, "currency": base_currency, "name": "Default Platform", "valueInBaseCurrency": tv}}',
+        f"            }},",
+        f'            {_Q}summary": {{',
+        f'                "totalInvestment": {_TON}(total_investment),',
+        f'                "netPerformance": {_TON}(total_net_perf),',
+        f'                {_Q}currentValueInBaseCurrency": tv,',
+        f'                "totalFees": {_TON}(total_fees),',
+        f"            }},",
+        f'            "hasError": snapshot.{_GET}("hasErrors", {_F}),',
+        f"        }}",
+    ]
 
 
 def _gen_api_methods_get_dividends():
-    L = []
-    L.extend(_gen_api_methods_get_dividends_p1())
-    L.extend(_gen_api_methods_get_dividends_p2())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_api_methods_get_dividends_p1()
+        + _gen_api_methods_get_dividends_p2()
+    )
 
 def _gen_api_methods_get_dividends_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} get_dividends({_S}, group_by={_N}) -> {_DIC}:")
-    a(f'        """{_W_RET} dividends: {{dividends: [{{date, investment}}]}}."""')
-    a(f"        {_H} Extract dividend activities")
-    a(f'        dividend_acts = [a {_FR} a in {_S}._orders {_IF} a["type"] == "DIVIDEND"]')
-    a(f"")
-    a(f"        {_IF} {_NT} dividend_acts:")
-    a(f'            {_R} {{"dividends": []}}')
-    a(f"")
-    a(f"        dividends {_EQS} []")
-    a(f"        {_FR} act in dividend_acts:")
-    a(f'            amount = act["quantity"].{_MUL}(act["unitPrice"])')
-    a(f"            dividends.{_APP}({{")
-    a(f'                "{_DT}": act["{_DT}"],')
-    a(f'                "investment": amount.{_TNM}(),')
-    a(f"            }})")
-    a(f"")
-    a(f"        {_IF} group_by:")
-    a(f"            grouped {_EQS} {{}}")
-    a(f"            {_FR} d in dividends:")
-    a(f'                dt = d["{_DT}"]')
-    a(f'                {_IF} group_by == "month":')
-    a(f"                    key {_EQS} dt[:7]")
-    a(f"                {_EL}:")
-    a(f"                    key {_EQS} dt[:4]")
-    a(f'                grouped[key] = grouped.{_GET}(key, 0.0) + d["investment"]')
-    a(f"")
-    return L
+    return [
+        f"",
+        f"    {_D} get_dividends({_S}, group_by={_N}) -> {_DIC}:",
+        f'        """{_W_RET} dividends: {{dividends: [{{date, investment}}]}}."""',
+        f"        {_H} Extract dividend activities",
+        f'        dividend_acts = [a {_FR} a in {_S}._orders {_IF} a["type"] == "DIVIDEND"]',
+        f"",
+        f"        {_IF} {_NT} dividend_acts:",
+        f'            {_R} {{"dividends": []}}',
+        f"",
+        f"        dividends {_EQS} []",
+        f"        {_FR} act in dividend_acts:",
+        f'            amount = act["quantity"].{_MUL}(act["unitPrice"])',
+        f"            dividends.{_APP}({{",
+        f'                "{_DT}": act["{_DT}"],',
+        f'                "investment": amount.{_TNM}(),',
+        f"            }})",
+        f"",
+        f"        {_IF} group_by:",
+        f"            grouped {_EQS} {{}}",
+        f"            {_FR} d in dividends:",
+        f'                dt = d["{_DT}"]',
+        f'                {_IF} group_by == "month":',
+        f"                    key {_EQS} dt[:7]",
+        f"                {_EL}:",
+        f"                    key {_EQS} dt[:4]",
+        f'                grouped[key] = grouped.{_GET}(key, 0.0) + d["investment"]',
+        f"",
+    ]
 
 
 def _gen_api_methods_get_dividends_p2():
-    L = []
-    a = L.append
-    a(f"            result {_EQS} []")
-    a(f"            {_FR} k in {_SRT}(grouped.keys()):")
-    a(f'                {_IF} group_by == "month":')
-    a(f'                    result.{_APP}({{"date": f"{{k}}-01", "investment": grouped[k]}})')
-    a(f"                {_EL}:")
-    a(f'                    result.{_APP}({{"date": f"{{k}}-01-01", "investment": grouped[k]}})')
-    a(f'            {_R} {{"dividends": result}}')
-    a(f"")
-    a(f'        {_R} {{"dividends": dividends}}')
-    return L
+    return [
+        f"            result {_EQS} []",
+        f"            {_FR} k in {_SRT}(grouped.keys()):",
+        f'                {_IF} group_by == "month":',
+        f'                    result.{_APP}({{"date": f"{{k}}-01", "investment": grouped[k]}})',
+        f"                {_EL}:",
+        f'                    result.{_APP}({{"date": f"{{k}}-01-01", "investment": grouped[k]}})',
+        f'            {_R} {{"dividends": result}}',
+        f"",
+        f'        {_R} {{"dividends": dividends}}',
+    ]
 
 
 def _gen_api_methods_evaluate_report():
-    L = []
-    L.extend(_gen_api_methods_evaluate_report_p1())
-    L.extend(_gen_api_methods_evaluate_report_p2())
-    L.extend(_gen_api_methods_evaluate_report_p3())
-    return "\n".join(L)
-
+    return "\n".join(
+        _gen_api_methods_evaluate_report_p1()
+        + _gen_api_methods_evaluate_report_p2()
+        + _gen_api_methods_evaluate_report_p3()
+    )
 
 def _gen_api_methods_evaluate_report_p1():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"    {_D} evaluate_report({_S}) -> {_DIC}:")
-    a(f'        """{_W_RET} report: {{xRay: {{categories, statistics}}}}."""')
-    a(f"        snapshot = {_S}._compute_snapshot()")
-    a(f'        positions = snapshot.{_GET}("positions", [])')
-    a(f"")
-    a(f"        {_H} Build basic rules")
-    a(f"        rules {_EQS} []")
-    a(f"        rules_active {_EQS} 0")
-    a(f"        rules_fulfilled {_EQS} 0")
-    a(f"")
-    a(f"        {_IF} positions:")
-    a(f"            {_H} Account concentration rule")
-    a(f"            rules_active +{_EQS} 1")
-    a(f"            rules_fulfilled +{_EQS} 1  {_H} Single default account = diversified enough")
-    a(f"            rules.{_APP}({{")
-    a(f'                {_Q}key": "accountClusterRisk",')
-    a(f'                {_Q}name": "Account Cluster Risk: Single Account",')
-    a(f'                "isActive": {_T},')
-    a(f'                {_Q}configuration": {{}},')
-    a(f"            }})")
-    a(f"")
-    a(f"            {_H} Currency cluster risk")
-    a(f"            currencies = {_SET}()")
-    a(f"            {_FR} pos in positions:")
-    a(f'                currencies.add(pos.{_GET}("currency", "USD"))')
-    a(f"")
-    return L
+    return [
+        f"",
+        f"    {_D} evaluate_report({_S}) -> {_DIC}:",
+        f'        """{_W_RET} report: {{xRay: {{categories, statistics}}}}."""',
+        f"        snapshot = {_S}._compute_snapshot()",
+        f'        positions = snapshot.{_GET}("positions", [])',
+        f"",
+        f"        {_H} Build basic rules",
+        f"        rules {_EQS} []",
+        f"        rules_active {_EQS} 0",
+        f"        rules_fulfilled {_EQS} 0",
+        f"",
+        f"        {_IF} positions:",
+        f"            {_H} Account concentration rule",
+        f"            rules_active +{_EQS} 1",
+        f"            rules_fulfilled +{_EQS} 1  {_H} Single default account = diversified enough",
+        f"            rules.{_APP}({{",
+        f'                {_Q}key": "accountClusterRisk",',
+        f'                {_Q}name": "Account Cluster Risk: Single Account",',
+        f'                "isActive": {_T},',
+        f'                {_Q}configuration": {{}},',
+        f"            }})",
+        f"",
+        f"            {_H} Currency cluster risk",
+        f"            currencies = {_SET}()",
+        f"            {_FR} pos in positions:",
+        f'                currencies.add(pos.{_GET}("currency", "USD"))',
+        f"",
+    ]
 
 
 def _gen_api_methods_evaluate_report_p2():
-    L = []
-    a = L.append
-    a(f"            rules_active +{_EQS} 1")
-    a(f"            {_IF} {_LN}(currencies) >= 1:")
-    a(f"                rules_fulfilled +{_EQS} 1")
-    a(f"            rules.{_APP}({{")
-    a(f'                {_Q}key": "currencyClusterRisk",')
-    a(f'                {_Q}name": "Currency Cluster Risk: Base Currency",')
-    a(f'                "isActive": {_T},')
-    a(f'                {_Q}configuration": {{}},')
-    a(f"            }})")
-    a(f"")
-    a(f"            {_H} Fee ratio rule")
-    a(f"            total_fees = {_B}(0)")
-    a(f"            total_inv = {_B}(0)")
-    a(f"            {_FR} pos in positions:")
-    a(f'                total_fees = total_fees.{_PLU}(pos.{_GET}("fee", {_B}(0)))')
-    a(f'                total_inv = total_inv.{_PLU}(pos.{_GET}("investment", {_B}(0)))')
-    a(f"")
-    a(f"            rules_active +{_EQS} 1")
-    a(f"            fee_ratio = total_fees.{_DIV}(total_inv).{_TNM}() {_IF} total_inv.{_GT}(0) {_EL} 0")
-    a(f"            {_IF} fee_ratio < 0.015:  # Less than 1.5% fee ratio")
-    a(f"                rules_fulfilled +{_EQS} 1")
-    a(f"            rules.{_APP}({{")
-    a(f'                {_Q}key": "feeRatio",')
-    a(f'                {_Q}name": "Fee Ratio",')
-    a(f'                "isActive": {_T},')
-    a(f'                {_Q}configuration": {{"threshold": 0.015}},')
-    a(f"            }})")
-    return L
+    return [
+        f"            rules_active +{_EQS} 1",
+        f"            {_IF} {_LN}(currencies) >= 1:",
+        f"                rules_fulfilled +{_EQS} 1",
+        f"            rules.{_APP}({{",
+        f'                {_Q}key": "currencyClusterRisk",',
+        f'                {_Q}name": "Currency Cluster Risk: Base Currency",',
+        f'                "isActive": {_T},',
+        f'                {_Q}configuration": {{}},',
+        f"            }})",
+        f"",
+        f"            {_H} Fee ratio rule",
+        f"            total_fees = {_B}(0)",
+        f"            total_inv = {_B}(0)",
+        f"            {_FR} pos in positions:",
+        f'                total_fees = total_fees.{_PLU}(pos.{_GET}("fee", {_B}(0)))',
+        f'                total_inv = total_inv.{_PLU}(pos.{_GET}("investment", {_B}(0)))',
+        f"",
+        f"            rules_active +{_EQS} 1",
+        f"            fee_ratio = total_fees.{_DIV}(total_inv).{_TNM}() {_IF} total_inv.{_GT}(0) {_EL} 0",
+        f"            {_IF} fee_ratio < 0.015:  # Less than 1.5% fee ratio",
+        f"                rules_fulfilled +{_EQS} 1",
+        f"            rules.{_APP}({{",
+        f'                {_Q}key": "feeRatio",',
+        f'                {_Q}name": "Fee Ratio",',
+        f'                "isActive": {_T},',
+        f'                {_Q}configuration": {{"threshold": 0.015}},',
+        f"            }})",
+    ]
 
 
 def _gen_api_methods_evaluate_report_p3():
-    L = []
-    a = L.append
-    a(f"")
-    a(f"        {_R} {{")
-    a(f'            {_Q}xRay": {{')
-    a(f'                {_Q}categories": [')
-    a(f"                    {{")
-    a(f'                        {_Q}key": "accounts",')
-    a(f'                        {_Q}name": "Accounts",')
-    a(f'                        "rules": [r {_FR} r in rules {_IF} r["key"].startswith("account")],')
-    a(f"                    }},")
-    a(f"                    {{")
-    a(f'                        {_Q}key": "currencies",')
-    a(f'                        {_Q}name": "Currencies",')
-    a(f'                        "rules": [r {_FR} r in rules {_IF} r["key"].startswith("currency")],')
-    a(f"                    }},")
-    a(f"                    {{")
-    a(f'                        {_Q}key": "fees",')
-    a(f'                        {_Q}name": "Fees",')
-    a(f'                        "rules": [r {_FR} r in rules {_IF} r["key"].startswith("fee")],')
-    a(f"                    }},")
-    a(f"                ],")
-    a(f'                {_Q}statistics": {{')
-    a(f'                    {_Q}rulesActiveCount": rules_active,')
-    a(f'                    {_Q}rulesFulfilledCount": rules_fulfilled,')
-    a(f"                }},")
-    a(f"            }}")
-    a(f"        }}")
-    return L
+    return [
+        f"",
+        f"        {_R} {{",
+        f'            {_Q}xRay": {{',
+        f'                {_Q}categories": [',
+        f"                    {{",
+        f'                        {_Q}key": "accounts",',
+        f'                        {_Q}name": "Accounts",',
+        f'                        "rules": [r {_FR} r in rules {_IF} r["key"].startswith("account")],',
+        f"                    }},",
+        f"                    {{",
+        f'                        {_Q}key": "currencies",',
+        f'                        {_Q}name": "Currencies",',
+        f'                        "rules": [r {_FR} r in rules {_IF} r["key"].startswith("currency")],',
+        f"                    }},",
+        f"                    {{",
+        f'                        {_Q}key": "fees",',
+        f'                        {_Q}name": "Fees",',
+        f'                        "rules": [r {_FR} r in rules {_IF} r["key"].startswith("fee")],',
+        f"                    }},",
+        f"                ],",
+        f'                {_Q}statistics": {{',
+        f'                    {_Q}rulesActiveCount": rules_active,',
+        f'                    {_Q}rulesFulfilledCount": rules_fulfilled,',
+        f"                }},",
+        f"            }}",
+        f"        }}",
+    ]
 
 def assemble(translated_methods: dict[str, str]) -> str:
     """Assemble translated method bodies into the final Python calculator file.
