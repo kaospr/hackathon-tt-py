@@ -64,10 +64,10 @@ class Big:
         return Big(self._val * Big(other)._val)
 
     def div(self, other) -> Big:
-        """Division.  ``x.div(y)``  Raises ``ZeroDivisionError`` on /0."""
+        """Division.  ``x.div(y)``  Returns Big(0) on /0."""
         divisor = Big(other)._val
         if divisor == 0:
-            raise ZeroDivisionError("Big: division by zero")
+            return Big(0)
         return Big(self._val / divisor)
 
     # Aliases (Big.js accepts both names)
@@ -237,7 +237,7 @@ class Big:
         return int(self._val)
 
     def __bool__(self):
-        return self._val != 0
+        return True  # Big object is always truthy (like JS object)
 
     def __str__(self):
         return str(self._val)
@@ -247,3 +247,47 @@ class Big:
 
     def __hash__(self):
         return hash(self._val)
+
+
+class Pair:
+    """Holds base and currency-effect values together."""
+    __slots__ = ("base", "ce")
+
+    def __init__(self, base=None, ce=None):
+        b = base if base is not None else Big(0)
+        c = ce if ce is not None else Big(0)
+        self.base = b if isinstance(b, Big) else Big(b)
+        self.ce = c if isinstance(c, Big) else Big(c)
+
+    def plus(self, other):
+        if isinstance(other, Pair):
+            return Pair(self.base.plus(other.base), self.ce.plus(other.ce))
+        return Pair(self.base.plus(other), self.ce.plus(other))
+
+    def minus(self, other):
+        if isinstance(other, Pair):
+            return Pair(self.base.minus(other.base), self.ce.minus(other.ce))
+        return Pair(self.base.minus(other), self.ce.minus(other))
+
+    def add(self, other):
+        return self.plus(other)
+
+    def mul_rates(self, current_rate, date_rate):
+        return Pair(self.base.mul(current_rate), self.ce.mul(date_rate))
+
+    def div_each(self, divisor):
+        """Divide both base and ce by the same divisor."""
+        return Pair(self.base.div(divisor), self.ce.div(divisor))
+
+    @staticmethod
+    def zero():
+        return Pair(Big(0), Big(0))
+
+
+def to_num(v):
+    """Convert Big or number to float."""
+    if isinstance(v, Big):
+        return v.toNumber()
+    if v is None:
+        return 0
+    return float(v)

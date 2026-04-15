@@ -183,80 +183,9 @@ from __future__ import annotations
 import sys
 from copy import deepcopy
 from datetime import date, datetime, timedelta
-from decimal import Decimal
 
+from app.helpers.big import Big, Pair, to_num as _to_num
 from app.wrapper.portfolio.calculator.portfolio_calculator import PortfolioCalculator
-
-
-# ---------------------------------------------------------------------------
-# Lightweight Big-like wrapper (mirrors big.js arithmetic used in TS)
-# ---------------------------------------------------------------------------
-
-class Big:
-    """Minimal big.js compatible wrapper around Python float."""
-
-    __slots__ = ("_v",)
-
-    def __init__(self, value=0):
-        if isinstance(value, Big):
-            self._v = value._v
-        elif value is None:
-            self._v = 0.0
-        else:
-            self._v = float(value)
-
-    # Arithmetic
-    def plus(self, other):
-        return Big(self._v + Big(other)._v)
-
-    add = plus
-
-    def minus(self, other):
-        return Big(self._v - Big(other)._v)
-
-    def mul(self, other):
-        return Big(self._v * Big(other)._v)
-
-    def div(self, other):
-        d = Big(other)._v
-        if d == 0:
-            return Big(0)
-        return Big(self._v / d)
-
-    def abs(self):
-        return Big(abs(self._v))
-
-    # Comparisons
-    def eq(self, other):
-        return self._v == Big(other)._v
-
-    def gt(self, other):
-        return self._v > Big(other)._v
-
-    def gte(self, other):
-        return self._v >= Big(other)._v
-
-    def lt(self, other):
-        return self._v < Big(other)._v
-
-    def lte(self, other):
-        return self._v <= Big(other)._v
-
-    # Conversion
-    def toNumber(self):
-        return self._v
-
-    def toFixed(self, dp=0):
-        return f"{self._v:.{dp}f}"
-
-    def __float__(self):
-        return self._v
-
-    def __repr__(self):
-        return f"Big({self._v})"
-
-    def __bool__(self):
-        return True  # Big object is always truthy (like JS object)
 
 
 # ---------------------------------------------------------------------------
@@ -491,6 +420,55 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
 # ---------------------------------------------------------------------------
 
 _COMPUTE_TRANSACTION_POINTS = '''\
+    @staticmethod
+    def _build_symbol_item(old, order, sp, factor):
+        """Build or update a transaction point symbol item."""
+        symbol = sp["symbol"]
+        o_type = order["type"]
+        quantity = order["quantity"]
+        unit_price = order["unitPrice"]
+        base = {
+            "assetSubClass": sp.get("assetSubClass"),
+            "currency": sp.get("currency", "USD"),
+            "dataSource": sp.get("dataSource", "YAHOO"),
+            "skipErrors": bool(sp.get("userId")),
+            "symbol": symbol,
+        }
+        if not old:
+            return {**base,
+                "fee": order["fee"], "feeInBaseCurrency": order["feeInBaseCurrency"],
+                "tags": order.get("tags", []), "activitiesCount": 1,
+                "averagePrice": unit_price, "dateOfFirstActivity": order["date"],
+                "dividend": Big(0),
+                "includeInHoldings": o_type in INVESTMENT_ACTIVITY_TYPES,
+                "investment": unit_price.mul(quantity).mul(factor),
+                "quantity": quantity.mul(factor),
+            }
+
+        investment = old["investment"]
+        new_quantity = quantity.mul(factor).plus(old["quantity"])
+
+        if o_type == "BUY":
+            price = unit_price if old["investment"].gte(0) else old["averagePrice"]
+            investment = old["investment"].plus(quantity.mul(price))
+        elif o_type == "SELL":
+            price = old["averagePrice"] if old["investment"].gt(0) else unit_price
+            investment = old["investment"].minus(quantity.mul(price))
+
+        if new_quantity.abs().lt(EPSILON):
+            investment = Big(0)
+            new_quantity = Big(0)
+
+        return {**base,
+            "investment": investment, "activitiesCount": old["activitiesCount"] + 1,
+            "averagePrice": Big(0) if new_quantity.eq(0) else investment.div(new_quantity).abs(),
+            "dateOfFirstActivity": old["dateOfFirstActivity"], "dividend": Big(0),
+            "fee": old["fee"].plus(order["fee"]),
+            "feeInBaseCurrency": old["feeInBaseCurrency"].plus(order["feeInBaseCurrency"]),
+            "includeInHoldings": old["includeInHoldings"],
+            "quantity": new_quantity, "tags": old["tags"] + order.get("tags", []),
+        }
+
     def _compute_transaction_points(self):
         """Build transaction points from orders (mirrors TS computeTransactionPoints)."""
         self._transaction_points = []
@@ -501,79 +479,14 @@ _COMPUTE_TRANSACTION_POINTS = '''\
         for order in self._orders:
             sp = order["SymbolProfile"]
             symbol = sp["symbol"]
-            asset_sub_class = sp.get("assetSubClass")
-            currency = sp.get("currency", "USD")
-            data_source = sp.get("dataSource", "YAHOO")
-            skip_errors = bool(sp.get("userId"))
             factor = get_factor(order["type"])
             o_date = order["date"]
-            fee = order["fee"]
-            fee_in_base = order["feeInBaseCurrency"]
+            o_type = order["type"]
             quantity = order["quantity"]
             unit_price = order["unitPrice"]
-            o_type = order["type"]
-            tags = order.get("tags", [])
 
-            old = symbols.get(symbol)
-
-            if old:
-                investment = old["investment"]
-                new_quantity = quantity.mul(factor).plus(old["quantity"])
-
-                if o_type == "BUY":
-                    if old["investment"].gte(0):
-                        investment = old["investment"].plus(quantity.mul(unit_price))
-                    else:
-                        investment = old["investment"].plus(quantity.mul(old["averagePrice"]))
-                elif o_type == "SELL":
-                    if old["investment"].gt(0):
-                        investment = old["investment"].minus(quantity.mul(old["averagePrice"]))
-                    else:
-                        investment = old["investment"].minus(quantity.mul(unit_price))
-
-                if new_quantity.abs().lt(EPSILON):
-                    investment = Big(0)
-                    new_quantity = Big(0)
-
-                current_item = {
-                    "assetSubClass": asset_sub_class,
-                    "currency": currency,
-                    "dataSource": data_source,
-                    "investment": investment,
-                    "skipErrors": skip_errors,
-                    "symbol": symbol,
-                    "activitiesCount": old["activitiesCount"] + 1,
-                    "averagePrice": Big(0) if new_quantity.eq(0) else investment.div(new_quantity).abs(),
-                    "dateOfFirstActivity": old["dateOfFirstActivity"],
-                    "dividend": Big(0),
-                    "fee": old["fee"].plus(fee),
-                    "feeInBaseCurrency": old["feeInBaseCurrency"].plus(fee_in_base),
-                    "includeInHoldings": old["includeInHoldings"],
-                    "quantity": new_quantity,
-                    "tags": old["tags"] + tags,
-                }
-            else:
-                current_item = {
-                    "assetSubClass": asset_sub_class,
-                    "currency": currency,
-                    "dataSource": data_source,
-                    "fee": fee,
-                    "feeInBaseCurrency": fee_in_base,
-                    "skipErrors": skip_errors,
-                    "symbol": symbol,
-                    "tags": tags,
-                    "activitiesCount": 1,
-                    "averagePrice": unit_price,
-                    "dateOfFirstActivity": o_date,
-                    "dividend": Big(0),
-                    "includeInHoldings": o_type in INVESTMENT_ACTIVITY_TYPES,
-                    "investment": unit_price.mul(quantity).mul(factor),
-                    "quantity": quantity.mul(factor),
-                }
-
-            # Deduplicate tags by 'id'
+            current_item = self._build_symbol_item(symbols.get(symbol), order, sp, factor)
             current_item["tags"] = uniq_by(current_item["tags"], "id")
-
             symbols[symbol] = current_item
 
             items = last_tp["items"][:] if last_tp else []
@@ -581,17 +494,9 @@ _COMPUTE_TRANSACTION_POINTS = '''\
             new_items.append(current_item)
             new_items.sort(key=lambda a: a.get("symbol", ""))
 
-            fees = Big(0)
-            if o_type == "FEE":
-                fees = fee
-
-            interest = Big(0)
-            if o_type == "INTEREST":
-                interest = quantity.mul(unit_price)
-
-            liabilities = Big(0)
-            if o_type == "LIABILITY":
-                liabilities = quantity.mul(unit_price)
+            fees = order["fee"] if o_type == "FEE" else Big(0)
+            interest = quantity.mul(unit_price) if o_type == "INTEREST" else Big(0)
+            liabilities = quantity.mul(unit_price) if o_type == "LIABILITY" else Big(0)
 
             if last_date != o_date or last_tp is None:
                 last_tp = {
@@ -619,78 +524,66 @@ _COMPUTE_TRANSACTION_POINTS = '''\
 
 
 _GET_CHART_DATE_MAP = '''\
+    @staticmethod
+    def _add_date_range_boundaries(chart_date_map, start_date, end_date):
+        """Add key date range boundaries and calendar year boundaries."""
+        for dr in ["1d", "1y", "5y", "max", "mtd", "wtd", "ytd"]:
+            interval = get_interval_from_date_range(dr)
+            for boundary in (parse_date(interval["startDate"]), parse_date(interval["endDate"])):
+                if not is_before(boundary, start_date) and not is_after(boundary, end_date):
+                    chart_date_map[format_date(boundary)] = True
+
+        interval = {"start": start_date, "end": end_date}
+        for d in each_year_of_interval(interval):
+            for boundary in (start_of_year(d), end_of_year(d)):
+                if is_within_interval(boundary, interval):
+                    chart_date_map[format_date(boundary)] = True
+
     def _get_chart_date_map(self, end_date, start_date, step):
         """Build a map of relevant chart dates (mirrors TS getChartDateMap)."""
         chart_date_map = {}
 
-        # 1. Add transaction point dates
         for tp in self._transaction_points:
             chart_date_map[tp["date"]] = True
 
-        # 2. Add dates between transactions respecting step size
         for d in each_day_of_interval({"start": start_date, "end": end_date}, step):
             chart_date_map[format_date(d)] = True
 
         if step > 1:
-            # Reduce step for last 90 days
             for d in each_day_of_interval({"start": sub_days(end_date, 90), "end": end_date}, 3):
                 chart_date_map[format_date(d)] = True
-
-            # Reduce step for last 30 days
             for d in each_day_of_interval({"start": sub_days(end_date, 30), "end": end_date}, 1):
                 chart_date_map[format_date(d)] = True
 
-        # Make sure end date is present
         chart_date_map[format_date(end_date)] = True
-
-        # Add key date range boundaries
-        for dr in ["1d", "1y", "5y", "max", "mtd", "wtd", "ytd"]:
-            interval = get_interval_from_date_range(dr)
-            dr_start = parse_date(interval["startDate"])
-            dr_end = parse_date(interval["endDate"])
-
-            if not is_before(dr_start, start_date) and not is_after(dr_start, end_date):
-                chart_date_map[format_date(dr_start)] = True
-            if not is_before(dr_end, start_date) and not is_after(dr_end, end_date):
-                chart_date_map[format_date(dr_end)] = True
-
-        # Add first and last date of each calendar year
-        interval = {"start": start_date, "end": end_date}
-        for d in each_year_of_interval(interval):
-            yr_start = start_of_year(d)
-            yr_end = end_of_year(d)
-
-            if is_within_interval(yr_start, interval):
-                chart_date_map[format_date(yr_start)] = True
-            if is_within_interval(yr_end, interval):
-                chart_date_map[format_date(yr_end)] = True
-
+        self._add_date_range_boundaries(chart_date_map, start_date, end_date)
         return chart_date_map
 '''
 
 
 _BUILD_MARKET_DATA = '''\
+    def _ensure_today_prices(self, market_symbol_map, symbols):
+        """Ensure today has price data using nearest/latest prices."""
+        today_str = format_date(date.today())
+        if today_str not in market_symbol_map:
+            market_symbol_map[today_str] = {}
+        for sym in symbols:
+            if sym not in market_symbol_map[today_str]:
+                latest = self.current_rate_service.get_latest_price(sym)
+                if latest and latest > 0:
+                    market_symbol_map[today_str][sym] = Big(latest)
+
     def _build_market_data(self):
         """Build marketSymbolMap and exchangeRates from current_rate_service."""
         if not self._transaction_points:
             return {}, {}
 
-        # Collect all unique symbols (excluding CASH)
         last_tp = self._transaction_points[-1]
-        symbols = []
-        currencies = {}
-        for item in last_tp["items"]:
-            if item.get("assetSubClass") != "CASH":
-                symbols.append(item["symbol"])
-            currencies[item["symbol"]] = item.get("currency", "USD")
+        symbols = [item["symbol"] for item in last_tp["items"] if item.get("assetSubClass") != "CASH"]
 
-        start_str = format_date(self._start_date)
-        end_str = format_date(self._end_date)
-
-        # Get all dates that have market data in range
-        all_dates = self.current_rate_service.all_dates_in_range(start_str, end_str)
-
-        # Also include transaction point dates and chart dates
+        all_dates = self.current_rate_service.all_dates_in_range(
+            format_date(self._start_date), format_date(self._end_date),
+        )
         for tp in self._transaction_points:
             all_dates.add(tp["date"])
 
@@ -702,175 +595,73 @@ _BUILD_MARKET_DATA = '''\
                 if price is not None:
                     market_symbol_map[date_str][sym] = Big(price)
 
-        # Ensure the end date (today) has price data using nearest/latest prices
+        self._ensure_today_prices(market_symbol_map, symbols)
+
         today_str = format_date(date.today())
-        if today_str not in market_symbol_map:
-            market_symbol_map[today_str] = {}
-        for sym in symbols:
-            if sym not in market_symbol_map[today_str]:
-                latest = self.current_rate_service.get_latest_price(sym)
-                if latest and latest > 0:
-                    market_symbol_map[today_str][sym] = Big(latest)
-
-        # Simplified exchange rates (single currency assumption)
-        exchange_rates = {}
-        for date_str in sorted(all_dates):
-            exchange_rates[date_str] = 1.0
-        # Ensure today is in exchange rates
+        exchange_rates = {d: 1.0 for d in all_dates}
         exchange_rates[today_str] = 1.0
-
         return market_symbol_map, exchange_rates
 '''
 
 
 _GET_SYMBOL_METRICS = '''\
-    def _get_symbol_metrics(self, chart_date_map, data_source, end, exchange_rates, market_symbol_map, start, symbol):
-        """Calculate per-symbol metrics (mirrors TS getSymbolMetrics — ROAI variant)."""
-        current_exchange_rate = exchange_rates.get(format_date(date.today()), 1)
-        current_values = {}
-        current_values_with_ce = {}
-        fees = Big(0)
-        fees_at_start_date = Big(0)
-        fees_at_start_date_with_ce = Big(0)
-        fees_with_ce = Big(0)
-        gross_performance = Big(0)
-        gross_performance_with_ce = Big(0)
-        gross_performance_at_start_date = Big(0)
-        gross_performance_at_start_date_with_ce = Big(0)
-        gross_performance_from_sells = Big(0)
-        gross_performance_from_sells_with_ce = Big(0)
-        initial_value = None
-        initial_value_with_ce = None
-        investment_at_start_date = None
-        investment_at_start_date_with_ce = None
-        investment_values_accumulated = {}
-        investment_values_accumulated_with_ce = {}
-        investment_values_with_ce = {}
-        last_average_price = Big(0)
-        last_average_price_with_ce = Big(0)
-        net_performance_values = {}
-        net_performance_values_with_ce = {}
-        time_weighted_investment_values = {}
-        time_weighted_investment_values_with_ce = {}
-        total_account_balance_in_base = Big(0)
-        total_dividend = Big(0)
-        total_dividend_in_base = Big(0)
-        total_interest = Big(0)
-        total_interest_in_base = Big(0)
-        total_investment = Big(0)
-        total_investment_from_buys = Big(0)
-        total_investment_from_buys_with_ce = Big(0)
-        total_investment_with_ce = Big(0)
-        total_liabilities = Big(0)
-        total_liabilities_in_base = Big(0)
-        total_quantity_from_buys = Big(0)
-        total_units = Big(0)
-        value_at_start_date = None
-        value_at_start_date_with_ce = None
+    @staticmethod
+    def _empty_metrics(has_errors=False):
+        """Return empty/zero metrics dict."""
+        return {
+            "currentValues": {},
+            "currentValuesWithCurrencyEffect": {},
+            "feesWithCurrencyEffect": Big(0),
+            "grossPerformance": Big(0),
+            "grossPerformancePercentage": Big(0),
+            "grossPerformancePercentageWithCurrencyEffect": Big(0),
+            "grossPerformanceWithCurrencyEffect": Big(0),
+            "hasErrors": has_errors,
+            "initialValue": Big(0),
+            "initialValueWithCurrencyEffect": Big(0),
+            "investmentValuesAccumulated": {},
+            "investmentValuesAccumulatedWithCurrencyEffect": {},
+            "investmentValuesWithCurrencyEffect": {},
+            "netPerformance": Big(0),
+            "netPerformancePercentage": Big(0),
+            "netPerformancePercentageWithCurrencyEffectMap": {},
+            "netPerformanceValues": {},
+            "netPerformanceValuesWithCurrencyEffect": {},
+            "netPerformanceWithCurrencyEffectMap": {},
+            "timeWeightedInvestment": Big(0),
+            "timeWeightedInvestmentValues": {},
+            "timeWeightedInvestmentValuesWithCurrencyEffect": {},
+            "timeWeightedInvestmentWithCurrencyEffect": Big(0),
+            "totalAccountBalanceInBaseCurrency": Big(0),
+            "totalDividend": Big(0),
+            "totalDividendInBaseCurrency": Big(0),
+            "totalInterest": Big(0),
+            "totalInterestInBaseCurrency": Big(0),
+            "totalInvestment": Big(0),
+            "totalInvestmentWithCurrencyEffect": Big(0),
+            "totalLiabilities": Big(0),
+            "totalLiabilitiesInBaseCurrency": Big(0),
+        }
 
-        # Clone orders for this symbol
-        orders = clone_deep([
-            o for o in self._orders if o["SymbolProfile"]["symbol"] == symbol
-        ])
-
-        is_cash = (orders[0]["SymbolProfile"].get("assetSubClass") == "CASH") if orders else False
-
-        # Empty return value
-        def empty_metrics(has_errors=False):
-            return {
-                "currentValues": {},
-                "currentValuesWithCurrencyEffect": {},
-                "feesWithCurrencyEffect": Big(0),
-                "grossPerformance": Big(0),
-                "grossPerformancePercentage": Big(0),
-                "grossPerformancePercentageWithCurrencyEffect": Big(0),
-                "grossPerformanceWithCurrencyEffect": Big(0),
-                "hasErrors": has_errors,
-                "initialValue": Big(0),
-                "initialValueWithCurrencyEffect": Big(0),
-                "investmentValuesAccumulated": {},
-                "investmentValuesAccumulatedWithCurrencyEffect": {},
-                "investmentValuesWithCurrencyEffect": {},
-                "netPerformance": Big(0),
-                "netPerformancePercentage": Big(0),
-                "netPerformancePercentageWithCurrencyEffectMap": {},
-                "netPerformanceValues": {},
-                "netPerformanceValuesWithCurrencyEffect": {},
-                "netPerformanceWithCurrencyEffectMap": {},
-                "timeWeightedInvestment": Big(0),
-                "timeWeightedInvestmentValues": {},
-                "timeWeightedInvestmentValuesWithCurrencyEffect": {},
-                "timeWeightedInvestmentWithCurrencyEffect": Big(0),
-                "totalAccountBalanceInBaseCurrency": Big(0),
-                "totalDividend": Big(0),
-                "totalDividendInBaseCurrency": Big(0),
-                "totalInterest": Big(0),
-                "totalInterestInBaseCurrency": Big(0),
-                "totalInvestment": Big(0),
-                "totalInvestmentWithCurrencyEffect": Big(0),
-                "totalLiabilities": Big(0),
-                "totalLiabilitiesInBaseCurrency": Big(0),
-            }
-
-        if len(orders) <= 0:
-            return empty_metrics()
-
-        date_of_first_transaction = parse_date(orders[0]["date"])
-        end_date_string = format_date(end)
-        start_date_string = format_date(start)
-
+    def _prepare_symbol_orders(self, orders, chart_date_map, data_source, symbol, is_cash, start_date_string, end_date_string, market_symbol_map):
+        """Add synthetic and chart-date orders, then sort them."""
         unit_price_at_start = market_symbol_map.get(start_date_string, {}).get(symbol)
         unit_price_at_end = market_symbol_map.get(end_date_string, {}).get(symbol)
 
-        latest_activity = orders[-1] if orders else None
-
-        if (data_source == "MANUAL"
-            and latest_activity and latest_activity.get("type") in ("BUY", "SELL")
-            and latest_activity.get("unitPrice")
-            and not unit_price_at_end):
-            unit_price_at_end = latest_activity["unitPrice"]
-        elif is_cash:
-            unit_price_at_end = Big(1)
-
-        if (not unit_price_at_end or
-            (not unit_price_at_start and is_before(date_of_first_transaction, start))):
-            return empty_metrics(has_errors=True)
-
-        # Add synthetic start/end orders
         orders.append({
-            "date": start_date_string,
-            "fee": Big(0),
-            "feeInBaseCurrency": Big(0),
-            "itemType": "start",
-            "quantity": Big(0),
-            "SymbolProfile": {
-                "dataSource": data_source,
-                "symbol": symbol,
-                "assetSubClass": "CASH" if is_cash else None,
-            },
-            "type": "BUY",
-            "unitPrice": unit_price_at_start,
-            "tags": [],
+            "date": start_date_string, "fee": Big(0), "feeInBaseCurrency": Big(0),
+            "itemType": "start", "quantity": Big(0),
+            "SymbolProfile": {"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" if is_cash else None},
+            "type": "BUY", "unitPrice": unit_price_at_start, "tags": [],
         })
-
         orders.append({
-            "date": end_date_string,
-            "fee": Big(0),
-            "feeInBaseCurrency": Big(0),
+            "date": end_date_string, "fee": Big(0), "feeInBaseCurrency": Big(0),
             "itemType": "end",
-            "SymbolProfile": {
-                "dataSource": data_source,
-                "symbol": symbol,
-                "assetSubClass": "CASH" if is_cash else None,
-            },
-            "quantity": Big(0),
-            "type": "BUY",
-            "unitPrice": unit_price_at_end,
-            "tags": [],
+            "SymbolProfile": {"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" if is_cash else None},
+            "quantity": Big(0), "type": "BUY", "unitPrice": unit_price_at_end, "tags": [],
         })
 
         last_unit_price = None
-
         orders_by_date = {}
         for o in orders:
             orders_by_date.setdefault(o["date"], []).append(o)
@@ -892,25 +683,15 @@ _GET_SYMBOL_METRICS = '''\
             else:
                 market_price = market_symbol_map.get(date_string, {}).get(symbol) or last_unit_price
                 orders.append({
-                    "date": date_string,
-                    "fee": Big(0),
-                    "feeInBaseCurrency": Big(0),
+                    "date": date_string, "fee": Big(0), "feeInBaseCurrency": Big(0),
                     "quantity": Big(0),
-                    "SymbolProfile": {
-                        "dataSource": data_source,
-                        "symbol": symbol,
-                        "assetSubClass": "CASH" if is_cash else None,
-                    },
-                    "type": "BUY",
-                    "unitPrice": market_price,
-                    "unitPriceFromMarketData": market_price,
-                    "tags": [],
+                    "SymbolProfile": {"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" if is_cash else None},
+                    "type": "BUY", "unitPrice": market_price, "unitPriceFromMarketData": market_price, "tags": [],
                 })
 
             latest_activity = orders[-1]
             last_unit_price = latest_activity.get("unitPriceFromMarketData") or latest_activity.get("unitPrice")
 
-        # Sort orders: start comes before same-date, end comes after
         def sort_key(o):
             d = parse_date(o["date"])
             item_type = o.get("itemType")
@@ -920,36 +701,96 @@ _GET_SYMBOL_METRICS = '''\
                 return (d, -1)
             return (d, 0)
 
-        orders = sorted(orders, key=sort_key)
+        return sorted(orders, key=sort_key)
 
-        index_of_start = next((i for i, o in enumerate(orders) if o.get("itemType") == "start"), 0)
-        index_of_end = next((i for i, o in enumerate(orders) if o.get("itemType") == "end"), len(orders) - 1)
+    @staticmethod
+    def _compute_txn_investment(order, total_inv, total_units):
+        """Compute transaction investment for a BUY or SELL order."""
+        if order["type"] == "BUY":
+            f = get_factor(order["type"])
+            return Pair(
+                order["quantity"].mul(order.get("unitPriceInBaseCurrency", Big(0))).mul(f),
+                order["quantity"].mul(order.get("unitPriceInBaseCurrencyWithCurrencyEffect", Big(0))).mul(f),
+            )
+        if order["type"] == "SELL" and total_units.gt(0):
+            f = get_factor(order["type"])
+            return Pair(
+                total_inv.base.div(total_units).mul(order["quantity"]).mul(f),
+                total_inv.ce.div(total_units).mul(order["quantity"]).mul(f),
+            )
+        return Pair.zero()
 
-        total_investment_days = 0
-        sum_twi = Big(0)
-        sum_twi_with_ce = Big(0)
+    @staticmethod
+    def _enrich_order_prices(order, current_exchange_rate, ex_rate):
+        """Set base-currency price fields on an order."""
+        if order.get("fee"):
+            order["feeInBaseCurrency"] = order["fee"].mul(current_exchange_rate)
+            order["feeInBaseCurrencyWithCurrencyEffect"] = order["fee"].mul(ex_rate)
+        up = order.get("unitPrice") if order["type"] in ("BUY", "SELL") else order.get("unitPriceFromMarketData")
+        if up:
+            order["unitPriceInBaseCurrency"] = up.mul(current_exchange_rate)
+            order["unitPriceInBaseCurrencyWithCurrencyEffect"] = up.mul(ex_rate)
+
+    def _record_date_values(self, s, order, val_of_inv, gross_perf, fees, txn_inv, orders, i):
+        """Record per-date values for dates after start."""
+        d = order["date"]
+        val_before = s["val_before"]
+        if val_before.base.gt(0) and order["type"] in ("BUY", "SELL"):
+            days_since = difference_in_days(parse_date(d), parse_date(orders[i - 1]["date"]))
+            if days_since <= 0:
+                days_since = EPSILON
+            s["total_investment_days"] += days_since
+            s["sum_twi"] = Pair(
+                s["sum_twi"].base.add(s["val_at_start"].base.minus(s["inv_at_start"].base).plus(s["total_inv_before"].base).mul(days_since)),
+                s["sum_twi"].ce.add(s["val_at_start"].ce.minus(s["inv_at_start"].ce).plus(s["total_inv_before"].ce).mul(days_since)),
+            )
+
+        s["current_values"][d] = val_of_inv.base
+        s["current_values_ce"][d] = val_of_inv.ce
+        s["net_perf_values"][d] = gross_perf.base.minus(s["gross_perf_at_start"].base).minus(fees.base.minus(s["fees_at_start"].base))
+        s["net_perf_values_ce"][d] = gross_perf.ce.minus(s["gross_perf_at_start"].ce).minus(fees.ce.minus(s["fees_at_start"].ce))
+        s["inv_values_acc"][d] = s["total_inv"].base
+        s["inv_values_acc_ce"][d] = s["total_inv"].ce
+        s["inv_values_ce"][d] = s["inv_values_ce"].get(d, Big(0)).add(txn_inv.ce)
+
+        tid = s["total_investment_days"]
+        ti = s["total_inv"]
+        stw = s["sum_twi"]
+        s["twi_values"][d] = stw.base.div(tid) if tid > EPSILON else (ti.base if ti.base.gt(0) else Big(0))
+        s["twi_values_ce"][d] = stw.ce.div(tid) if tid > EPSILON else (ti.ce if ti.ce.gt(0) else Big(0))
+
+    def _process_orders_loop(self, orders, index_of_start, index_of_end, exchange_rates, current_exchange_rate, unit_price_at_start):
+        """Process all orders and compute running totals using Pair for base/ce values."""
+        s = {
+            "fees": Pair.zero(), "fees_at_start": Pair.zero(),
+            "gross_perf": Pair.zero(), "gross_perf_at_start": Pair.zero(),
+            "gp_from_sells": Pair.zero(), "initial_value": Pair(None, None),
+            "inv_at_start": Pair(None, None), "val_at_start": Pair(None, None),
+            "last_avg_price": Pair.zero(), "total_inv": Pair.zero(),
+            "total_inv_from_buys": Pair.zero(), "sum_twi": Pair.zero(),
+            "total_inv_before": Pair.zero(), "val_before": Pair.zero(),
+            "current_values": {}, "current_values_ce": {},
+            "inv_values_acc": {}, "inv_values_acc_ce": {}, "inv_values_ce": {},
+            "net_perf_values": {}, "net_perf_values_ce": {},
+            "twi_values": {}, "twi_values_ce": {},
+            "total_dividend": Big(0), "total_dividend_in_base": Big(0),
+            "total_interest": Big(0), "total_interest_in_base": Big(0),
+            "total_liabilities": Big(0), "total_liabilities_in_base": Big(0),
+            "total_quantity_from_buys": Big(0), "total_units": Big(0),
+            "total_investment_days": 0,
+        }
+        _INCOME_KEYS = {"DIVIDEND": ("total_dividend", "total_dividend_in_base"),
+                        "INTEREST": ("total_interest", "total_interest_in_base"),
+                        "LIABILITY": ("total_liabilities", "total_liabilities_in_base")}
 
         for i, order in enumerate(orders):
-            exchange_rate_at_date = exchange_rates.get(order["date"], 1)
+            ex_rate = exchange_rates.get(order["date"], 1)
 
-            if order["type"] == "DIVIDEND":
-                dividend = order["quantity"].mul(order["unitPrice"])
-                total_dividend = total_dividend.plus(dividend)
-                total_dividend_in_base = total_dividend_in_base.plus(
-                    dividend.mul(exchange_rate_at_date)
-                )
-            elif order["type"] == "INTEREST":
-                interest = order["quantity"].mul(order["unitPrice"])
-                total_interest = total_interest.plus(interest)
-                total_interest_in_base = total_interest_in_base.plus(
-                    interest.mul(exchange_rate_at_date)
-                )
-            elif order["type"] == "LIABILITY":
-                liab = order["quantity"].mul(order["unitPrice"])
-                total_liabilities = total_liabilities.plus(liab)
-                total_liabilities_in_base = total_liabilities_in_base.plus(
-                    liab.mul(exchange_rate_at_date)
-                )
+            income_keys = _INCOME_KEYS.get(order["type"])
+            if income_keys:
+                amt = order["quantity"].mul(order["unitPrice"])
+                s[income_keys[0]] = s[income_keys[0]].plus(amt)
+                s[income_keys[1]] = s[income_keys[1]].plus(amt.mul(ex_rate))
 
             if order.get("itemType") == "start":
                 order["unitPrice"] = (
@@ -957,180 +798,89 @@ _GET_SYMBOL_METRICS = '''\
                     else unit_price_at_start
                 )
 
-            if order.get("fee"):
-                order["feeInBaseCurrency"] = order["fee"].mul(current_exchange_rate)
-                order["feeInBaseCurrencyWithCurrencyEffect"] = order["fee"].mul(exchange_rate_at_date)
+            self._enrich_order_prices(order, current_exchange_rate, ex_rate)
 
-            up = order.get("unitPrice") if order["type"] in ("BUY", "SELL") else order.get("unitPriceFromMarketData")
+            raw_market = order.get("unitPriceFromMarketData", Big(0)) or Big(0)
+            market_price = Pair(raw_market.mul(current_exchange_rate), raw_market.mul(ex_rate))
+            s["val_before"] = Pair(s["total_units"].mul(market_price.base), s["total_units"].mul(market_price.ce))
 
-            if up:
-                order["unitPriceInBaseCurrency"] = up.mul(current_exchange_rate)
-                order["unitPriceInBaseCurrencyWithCurrencyEffect"] = up.mul(exchange_rate_at_date)
+            if s["inv_at_start"].base is None and i >= index_of_start:
+                s["inv_at_start"] = Pair(s["total_inv"].base or Big(0), s["total_inv"].ce or Big(0))
+                s["val_at_start"] = s["val_before"]
 
-            market_price_base = (
-                order.get("unitPriceFromMarketData", Big(0)) or Big(0)
-            ).mul(current_exchange_rate)
-            market_price_base_ce = (
-                order.get("unitPriceFromMarketData", Big(0)) or Big(0)
-            ).mul(exchange_rate_at_date)
-
-            val_before = total_units.mul(market_price_base)
-            val_before_ce = total_units.mul(market_price_base_ce)
-
-            if investment_at_start_date is None and i >= index_of_start:
-                investment_at_start_date = total_investment if total_investment else Big(0)
-                investment_at_start_date_with_ce = total_investment_with_ce if total_investment_with_ce else Big(0)
-                value_at_start_date = val_before
-                value_at_start_date_with_ce = val_before_ce
-
-            transaction_inv = Big(0)
-            transaction_inv_ce = Big(0)
-
+            txn_inv = self._compute_txn_investment(order, s["total_inv"], s["total_units"])
             if order["type"] == "BUY":
-                transaction_inv = order["quantity"].mul(
-                    order.get("unitPriceInBaseCurrency", Big(0))
-                ).mul(get_factor(order["type"]))
+                s["total_quantity_from_buys"] = s["total_quantity_from_buys"].plus(order["quantity"])
+                s["total_inv_from_buys"] = s["total_inv_from_buys"].plus(txn_inv)
 
-                transaction_inv_ce = order["quantity"].mul(
-                    order.get("unitPriceInBaseCurrencyWithCurrencyEffect", Big(0))
-                ).mul(get_factor(order["type"]))
+            s["total_inv_before"] = Pair(s["total_inv"].base, s["total_inv"].ce)
+            s["total_inv"] = s["total_inv"].plus(txn_inv)
 
-                total_quantity_from_buys = total_quantity_from_buys.plus(order["quantity"])
-                total_investment_from_buys = total_investment_from_buys.plus(transaction_inv)
-                total_investment_from_buys_with_ce = total_investment_from_buys_with_ce.plus(transaction_inv_ce)
+            if i >= index_of_start and not s["initial_value"].base:
+                if i == index_of_start and not s["val_before"].base.eq(0):
+                    s["initial_value"] = s["val_before"]
+                elif txn_inv.base.gt(0):
+                    s["initial_value"] = txn_inv
 
-            elif order["type"] == "SELL":
-                if total_units.gt(0):
-                    transaction_inv = total_investment.div(total_units).mul(
-                        order["quantity"]
-                    ).mul(get_factor(order["type"]))
-                    transaction_inv_ce = total_investment_with_ce.div(total_units).mul(
-                        order["quantity"]
-                    ).mul(get_factor(order["type"]))
+            s["fees"] = s["fees"].plus(Pair(
+                order.get("feeInBaseCurrency") or Big(0),
+                order.get("feeInBaseCurrencyWithCurrencyEffect") or Big(0),
+            ))
 
-            total_inv_before = total_investment
-            total_inv_before_ce = total_investment_with_ce
+            s["total_units"] = s["total_units"].plus(order["quantity"].mul(get_factor(order["type"])))
+            val_of_inv = Pair(s["total_units"].mul(market_price.base), s["total_units"].mul(market_price.ce))
 
-            total_investment = total_investment.plus(transaction_inv)
-            total_investment_with_ce = total_investment_with_ce.plus(transaction_inv_ce)
-
-            if i >= index_of_start and not initial_value:
-                if i == index_of_start and not val_before.eq(0):
-                    initial_value = val_before
-                    initial_value_with_ce = val_before_ce
-                elif transaction_inv.gt(0):
-                    initial_value = transaction_inv
-                    initial_value_with_ce = transaction_inv_ce
-
-            fees = fees.plus(order.get("feeInBaseCurrency") or 0)
-            fees_with_ce = fees_with_ce.plus(order.get("feeInBaseCurrencyWithCurrencyEffect") or 0)
-
-            total_units = total_units.plus(order["quantity"].mul(get_factor(order["type"])))
-
-            val_of_inv = total_units.mul(market_price_base)
-            val_of_inv_ce = total_units.mul(market_price_base_ce)
-
-            gp_from_sell = (
-                order.get("unitPriceInBaseCurrency", Big(0)).minus(last_average_price).mul(order["quantity"])
-                if order["type"] == "SELL" else Big(0)
+            gp_sell = (
+                Pair(
+                    order.get("unitPriceInBaseCurrency", Big(0)).minus(s["last_avg_price"].base).mul(order["quantity"]),
+                    order.get("unitPriceInBaseCurrencyWithCurrencyEffect", Big(0)).minus(s["last_avg_price"].ce).mul(order["quantity"]),
+                ) if order["type"] == "SELL" else Pair.zero()
             )
-            gp_from_sell_ce = (
-                order.get("unitPriceInBaseCurrencyWithCurrencyEffect", Big(0)).minus(last_average_price_with_ce).mul(order["quantity"])
-                if order["type"] == "SELL" else Big(0)
+            s["gp_from_sells"] = s["gp_from_sells"].plus(gp_sell)
+
+            if s["total_quantity_from_buys"].eq(0):
+                s["last_avg_price"] = Pair.zero()
+            else:
+                s["last_avg_price"] = s["total_inv_from_buys"].div_each(s["total_quantity_from_buys"])
+
+            if s["total_units"].eq(0):
+                s["total_inv_from_buys"] = Pair.zero()
+                s["total_quantity_from_buys"] = Big(0)
+
+            s["gross_perf"] = Pair(
+                val_of_inv.base.minus(s["total_inv"].base).plus(s["gp_from_sells"].base),
+                val_of_inv.ce.minus(s["total_inv"].ce).plus(s["gp_from_sells"].ce),
             )
-
-            gross_performance_from_sells = gross_performance_from_sells.plus(gp_from_sell)
-            gross_performance_from_sells_with_ce = gross_performance_from_sells_with_ce.plus(gp_from_sell_ce)
-
-            last_average_price = (
-                Big(0) if total_quantity_from_buys.eq(0)
-                else total_investment_from_buys.div(total_quantity_from_buys)
-            )
-            last_average_price_with_ce = (
-                Big(0) if total_quantity_from_buys.eq(0)
-                else total_investment_from_buys_with_ce.div(total_quantity_from_buys)
-            )
-
-            if total_units.eq(0):
-                total_investment_from_buys = Big(0)
-                total_investment_from_buys_with_ce = Big(0)
-                total_quantity_from_buys = Big(0)
-
-            new_gp = val_of_inv.minus(total_investment).plus(gross_performance_from_sells)
-            new_gp_ce = val_of_inv_ce.minus(total_investment_with_ce).plus(gross_performance_from_sells_with_ce)
-
-            gross_performance = new_gp
-            gross_performance_with_ce = new_gp_ce
 
             if order.get("itemType") == "start":
-                fees_at_start_date = fees
-                fees_at_start_date_with_ce = fees_with_ce
-                gross_performance_at_start_date = gross_performance
-                gross_performance_at_start_date_with_ce = gross_performance_with_ce
+                s["fees_at_start"] = Pair(s["fees"].base, s["fees"].ce)
+                s["gross_perf_at_start"] = Pair(s["gross_perf"].base, s["gross_perf"].ce)
 
             if i > index_of_start:
-                if val_before.gt(0) and order["type"] in ("BUY", "SELL"):
-                    order_date = parse_date(order["date"])
-                    prev_date = parse_date(orders[i - 1]["date"])
-                    days_since = difference_in_days(order_date, prev_date)
-                    if days_since <= 0:
-                        days_since = EPSILON
-
-                    total_investment_days += days_since
-
-                    sum_twi = sum_twi.add(
-                        value_at_start_date.minus(investment_at_start_date).plus(total_inv_before).mul(days_since)
-                    )
-                    sum_twi_with_ce = sum_twi_with_ce.add(
-                        value_at_start_date_with_ce.minus(investment_at_start_date_with_ce).plus(total_inv_before_ce).mul(days_since)
-                    )
-
-                current_values[order["date"]] = val_of_inv
-                current_values_with_ce[order["date"]] = val_of_inv_ce
-
-                net_performance_values[order["date"]] = (
-                    gross_performance.minus(gross_performance_at_start_date)
-                    .minus(fees.minus(fees_at_start_date))
-                )
-                net_performance_values_with_ce[order["date"]] = (
-                    gross_performance_with_ce.minus(gross_performance_at_start_date_with_ce)
-                    .minus(fees_with_ce.minus(fees_at_start_date_with_ce))
-                )
-
-                investment_values_accumulated[order["date"]] = total_investment
-                investment_values_accumulated_with_ce[order["date"]] = total_investment_with_ce
-
-                investment_values_with_ce[order["date"]] = (
-                    investment_values_with_ce.get(order["date"], Big(0))
-                ).add(transaction_inv_ce)
-
-                time_weighted_investment_values[order["date"]] = (
-                    sum_twi.div(total_investment_days) if total_investment_days > EPSILON
-                    else total_investment if total_investment.gt(0) else Big(0)
-                )
-                time_weighted_investment_values_with_ce[order["date"]] = (
-                    sum_twi_with_ce.div(total_investment_days) if total_investment_days > EPSILON
-                    else total_investment_with_ce if total_investment_with_ce.gt(0) else Big(0)
-                )
+                self._record_date_values(s, order, val_of_inv, s["gross_perf"], s["fees"], txn_inv, orders, i)
 
             if i == index_of_end:
                 break
 
-        total_gp = gross_performance.minus(gross_performance_at_start_date)
-        total_gp_ce = gross_performance_with_ce.minus(gross_performance_at_start_date_with_ce)
-        total_np = gross_performance.minus(gross_performance_at_start_date).minus(
-            fees.minus(fees_at_start_date)
-        )
+        return {
+            "fees": s["fees"], "fees_at_start": s["fees_at_start"],
+            "gross_perf": s["gross_perf"], "gross_perf_at_start": s["gross_perf_at_start"],
+            "initial_value": s["initial_value"], "total_inv": s["total_inv"],
+            "sum_twi": s["sum_twi"], "total_investment_days": s["total_investment_days"],
+            "total_units": s["total_units"],
+            "current_values": s["current_values"], "current_values_ce": s["current_values_ce"],
+            "inv_values_acc": s["inv_values_acc"], "inv_values_acc_ce": s["inv_values_acc_ce"],
+            "inv_values_ce": s["inv_values_ce"],
+            "net_perf_values": s["net_perf_values"], "net_perf_values_ce": s["net_perf_values_ce"],
+            "twi_values": s["twi_values"], "twi_values_ce": s["twi_values_ce"],
+            "total_dividend": s["total_dividend"], "total_dividend_in_base": s["total_dividend_in_base"],
+            "total_interest": s["total_interest"], "total_interest_in_base": s["total_interest_in_base"],
+            "total_liabilities": s["total_liabilities"], "total_liabilities_in_base": s["total_liabilities_in_base"],
+            "unit_price_at_end": orders[next((i for i, o in enumerate(orders) if o.get("itemType") == "end"), len(orders) - 1)].get("unitPrice"),
+        }
 
-        twi_avg = sum_twi.div(total_investment_days) if total_investment_days > 0 else Big(0)
-        twi_avg_ce = sum_twi_with_ce.div(total_investment_days) if total_investment_days > 0 else Big(0)
-
-        gp_pct = total_gp.div(twi_avg) if twi_avg.gt(0) else Big(0)
-        gp_pct_ce = total_gp_ce.div(twi_avg_ce) if twi_avg_ce.gt(0) else Big(0)
-
-        np_pct = total_np.div(twi_avg) if twi_avg.gt(0) else Big(0)
-
-        # Build per-dateRange net performance maps
+    def _compute_date_range_performance(self, start, end, current_values_ce, inv_values_acc_ce, net_perf_values_ce):
+        """Compute per-dateRange net performance maps."""
         np_pct_ce_map = {}
         np_with_ce_map = {}
 
@@ -1143,80 +893,144 @@ _GET_SYMBOL_METRICS = '''\
             di = get_interval_from_date_range(dr)
             dr_end = parse_date(di["endDate"])
             dr_start = parse_date(di["startDate"])
-
             if is_before(dr_start, start):
                 dr_start = parse_date(start)
 
             range_end_str = format_date(dr_end)
             range_start_str = format_date(dr_start)
 
-            cv_at_start_ce = current_values_with_ce.get(range_start_str, Big(0))
-            iv_acc_at_start_ce = investment_values_accumulated_with_ce.get(range_start_str, Big(0))
+            cv_at_start_ce = current_values_ce.get(range_start_str, Big(0))
+            iv_acc_at_start_ce = inv_values_acc_ce.get(range_start_str, Big(0))
             gp_at_start_ce = cv_at_start_ce.minus(iv_acc_at_start_ce)
 
             average = Big(0)
             day_count = 0
-
             for j in range(len(self._chart_dates) - 1, -1, -1):
                 d = self._chart_dates[j]
                 if d > range_end_str:
                     continue
                 elif d < range_start_str:
                     break
-
-                acc_val = investment_values_accumulated_with_ce.get(d)
+                acc_val = inv_values_acc_ce.get(d)
                 if acc_val is not None and isinstance(acc_val, Big) and acc_val.gt(0):
                     average = average.add(acc_val.add(gp_at_start_ce))
                     day_count += 1
-
             if day_count > 0:
                 average = average.div(day_count)
 
-            end_val = net_performance_values_with_ce.get(range_end_str, Big(0))
-            start_val = (
-                Big(0) if dr == "max"
-                else net_performance_values_with_ce.get(range_start_str, Big(0))
-            )
+            end_val = net_perf_values_ce.get(range_end_str, Big(0))
+            start_val = Big(0) if dr == "max" else net_perf_values_ce.get(range_start_str, Big(0))
             np_with_ce_map[dr] = end_val.minus(start_val)
+            np_pct_ce_map[dr] = np_with_ce_map[dr].div(average) if average.gt(0) else Big(0)
 
-            np_pct_ce_map[dr] = (
-                np_with_ce_map[dr].div(average) if average.gt(0) else Big(0)
-            )
+        return np_pct_ce_map, np_with_ce_map
 
+    def _build_symbol_metrics_result(self, loop_result, start, end, gp_pct, gp_pct_ce, np_pct, np_pct_ce_map, np_with_ce_map, twi_avg):
+        """Assemble the final metrics dict from loop results."""
+        r = loop_result
+        iv = r["initial_value"]
         return {
-            "currentValues": current_values,
-            "currentValuesWithCurrencyEffect": current_values_with_ce,
-            "feesWithCurrencyEffect": fees_with_ce,
+            "currentValues": r["current_values"],
+            "currentValuesWithCurrencyEffect": r["current_values_ce"],
+            "feesWithCurrencyEffect": r["fees"].ce,
             "grossPerformancePercentage": gp_pct,
             "grossPerformancePercentageWithCurrencyEffect": gp_pct_ce,
-            "initialValue": initial_value if initial_value else Big(0),
-            "initialValueWithCurrencyEffect": initial_value_with_ce if initial_value_with_ce else Big(0),
-            "investmentValuesAccumulated": investment_values_accumulated,
-            "investmentValuesAccumulatedWithCurrencyEffect": investment_values_accumulated_with_ce,
-            "investmentValuesWithCurrencyEffect": investment_values_with_ce,
+            "initialValue": iv.base if iv.base else Big(0),
+            "initialValueWithCurrencyEffect": iv.ce if iv.ce else Big(0),
+            "investmentValuesAccumulated": r["inv_values_acc"],
+            "investmentValuesAccumulatedWithCurrencyEffect": r["inv_values_acc_ce"],
+            "investmentValuesWithCurrencyEffect": r["inv_values_ce"],
             "netPerformancePercentage": np_pct,
             "netPerformancePercentageWithCurrencyEffectMap": np_pct_ce_map,
-            "netPerformanceValues": net_performance_values,
-            "netPerformanceValuesWithCurrencyEffect": net_performance_values_with_ce,
+            "netPerformanceValues": r["net_perf_values"],
+            "netPerformanceValuesWithCurrencyEffect": r["net_perf_values_ce"],
             "netPerformanceWithCurrencyEffectMap": np_with_ce_map,
-            "timeWeightedInvestmentValues": time_weighted_investment_values,
-            "timeWeightedInvestmentValuesWithCurrencyEffect": time_weighted_investment_values_with_ce,
-            "totalAccountBalanceInBaseCurrency": total_account_balance_in_base,
-            "totalDividend": total_dividend,
-            "totalDividendInBaseCurrency": total_dividend_in_base,
-            "totalInterest": total_interest,
-            "totalInterestInBaseCurrency": total_interest_in_base,
-            "totalInvestment": total_investment,
-            "totalInvestmentWithCurrencyEffect": total_investment_with_ce,
-            "totalLiabilities": total_liabilities,
-            "totalLiabilitiesInBaseCurrency": total_liabilities_in_base,
-            "grossPerformance": total_gp,
-            "grossPerformanceWithCurrencyEffect": total_gp_ce,
-            "hasErrors": total_units.gt(0) and (not initial_value or not unit_price_at_end),
-            "netPerformance": total_np,
-            "timeWeightedInvestment": twi_avg,
-            "timeWeightedInvestmentWithCurrencyEffect": twi_avg_ce,
+            "timeWeightedInvestmentValues": r["twi_values"],
+            "timeWeightedInvestmentValuesWithCurrencyEffect": r["twi_values_ce"],
+            "totalAccountBalanceInBaseCurrency": Big(0),
+            "totalDividend": r["total_dividend"],
+            "totalDividendInBaseCurrency": r["total_dividend_in_base"],
+            "totalInterest": r["total_interest"],
+            "totalInterestInBaseCurrency": r["total_interest_in_base"],
+            "totalInvestment": r["total_inv"].base,
+            "totalInvestmentWithCurrencyEffect": r["total_inv"].ce,
+            "totalLiabilities": r["total_liabilities"],
+            "totalLiabilitiesInBaseCurrency": r["total_liabilities_in_base"],
+            "grossPerformance": r["gross_perf"].base.minus(r["gross_perf_at_start"].base),
+            "grossPerformanceWithCurrencyEffect": r["gross_perf"].ce.minus(r["gross_perf_at_start"].ce),
+            "hasErrors": r["total_units"].gt(0) and (not iv.base or not r["unit_price_at_end"]),
+            "netPerformance": r["gross_perf"].base.minus(r["gross_perf_at_start"].base).minus(
+                r["fees"].base.minus(r["fees_at_start"].base)
+            ),
+            "timeWeightedInvestment": twi_avg.base,
+            "timeWeightedInvestmentWithCurrencyEffect": twi_avg.ce,
         }
+
+    def _get_symbol_metrics(self, chart_date_map, data_source, end, exchange_rates, market_symbol_map, start, symbol):
+        """Calculate per-symbol metrics (mirrors TS getSymbolMetrics -- ROAI variant)."""
+        current_exchange_rate = exchange_rates.get(format_date(date.today()), 1)
+
+        orders = clone_deep([o for o in self._orders if o["SymbolProfile"]["symbol"] == symbol])
+        is_cash = (orders[0]["SymbolProfile"].get("assetSubClass") == "CASH") if orders else False
+
+        if len(orders) <= 0:
+            return self._empty_metrics()
+
+        date_of_first_transaction = parse_date(orders[0]["date"])
+        end_date_string = format_date(end)
+        start_date_string = format_date(start)
+
+        unit_price_at_start = market_symbol_map.get(start_date_string, {}).get(symbol)
+        unit_price_at_end = market_symbol_map.get(end_date_string, {}).get(symbol)
+        latest_activity = orders[-1] if orders else None
+
+        if (data_source == "MANUAL"
+            and latest_activity and latest_activity.get("type") in ("BUY", "SELL")
+            and latest_activity.get("unitPrice") and not unit_price_at_end):
+            unit_price_at_end = latest_activity["unitPrice"]
+        elif is_cash:
+            unit_price_at_end = Big(1)
+
+        if (not unit_price_at_end or
+            (not unit_price_at_start and is_before(date_of_first_transaction, start))):
+            return self._empty_metrics(has_errors=True)
+
+        orders = self._prepare_symbol_orders(
+            orders, chart_date_map, data_source, symbol, is_cash,
+            start_date_string, end_date_string, market_symbol_map,
+        )
+
+        index_of_start = next((i for i, o in enumerate(orders) if o.get("itemType") == "start"), 0)
+        index_of_end = next((i for i, o in enumerate(orders) if o.get("itemType") == "end"), len(orders) - 1)
+
+        r = self._process_orders_loop(
+            orders, index_of_start, index_of_end,
+            exchange_rates, current_exchange_rate, unit_price_at_start,
+        )
+
+        total_gp = Pair(
+            r["gross_perf"].base.minus(r["gross_perf_at_start"].base),
+            r["gross_perf"].ce.minus(r["gross_perf_at_start"].ce),
+        )
+        total_np = total_gp.base.minus(r["fees"].base.minus(r["fees_at_start"].base))
+
+        days = r["total_investment_days"]
+        twi_avg = Pair(
+            r["sum_twi"].base.div(days) if days > 0 else Big(0),
+            r["sum_twi"].ce.div(days) if days > 0 else Big(0),
+        )
+
+        gp_pct = total_gp.base.div(twi_avg.base) if twi_avg.base.gt(0) else Big(0)
+        gp_pct_ce = total_gp.ce.div(twi_avg.ce) if twi_avg.ce.gt(0) else Big(0)
+        np_pct = total_np.div(twi_avg.base) if twi_avg.base.gt(0) else Big(0)
+
+        np_pct_ce_map, np_with_ce_map = self._compute_date_range_performance(
+            start, end, r["current_values_ce"], r["inv_values_acc_ce"], r["net_perf_values_ce"],
+        )
+
+        return self._build_symbol_metrics_result(
+            r, start, end, gp_pct, gp_pct_ce, np_pct, np_pct_ce_map, np_with_ce_map, twi_avg,
+        )
 '''
 
 
@@ -1290,94 +1104,26 @@ _CALCULATE_OVERALL_PERFORMANCE = '''\
 
 
 _COMPUTE_SNAPSHOT = '''\
-    def _compute_snapshot(self):
-        """Build full portfolio snapshot (mirrors TS computeSnapshot)."""
-        if self._snapshot_cache is not None:
-            return self._snapshot_cache
-
-        last_tp = self._transaction_points[-1] if self._transaction_points else None
-        transaction_points = [
-            tp for tp in self._transaction_points
-            if is_before(parse_date(tp["date"]), self._end_date) or format_date(parse_date(tp["date"])) == format_date(self._end_date)
-        ]
-
-        if not transaction_points:
-            self._snapshot_cache = {
-                "activitiesCount": 0,
-                "createdAt": datetime.now(),
-                "currentValueInBaseCurrency": Big(0),
-                "errors": [],
-                "hasErrors": False,
-                "historicalData": [],
-                "positions": [],
-                "totalFeesWithCurrencyEffect": Big(0),
-                "totalInterestWithCurrencyEffect": Big(0),
-                "totalInvestment": Big(0),
-                "totalInvestmentWithCurrencyEffect": Big(0),
-                "totalLiabilitiesWithCurrencyEffect": Big(0),
-            }
-            return self._snapshot_cache
-
-        market_symbol_map, exchange_rates = self._build_market_data()
-
-        currencies = {}
-        data_gathering_items = []
-        first_index = len(transaction_points)
-        first_tp_found = None
-        total_interest_ce = Big(0)
-        total_liabilities_ce = Big(0)
-
-        for item in transaction_points[first_index - 1]["items"]:
-            if item.get("assetSubClass") != "CASH":
-                data_gathering_items.append({
-                    "dataSource": item["dataSource"],
-                    "symbol": item["symbol"],
-                })
-            currencies[item["symbol"]] = item.get("currency", "USD")
-
-        for i, tp in enumerate(transaction_points):
-            if not is_before(parse_date(tp["date"]), self._start_date) and first_tp_found is None:
-                first_tp_found = tp
-                first_index = i
-
-        end_date_string = format_date(self._end_date)
-        days_in_market = difference_in_days(self._end_date, self._start_date)
-        max_chart_items = 500
-
-        step = max(1, round(days_in_market / min(days_in_market, max_chart_items))) if days_in_market > 0 else 1
-
-        chart_date_map = self._get_chart_date_map(
-            end_date=self._end_date,
-            start_date=self._start_date,
-            step=step,
-        )
-
-        chart_dates = sorted(chart_date_map.keys())
-
-        if first_index > 0:
-            first_index -= 1
-
+    def _build_positions(self, last_tp, end_date_string, chart_date_map, exchange_rates, market_symbol_map):
+        """Build position list and collect per-symbol date-series data."""
         errors = []
         has_any_errors = False
         positions = []
-        accumulated_values_by_date = {}
         values_by_symbol = {}
+        total_interest_ce = Big(0)
+        total_liabilities_ce = Big(0)
 
         for item in last_tp["items"]:
             market_price_base = (
                 market_symbol_map.get(end_date_string, {}).get(item["symbol"])
                 or item.get("averagePrice", Big(0))
             )
-            # Exchange rate = 1 (simplified single-currency)
             market_price_in_base = market_price_base
 
             metrics = self._get_symbol_metrics(
-                chart_date_map=chart_date_map,
-                data_source=item["dataSource"],
-                end=self._end_date,
-                exchange_rates=exchange_rates,
-                market_symbol_map=market_symbol_map,
-                start=self._start_date,
+                chart_date_map=chart_date_map, data_source=item["dataSource"],
+                end=self._end_date, exchange_rates=exchange_rates,
+                market_symbol_map=market_symbol_map, start=self._start_date,
                 symbol=item["symbol"],
             )
 
@@ -1398,6 +1144,7 @@ _COMPUTE_SNAPSHOT = '''\
                 }
 
             value_in_base = market_price_in_base.mul(item["quantity"]) if isinstance(market_price_in_base, Big) else Big(market_price_in_base).mul(item["quantity"])
+            has_err = metrics["hasErrors"]
 
             positions.append({
                 "includeInTotalAssetValue": include_in_total,
@@ -1412,19 +1159,19 @@ _COMPUTE_SNAPSHOT = '''\
                 "dividendInBaseCurrency": metrics["totalDividendInBaseCurrency"],
                 "fee": item.get("fee", Big(0)),
                 "feeInBaseCurrency": item.get("feeInBaseCurrency", Big(0)),
-                "grossPerformance": metrics["grossPerformance"] if not metrics["hasErrors"] else None,
-                "grossPerformancePercentage": metrics["grossPerformancePercentage"] if not metrics["hasErrors"] else None,
-                "grossPerformancePercentageWithCurrencyEffect": metrics["grossPerformancePercentageWithCurrencyEffect"] if not metrics["hasErrors"] else None,
-                "grossPerformanceWithCurrencyEffect": metrics["grossPerformanceWithCurrencyEffect"] if not metrics["hasErrors"] else None,
+                "grossPerformance": metrics["grossPerformance"] if not has_err else None,
+                "grossPerformancePercentage": metrics["grossPerformancePercentage"] if not has_err else None,
+                "grossPerformancePercentageWithCurrencyEffect": metrics["grossPerformancePercentageWithCurrencyEffect"] if not has_err else None,
+                "grossPerformanceWithCurrencyEffect": metrics["grossPerformanceWithCurrencyEffect"] if not has_err else None,
                 "includeInHoldings": item.get("includeInHoldings", True),
                 "investment": metrics["totalInvestment"],
                 "investmentWithCurrencyEffect": metrics["totalInvestmentWithCurrencyEffect"],
                 "marketPrice": market_symbol_map.get(end_date_string, {}).get(item["symbol"], Big(1)).toNumber(),
-                "marketPriceInBaseCurrency": market_price_in_base.toNumber() if isinstance(market_price_in_base, Big) else float(market_price_in_base),
-                "netPerformance": metrics["netPerformance"] if not metrics["hasErrors"] else None,
-                "netPerformancePercentage": metrics["netPerformancePercentage"] if not metrics["hasErrors"] else None,
-                "netPerformancePercentageWithCurrencyEffectMap": metrics["netPerformancePercentageWithCurrencyEffectMap"] if not metrics["hasErrors"] else None,
-                "netPerformanceWithCurrencyEffectMap": metrics["netPerformanceWithCurrencyEffectMap"] if not metrics["hasErrors"] else None,
+                "marketPriceInBaseCurrency": _to_num(market_price_in_base),
+                "netPerformance": metrics["netPerformance"] if not has_err else None,
+                "netPerformancePercentage": metrics["netPerformancePercentage"] if not has_err else None,
+                "netPerformancePercentageWithCurrencyEffectMap": metrics["netPerformancePercentageWithCurrencyEffectMap"] if not has_err else None,
+                "netPerformanceWithCurrencyEffectMap": metrics["netPerformanceWithCurrencyEffectMap"] if not has_err else None,
                 "quantity": item["quantity"],
                 "symbol": item["symbol"],
                 "tags": item.get("tags", []),
@@ -1434,14 +1181,26 @@ _COMPUTE_SNAPSHOT = '''\
             total_interest_ce = total_interest_ce.plus(metrics.get("totalInterestInBaseCurrency", Big(0)))
             total_liabilities_ce = total_liabilities_ce.plus(metrics.get("totalLiabilitiesInBaseCurrency", Big(0)))
 
-            if (metrics["hasErrors"] and item.get("investment", Big(0)).gt(0) and not item.get("skipErrors", False)):
+            if has_err and item.get("investment", Big(0)).gt(0) and not item.get("skipErrors", False):
                 errors.append({"dataSource": item["dataSource"], "symbol": item["symbol"]})
 
-        # Accumulate values by date for historical data / chart
+        return positions, values_by_symbol, errors, has_any_errors, total_interest_ce, total_liabilities_ce
+
+    def _build_historical_data(self, chart_dates, values_by_symbol):
+        """Aggregate per-symbol values into historical data entries."""
+        accumulated = {}
+        _ZERO_ACC = lambda: {
+            "investmentValueWithCurrencyEffect": Big(0),
+            "totalAccountBalanceWithCurrencyEffect": Big(0),
+            "totalCurrentValue": Big(0), "totalCurrentValueWithCurrencyEffect": Big(0),
+            "totalInvestmentValue": Big(0), "totalInvestmentValueWithCurrencyEffect": Big(0),
+            "totalNetPerformanceValue": Big(0), "totalNetPerformanceValueWithCurrencyEffect": Big(0),
+            "totalTimeWeightedInvestmentValue": Big(0), "totalTimeWeightedInvestmentValueWithCurrencyEffect": Big(0),
+        }
+
         for date_string in chart_dates:
             for sym in values_by_symbol:
                 sv = values_by_symbol[sym]
-
                 cv = sv["currentValues"].get(date_string, Big(0))
                 cv_ce = sv["currentValuesWithCurrencyEffect"].get(date_string, Big(0))
                 iv_acc = sv["investmentValuesAccumulated"].get(date_string, Big(0))
@@ -1452,21 +1211,10 @@ _COMPUTE_SNAPSHOT = '''\
                 twiv = sv["timeWeightedInvestmentValues"].get(date_string, Big(0))
                 twiv_ce = sv["timeWeightedInvestmentValuesWithCurrencyEffect"].get(date_string, Big(0))
 
-                if date_string not in accumulated_values_by_date:
-                    accumulated_values_by_date[date_string] = {
-                        "investmentValueWithCurrencyEffect": Big(0),
-                        "totalAccountBalanceWithCurrencyEffect": Big(0),
-                        "totalCurrentValue": Big(0),
-                        "totalCurrentValueWithCurrencyEffect": Big(0),
-                        "totalInvestmentValue": Big(0),
-                        "totalInvestmentValueWithCurrencyEffect": Big(0),
-                        "totalNetPerformanceValue": Big(0),
-                        "totalNetPerformanceValueWithCurrencyEffect": Big(0),
-                        "totalTimeWeightedInvestmentValue": Big(0),
-                        "totalTimeWeightedInvestmentValueWithCurrencyEffect": Big(0),
-                    }
+                if date_string not in accumulated:
+                    accumulated[date_string] = _ZERO_ACC()
 
-                acc = accumulated_values_by_date[date_string]
+                acc = accumulated[date_string]
                 acc["investmentValueWithCurrencyEffect"] = acc["investmentValueWithCurrencyEffect"].add(iv_ce)
                 acc["totalCurrentValue"] = acc["totalCurrentValue"].add(cv)
                 acc["totalCurrentValueWithCurrencyEffect"] = acc["totalCurrentValueWithCurrencyEffect"].add(cv_ce)
@@ -1478,16 +1226,14 @@ _COMPUTE_SNAPSHOT = '''\
                 acc["totalTimeWeightedInvestmentValueWithCurrencyEffect"] = acc["totalTimeWeightedInvestmentValueWithCurrencyEffect"].add(twiv_ce)
 
         historical_data = []
-        for d in sorted(accumulated_values_by_date.keys()):
-            vals = accumulated_values_by_date[d]
+        for d in sorted(accumulated.keys()):
+            vals = accumulated[d]
             twi_val = vals["totalTimeWeightedInvestmentValue"]
             twi_val_ce = vals["totalTimeWeightedInvestmentValueWithCurrencyEffect"]
             npv = vals["totalNetPerformanceValue"]
             npv_ce = vals["totalNetPerformanceValueWithCurrencyEffect"]
-
             np_pct = 0 if twi_val.eq(0) else npv.div(twi_val).toNumber()
             np_pct_ce = 0 if twi_val_ce.eq(0) else npv_ce.div(twi_val_ce).toNumber()
-
             historical_data.append({
                 "date": d,
                 "netPerformanceInPercentage": np_pct,
@@ -1495,28 +1241,69 @@ _COMPUTE_SNAPSHOT = '''\
                 "investmentValueWithCurrencyEffect": vals["investmentValueWithCurrencyEffect"].toNumber(),
                 "netPerformance": npv.toNumber(),
                 "netPerformanceWithCurrencyEffect": npv_ce.toNumber(),
-                "netWorth": vals["totalCurrentValueWithCurrencyEffect"].plus(
-                    vals["totalAccountBalanceWithCurrencyEffect"]
-                ).toNumber(),
+                "netWorth": vals["totalCurrentValueWithCurrencyEffect"].plus(vals["totalAccountBalanceWithCurrencyEffect"]).toNumber(),
                 "totalAccountBalance": vals["totalAccountBalanceWithCurrencyEffect"].toNumber(),
                 "totalInvestment": vals["totalInvestmentValue"].toNumber(),
                 "totalInvestmentValueWithCurrencyEffect": vals["totalInvestmentValueWithCurrencyEffect"].toNumber(),
                 "value": vals["totalCurrentValue"].toNumber(),
                 "valueWithCurrencyEffect": vals["totalCurrentValueWithCurrencyEffect"].toNumber(),
             })
+        return historical_data
 
+    def _compute_snapshot(self):
+        """Build full portfolio snapshot (mirrors TS computeSnapshot)."""
+        if self._snapshot_cache is not None:
+            return self._snapshot_cache
+
+        last_tp = self._transaction_points[-1] if self._transaction_points else None
+        transaction_points = [
+            tp for tp in self._transaction_points
+            if is_before(parse_date(tp["date"]), self._end_date) or format_date(parse_date(tp["date"])) == format_date(self._end_date)
+        ]
+
+        if not transaction_points:
+            self._snapshot_cache = {
+                "activitiesCount": 0, "createdAt": datetime.now(),
+                "currentValueInBaseCurrency": Big(0), "errors": [], "hasErrors": False,
+                "historicalData": [], "positions": [],
+                "totalFeesWithCurrencyEffect": Big(0), "totalInterestWithCurrencyEffect": Big(0),
+                "totalInvestment": Big(0), "totalInvestmentWithCurrencyEffect": Big(0),
+                "totalLiabilitiesWithCurrencyEffect": Big(0),
+            }
+            return self._snapshot_cache
+
+        market_symbol_map, exchange_rates = self._build_market_data()
+
+        first_index = len(transaction_points)
+        first_tp_found = None
+        for i, tp in enumerate(transaction_points):
+            if not is_before(parse_date(tp["date"]), self._start_date) and first_tp_found is None:
+                first_tp_found = tp
+                first_index = i
+        if first_index > 0:
+            first_index -= 1
+
+        end_date_string = format_date(self._end_date)
+        days_in_market = difference_in_days(self._end_date, self._start_date)
+        step = max(1, round(days_in_market / min(days_in_market, 500))) if days_in_market > 0 else 1
+
+        chart_date_map = self._get_chart_date_map(end_date=self._end_date, start_date=self._start_date, step=step)
+        chart_dates = sorted(chart_date_map.keys())
+
+        positions, values_by_symbol, errors, has_any_errors, total_interest_ce, total_liabilities_ce = (
+            self._build_positions(last_tp, end_date_string, chart_date_map, exchange_rates, market_symbol_map)
+        )
+
+        historical_data = self._build_historical_data(chart_dates, values_by_symbol)
         overall = self._calculate_overall_performance(positions)
 
         positions_for_holdings = [
             {k: v for k, v in p.items() if k != "includeInHoldings"}
-            for p in positions
-            if p.get("includeInHoldings", True)
+            for p in positions if p.get("includeInHoldings", True)
         ]
 
         result = {
-            **overall,
-            "errors": errors,
-            "historicalData": historical_data,
+            **overall, "errors": errors, "historicalData": historical_data,
             "totalInterestWithCurrencyEffect": total_interest_ce,
             "totalLiabilitiesWithCurrencyEffect": total_liabilities_ce,
             "hasErrors": has_any_errors or overall["hasErrors"],
@@ -1532,120 +1319,94 @@ _API_METHODS = '''\
     # Public API methods
     # =======================================================================
 
-    def get_performance(self) -> dict:
-        """Return full performance response: {chart, firstOrderDate, performance}."""
-        snapshot = self._compute_snapshot()
-        historical_data = snapshot.get("historicalData", [])
-
+    def _build_chart(self, historical_data):
+        """Build chart entries from historical data."""
         chart = []
         np_at_start = None
         np_ce_at_start = None
         total_inv_vals_ce = []
-
-        today = date.today()
-        # Use max range: start = self._start_date, end = self._end_date
         start = self._start_date
         end = self._end_date
 
         for item in historical_data:
             d = parse_date(item["date"])
-            if not is_before(d, start) and not is_after(d, end):
-                if np_at_start is None:
-                    np_at_start = item["netPerformance"]
-                    np_ce_at_start = item["netPerformanceWithCurrencyEffect"]
+            if is_before(d, start) or is_after(d, end):
+                continue
+            if np_at_start is None:
+                np_at_start = item["netPerformance"]
+                np_ce_at_start = item["netPerformanceWithCurrencyEffect"]
 
-                np_since = item["netPerformance"] - np_at_start
-                np_ce_since = item["netPerformanceWithCurrencyEffect"] - np_ce_at_start
+            np_since = item["netPerformance"] - np_at_start
+            np_ce_since = item["netPerformanceWithCurrencyEffect"] - np_ce_at_start
 
-                if item.get("totalInvestmentValueWithCurrencyEffect", 0) > 0:
-                    total_inv_vals_ce.append(item["totalInvestmentValueWithCurrencyEffect"])
+            if item.get("totalInvestmentValueWithCurrencyEffect", 0) > 0:
+                total_inv_vals_ce.append(item["totalInvestmentValueWithCurrencyEffect"])
 
-                twi_val = (sum(total_inv_vals_ce) / len(total_inv_vals_ce)) if total_inv_vals_ce else 0
+            twi_val = (sum(total_inv_vals_ce) / len(total_inv_vals_ce)) if total_inv_vals_ce else 0
 
-                entry = dict(item)
-                entry["netPerformance"] = item["netPerformance"] - np_at_start
-                entry["netPerformanceWithCurrencyEffect"] = np_ce_since
-                entry["netPerformanceInPercentage"] = (
-                    0 if twi_val == 0 else np_since / twi_val
-                )
-                entry["netPerformanceInPercentageWithCurrencyEffect"] = (
-                    0 if twi_val == 0 else np_ce_since / twi_val
-                )
-                chart.append(entry)
+            entry = dict(item)
+            entry["netPerformance"] = np_since
+            entry["netPerformanceWithCurrencyEffect"] = np_ce_since
+            entry["netPerformanceInPercentage"] = 0 if twi_val == 0 else np_since / twi_val
+            entry["netPerformanceInPercentageWithCurrencyEffect"] = 0 if twi_val == 0 else np_ce_since / twi_val
+            chart.append(entry)
+        return chart
 
-        # Build performance summary from snapshot
-        perf = {}
+    @staticmethod
+    def _fallback_np_pct(positions, total_np, total_np_pct, total_np_pct_ce):
+        """Resolve net performance percentages from positions when chart gives 0."""
+        if (total_np_pct != 0 and total_np_pct_ce != 0) or total_np.eq(0):
+            return total_np_pct, total_np_pct_ce
+        for pos in positions:
+            pos_np_pct = pos.get("netPerformancePercentage")
+            if pos_np_pct is not None and isinstance(pos_np_pct, Big) and not pos_np_pct.eq(0):
+                val = pos_np_pct.toNumber()
+                total_np_pct = total_np_pct or val
+                total_np_pct_ce = total_np_pct_ce or val
+            else:
+                np_pct_map = pos.get("netPerformancePercentageWithCurrencyEffectMap")
+                if isinstance(np_pct_map, dict):
+                    max_pct = np_pct_map.get("max", Big(0))
+                    if isinstance(max_pct, Big) and not max_pct.eq(0):
+                        val = max_pct.toNumber()
+                        total_np_pct = total_np_pct or val
+                        total_np_pct_ce = total_np_pct_ce or val
+        return total_np_pct, total_np_pct_ce
+
+    def get_performance(self) -> dict:
+        """Return full performance response: {chart, firstOrderDate, performance}."""
+        snapshot = self._compute_snapshot()
+        chart = self._build_chart(snapshot.get("historicalData", []))
         positions = snapshot.get("positions", [])
-        current_value_base = snapshot.get("currentValueInBaseCurrency", Big(0))
 
-        total_fees = snapshot.get("totalFeesWithCurrencyEffect", Big(0))
-        total_inv = snapshot.get("totalInvestment", Big(0))
-        total_liab = snapshot.get("totalLiabilitiesWithCurrencyEffect", Big(0))
-
-        # Sum net performance from positions
         total_np = Big(0)
-        total_np_pct = Big(0)
         total_np_ce = Big(0)
-        total_np_pct_ce = Big(0)
-
         for pos in positions:
             if pos.get("netPerformance") is not None:
                 total_np = total_np.plus(pos["netPerformance"])
-            if pos.get("netPerformanceWithCurrencyEffectMap") and isinstance(pos["netPerformanceWithCurrencyEffectMap"], dict):
-                max_val = pos["netPerformanceWithCurrencyEffectMap"].get("max", Big(0))
-                total_np_ce = total_np_ce.plus(max_val)
+            np_ce_map = pos.get("netPerformanceWithCurrencyEffectMap")
+            if isinstance(np_ce_map, dict):
+                total_np_ce = total_np_ce.plus(np_ce_map.get("max", Big(0)))
 
-        # Net performance percentages from chart if available
-        if chart:
-            last_entry = chart[-1]
-            total_np_pct = last_entry.get("netPerformanceInPercentage", 0)
-            total_np_pct_ce = last_entry.get("netPerformanceInPercentageWithCurrencyEffect", 0)
+        total_np_pct = chart[-1].get("netPerformanceInPercentage", 0) if chart else 0
+        total_np_pct_ce = chart[-1].get("netPerformanceInPercentageWithCurrencyEffect", 0) if chart else 0
+        total_np_pct, total_np_pct_ce = self._fallback_np_pct(positions, total_np, total_np_pct, total_np_pct_ce)
 
-        # Fallback: if chart-based percentage is 0 but we have net performance,
-        # compute from position-level data (handles same-day buy+sell edge case)
-        if (total_np_pct == 0 or total_np_pct_ce == 0) and not total_np.eq(0):
-            for pos in positions:
-                # Try the position-level netPerformancePercentage first (TWI-based)
-                pos_np_pct = pos.get("netPerformancePercentage")
-                if pos_np_pct is not None and isinstance(pos_np_pct, Big) and not pos_np_pct.eq(0):
-                    if total_np_pct == 0:
-                        total_np_pct = pos_np_pct.toNumber()
-                    if total_np_pct_ce == 0:
-                        total_np_pct_ce = pos_np_pct.toNumber()
-                else:
-                    # Fall back to the dateRange map
-                    np_pct_map = pos.get("netPerformancePercentageWithCurrencyEffectMap")
-                    if np_pct_map and isinstance(np_pct_map, dict):
-                        max_pct = np_pct_map.get("max", Big(0))
-                        if isinstance(max_pct, Big) and not max_pct.eq(0):
-                            if total_np_pct == 0:
-                                total_np_pct = max_pct.toNumber()
-                            if total_np_pct_ce == 0:
-                                total_np_pct_ce = max_pct.toNumber()
-
-        cv_num = current_value_base.toNumber() if isinstance(current_value_base, Big) else float(current_value_base)
-
+        cv_num = _to_num(snapshot.get("currentValueInBaseCurrency", Big(0)))
         perf = {
-            "currentNetWorth": cv_num,
-            "currentValue": cv_num,
-            "currentValueInBaseCurrency": cv_num,
-            "netPerformance": total_np.toNumber() if isinstance(total_np, Big) else float(total_np),
-            "netPerformancePercentage": total_np_pct if isinstance(total_np_pct, (int, float)) else total_np_pct.toNumber(),
-            "netPerformancePercentageWithCurrencyEffect": total_np_pct_ce if isinstance(total_np_pct_ce, (int, float)) else total_np_pct_ce.toNumber(),
-            "netPerformanceWithCurrencyEffect": total_np_ce.toNumber() if isinstance(total_np_ce, Big) else float(total_np_ce),
-            "totalFees": total_fees.toNumber() if isinstance(total_fees, Big) else float(total_fees),
-            "totalInvestment": total_inv.toNumber() if isinstance(total_inv, Big) else float(total_inv),
-            "totalLiabilities": total_liab.toNumber() if isinstance(total_liab, Big) else float(total_liab),
+            "currentNetWorth": cv_num, "currentValue": cv_num, "currentValueInBaseCurrency": cv_num,
+            "netPerformance": _to_num(total_np),
+            "netPerformancePercentage": _to_num(total_np_pct),
+            "netPerformancePercentageWithCurrencyEffect": _to_num(total_np_pct_ce),
+            "netPerformanceWithCurrencyEffect": _to_num(total_np_ce),
+            "totalFees": _to_num(snapshot.get("totalFeesWithCurrencyEffect", Big(0))),
+            "totalInvestment": _to_num(snapshot.get("totalInvestment", Big(0))),
+            "totalLiabilities": _to_num(snapshot.get("totalLiabilitiesWithCurrencyEffect", Big(0))),
             "totalValueables": 0.0,
         }
 
         first_order_date = min((a["date"] for a in self._orders), default=None) if self._orders else None
-
-        return {
-            "chart": chart,
-            "firstOrderDate": first_order_date,
-            "performance": perf,
-        }
+        return {"chart": chart, "firstOrderDate": first_order_date, "performance": perf}
 
     def get_investments(self, group_by=None) -> dict:
         """Return investments: {investments: [{date, investment}]}."""
@@ -1697,35 +1458,45 @@ _API_METHODS = '''\
                 result.append({"date": f"{dg}-01-01", "investment": grouped[dg]})
         return result
 
+    @staticmethod
+    def _build_holding_dict(pos, extra=None):
+        """Build a holding dict from a position, reducing duplication between get_holdings and get_details."""
+        sym = pos.get("symbol", "")
+        investment = pos.get("investment", Big(0))
+        quantity = pos.get("quantity", Big(0))
+        fee = pos.get("fee", Big(0))
+        np_ = pos.get("netPerformance", Big(0)) or Big(0)
+
+        h = {
+            "symbol": sym,
+            "quantity": _to_num(quantity),
+            "investment": _to_num(investment),
+            "currency": pos.get("currency", "USD"),
+            "dataSource": pos.get("dataSource", "YAHOO"),
+            "dateOfFirstActivity": pos.get("dateOfFirstActivity"),
+            "averagePrice": _to_num(pos.get("averagePrice", 0)),
+            "marketPrice": pos.get("marketPrice", 0),
+            "marketPriceInBaseCurrency": pos.get("marketPriceInBaseCurrency", 0),
+            "fee": _to_num(fee),
+            "netPerformance": _to_num(np_),
+            "grossPerformance": _to_num(pos.get("grossPerformance", 0)),
+            "valueInBaseCurrency": _to_num(pos.get("valueInBaseCurrency", 0)),
+            "activitiesCount": pos.get("activitiesCount", 0),
+            "tags": pos.get("tags", []),
+        }
+        if extra:
+            h.update(extra)
+        return sym, h
+
     def get_holdings(self) -> dict:
         """Return holdings: {holdings: {symbol: {...}}}."""
         snapshot = self._compute_snapshot()
-        positions = snapshot.get("positions", [])
-
         holdings = {}
-        for pos in positions:
-            sym = pos.get("symbol", "")
-            investment = pos.get("investment", Big(0))
-            quantity = pos.get("quantity", Big(0))
-
-            holdings[sym] = {
-                "symbol": sym,
-                "quantity": quantity.toNumber() if isinstance(quantity, Big) else float(quantity),
-                "investment": investment.toNumber() if isinstance(investment, Big) else float(investment),
-                "currency": pos.get("currency", "USD"),
-                "dataSource": pos.get("dataSource", "YAHOO"),
-                "dateOfFirstActivity": pos.get("dateOfFirstActivity"),
-                "averagePrice": pos["averagePrice"].toNumber() if isinstance(pos.get("averagePrice"), Big) else float(pos.get("averagePrice", 0)),
-                "marketPrice": pos.get("marketPrice", 0),
-                "marketPriceInBaseCurrency": pos.get("marketPriceInBaseCurrency", 0),
-                "fee": pos["fee"].toNumber() if isinstance(pos.get("fee"), Big) else float(pos.get("fee", 0)),
-                "netPerformance": pos["netPerformance"].toNumber() if isinstance(pos.get("netPerformance"), Big) else (float(pos["netPerformance"]) if pos.get("netPerformance") is not None else 0),
-                "netPerformancePercentage": pos["netPerformancePercentage"].toNumber() if isinstance(pos.get("netPerformancePercentage"), Big) else (float(pos["netPerformancePercentage"]) if pos.get("netPerformancePercentage") is not None else 0),
-                "grossPerformance": pos["grossPerformance"].toNumber() if isinstance(pos.get("grossPerformance"), Big) else (float(pos["grossPerformance"]) if pos.get("grossPerformance") is not None else 0),
-                "valueInBaseCurrency": pos["valueInBaseCurrency"].toNumber() if isinstance(pos.get("valueInBaseCurrency"), Big) else float(pos.get("valueInBaseCurrency", 0)),
-                "activitiesCount": pos.get("activitiesCount", 0),
-                "tags": pos.get("tags", []),
-            }
+        for pos in snapshot.get("positions", []):
+            sym, h = self._build_holding_dict(pos, extra={
+                "netPerformancePercentage": _to_num(pos.get("netPerformancePercentage", 0)),
+            })
+            holdings[sym] = h
         return {"holdings": holdings}
 
     def get_details(self, base_currency="USD") -> dict:
@@ -1740,67 +1511,40 @@ _API_METHODS = '''\
         total_fees = Big(0)
 
         for pos in positions:
-            sym = pos.get("symbol", "")
             investment = pos.get("investment", Big(0))
-            quantity = pos.get("quantity", Big(0))
-            value_base = pos.get("valueInBaseCurrency", Big(0))
             np_ = pos.get("netPerformance", Big(0)) or Big(0)
             fee = pos.get("fee", Big(0))
-            np_pct = pos.get("netPerformancePercentage")
+            value_base = pos.get("valueInBaseCurrency", Big(0))
 
             total_investment = total_investment.plus(investment)
             total_net_perf = total_net_perf.plus(np_)
             total_value_base = total_value_base.plus(value_base)
             total_fees = total_fees.plus(fee)
 
-            inv_val = investment.toNumber() if isinstance(investment, Big) else float(investment)
-            np_val = np_.toNumber() if isinstance(np_, Big) else float(np_) if np_ is not None else 0
-
-            holdings[sym] = {
-                "symbol": sym,
-                "quantity": quantity.toNumber() if isinstance(quantity, Big) else float(quantity),
-                "investment": inv_val,
-                "currency": pos.get("currency", "USD"),
-                "dataSource": pos.get("dataSource", "YAHOO"),
-                "dateOfFirstActivity": pos.get("dateOfFirstActivity"),
-                "averagePrice": pos["averagePrice"].toNumber() if isinstance(pos.get("averagePrice"), Big) else float(pos.get("averagePrice", 0)),
-                "marketPrice": pos.get("marketPrice", 0),
-                "marketPriceInBaseCurrency": pos.get("marketPriceInBaseCurrency", 0),
-                "fee": fee.toNumber() if isinstance(fee, Big) else float(fee),
-                "netPerformance": np_val,
+            inv_val = _to_num(investment)
+            np_val = _to_num(np_)
+            sym, h = self._build_holding_dict(pos, extra={
                 "netPerformancePercent": (np_val / inv_val) if inv_val != 0 else 0,
-                "grossPerformance": pos["grossPerformance"].toNumber() if isinstance(pos.get("grossPerformance"), Big) else (float(pos["grossPerformance"]) if pos.get("grossPerformance") is not None else 0),
-                "valueInBaseCurrency": value_base.toNumber() if isinstance(value_base, Big) else float(value_base),
-                "activitiesCount": pos.get("activitiesCount", 0),
-                "tags": pos.get("tags", []),
-            }
+            })
+            holdings[sym] = h
 
         created_at = min((a["date"] for a in self._orders), default=None) if self._orders else None
+        tv = _to_num(total_value_base)
 
         return {
             "accounts": {
-                "default": {
-                    "balance": 0.0,
-                    "currency": base_currency,
-                    "name": "Default Account",
-                    "valueInBaseCurrency": total_value_base.toNumber() if isinstance(total_value_base, Big) else float(total_value_base),
-                }
+                "default": {"balance": 0.0, "currency": base_currency, "name": "Default Account", "valueInBaseCurrency": tv}
             },
             "createdAt": created_at,
             "holdings": holdings,
             "platforms": {
-                "default": {
-                    "balance": 0.0,
-                    "currency": base_currency,
-                    "name": "Default Platform",
-                    "valueInBaseCurrency": total_value_base.toNumber() if isinstance(total_value_base, Big) else float(total_value_base),
-                }
+                "default": {"balance": 0.0, "currency": base_currency, "name": "Default Platform", "valueInBaseCurrency": tv}
             },
             "summary": {
-                "totalInvestment": total_investment.toNumber() if isinstance(total_investment, Big) else float(total_investment),
-                "netPerformance": total_net_perf.toNumber() if isinstance(total_net_perf, Big) else float(total_net_perf),
-                "currentValueInBaseCurrency": total_value_base.toNumber() if isinstance(total_value_base, Big) else float(total_value_base),
-                "totalFees": total_fees.toNumber() if isinstance(total_fees, Big) else float(total_fees),
+                "totalInvestment": _to_num(total_investment),
+                "netPerformance": _to_num(total_net_perf),
+                "currentValueInBaseCurrency": tv,
+                "totalFees": _to_num(total_fees),
             },
             "hasError": snapshot.get("hasErrors", False),
         }
