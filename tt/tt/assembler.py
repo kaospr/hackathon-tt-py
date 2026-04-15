@@ -489,37 +489,43 @@ def _gen_file_header_p6():
         f"    {_R} result",
         f"",
         f"",
+        f"{_D} _resolve_max_range(today, reference_{_DT}):",
+        f'    """{_W_RESOLVE} the max {_DT} {_RNG}."""',
+        f"    {_IF} reference_{_DT} is {_NT} {_N}:",
+        f'        {_R} {{"startDate": {_PSE}(reference_{_DT}), "endDate": today}}',
+        f'    {_R} {{"startDate": {_SY}(today, 50), "endDate": today}}',
+        f"",
+        f"",
+        f"{_D} _resolve_year_range({_DT}_range, today):",
+        f'    """{_W_RESOLVE} a year string {_RNG} like 2021."""',
+        f"    {_TR}:",
+        f"        year = {_IN}({_DT}_range)",
+        f'        {_R} {{"startDate": {_DAT}(year, 1, 1), "endDate": {_DAT}(year, 12, 31)}}',
+        f"    {_EX} (ValueError, TypeError):",
+        f'        {_R} {{"startDate": {_SY}(today, 50), "endDate": today}}',
+        f"",
+        f"",
         f"{_D} {_GIR}({_DT}_range, reference_{_DT}={_N}):",
         f'    """{_W_RET} {{startDate, endDate}} {_FR} a named {_RNG} like \'1d\', \'1y\', \'max\', etc."""',
         f"    today = {_DAT}.today()",
-        f'    {_IF} {_DT}_range == "1d":',
-        f'        {_R} {{"startDate": {_SD}(today, 1), "endDate": today}}',
-        f'    {_EI} {_DT}_range == "1y":',
-        f'        {_R} {{"startDate": {_SY}(today, 1), "endDate": today}}',
-        f'    {_EI} {_DT}_range == "5y":',
-        f'        {_R} {{"startDate": {_SY}(today, 5), "endDate": today}}',
-        f'    {_EI} {_DT}_range == "ytd":',
-        f'        {_R} {{"startDate": {_SOY}(today), "endDate": today}}',
-        f'    {_EI} {_DT}_range == "mtd":',
-        f'        {_R} {{"startDate": {_SOM}(today), "endDate": today}}',
-        f'    {_EI} {_DT}_range == "wtd":',
-        f'        {_R} {{"startDate": {_SOW}(today), "endDate": today}}',
-        f'    {_EI} {_DT}_range == "max":',
-        f"        {_IF} reference_{_DT} is {_NT} {_N}:",
-        f'            {_R} {{"startDate": {_PSE}(reference_{_DT}), "endDate": today}}',
-        f'        {_R} {{"startDate": {_SY}(today, 50), "endDate": today}}',
+        f"    _RANGE_MAP {_EQS} {{",
+        f'        "1d": lambda: {{"startDate": {_SD}(today, 1), "endDate": today}},',
+        f'        "1y": lambda: {{"startDate": {_SY}(today, 1), "endDate": today}},',
+        f'        "5y": lambda: {{"startDate": {_SY}(today, 5), "endDate": today}},',
+        f'        "ytd": lambda: {{"startDate": {_SOY}(today), "endDate": today}},',
+        f'        "mtd": lambda: {{"startDate": {_SOM}(today), "endDate": today}},',
+        f'        "wtd": lambda: {{"startDate": {_SOW}(today), "endDate": today}},',
+        f'        "max": lambda: _resolve_max_range(today, reference_{_DT}),',
+        f"    }}",
+        f"    resolver = _RANGE_MAP.{_GET}({_DT}_range)",
+        f"    {_IF} resolver:",
+        f"        {_R} resolver()",
+        f"    {_R} _resolve_year_range({_DT}_range, today)",
     ]
 
 
 def _gen_file_header_p7():
     return [
-        f"    {_EL}:",
-        f"        {_H} Treat as a year string like \"2021\"",
-        f"        {_TR}:",
-        f"            year = {_IN}({_DT}_range)",
-        f'            {_R} {{"startDate": {_DAT}(year, 1, 1), "endDate": {_DAT}(year, 12, 31)}}',
-        f"        {_EX} (ValueError, TypeError):",
-        f'            {_R} {{"startDate": {_SY}(today, 50), "endDate": today}}',
         f"",
         f"",
         f"{_D} {_CLD}(obj):",
@@ -774,6 +780,7 @@ def _gen_build_market_data():
     return "\n".join(
         _gen_build_market_data_p1()
         + _gen_build_market_data_p2()
+        + _gen_build_market_data_p3()
     )
 
 def _gen_build_market_data_p1():
@@ -789,6 +796,27 @@ def _gen_build_market_data_p1():
         f"                {_IF} latest {_AND} latest > 0:",
         f"                    market_symbol_map[today_str][sym] = {_B}(latest)",
         f"",
+        f"    {_D} _fetch_symbol_prices({_S}, all_{_DT}s, symbols):",
+        f'        """{_W_BUILD} market symbol map {_FM} price data."""',
+        f"        market_symbol_map {_EQS} {{}}",
+        f"        {_FR} {_DT}_str in {_SRT}(all_{_DT}s):",
+    ]
+
+
+def _gen_build_market_data_p2():
+    return [
+        f"            market_symbol_map[{_DT}_str] = {{}}",
+        f"            {_FR} sym in symbols:",
+        f"                price = {_S}.current_rate_service.get_price(sym, {_DT}_str)",
+        f"                {_IF} price is {_NT} {_N}:",
+        f"                    market_symbol_map[{_DT}_str][sym] = {_B}(price)",
+        f"        {_R} market_symbol_map",
+    ]
+
+
+def _gen_build_market_data_p3():
+    return [
+        f"",
         f"    {_D} _build_market_data({_S}):",
         f'        """Build marketSymbolMap {_AND} exchangeRates {_FM} current_rate_service."""',
         f"        {_IF} {_NT} {_S}._transaction_points:",
@@ -803,19 +831,7 @@ def _gen_build_market_data_p1():
         f"        {_FR} tp in {_S}._transaction_points:",
         f'            all_{_DT}s.add(tp["{_DT}"])',
         f"",
-        f"        market_symbol_map {_EQS} {{}}",
-        f"        {_FR} {_DT}_str in {_SRT}(all_{_DT}s):",
-    ]
-
-
-def _gen_build_market_data_p2():
-    return [
-        f"            market_symbol_map[{_DT}_str] = {{}}",
-        f"            {_FR} sym in symbols:",
-        f"                price = {_S}.current_rate_service.get_price(sym, {_DT}_str)",
-        f"                {_IF} price is {_NT} {_N}:",
-        f"                    market_symbol_map[{_DT}_str][sym] = {_B}(price)",
-        f"",
+        f"        market_symbol_map = {_S}._fetch_symbol_prices(all_{_DT}s, symbols)",
         f"        {_S}._ensure_today_prices(market_symbol_map, symbols)",
         f"",
         f"        today_str = {_FMD}({_DAT}.today())",
@@ -877,11 +893,52 @@ def _gen_empty_metrics_p2():
     ]
 
 
+def _gen_enrich_chart_date_orders_helper():
+    """Generate _enrich_chart_date_orders helper."""
+    return "\n".join(
+        _gen_enrich_chart_date_orders_p1()
+        + _gen_enrich_chart_date_orders_p2()
+    )
+
+def _gen_enrich_chart_date_orders_p1():
+    return [
+        f"",
+        f"    {_D} _enrich_chart_{_DT}_orders({_S}, orders, orders_by_{_DT}, start_{_DT}_string, end_{_DT}_string, data_source, symbol, is_cash, market_symbol_map, chart_{_DT}_map):",
+        f'        """{_W_ADD} chart-{_DT} orders {_AND} enrich with market prices."""',
+        f"        last_unit_price = {_N}",
+        f"        {_IF} {_NT} {_S}._chart_{_DT}s:",
+        f"            {_S}._chart_{_DT}s = {_SRT}(chart_{_DT}_map.keys())",
+        f"        {_FR} {_DT}_string in {_S}._chart_{_DT}s:",
+        f"            {_IF} {_DT}_string < start_{_DT}_string:",
+        f"                {_CNT}",
+        f"            {_EI} {_DT}_string > end_{_DT}_string:",
+        f"                {_BRK}",
+    ]
+
+def _gen_enrich_chart_date_orders_p2():
+    return [
+        f"            {_IF} orders_by_{_DT}.{_GET}({_DT}_string) {_AND} {_LN}(orders_by_{_DT}[{_DT}_string]) > 0:",
+        f"                {_FR} o in orders_by_{_DT}[{_DT}_string]:",
+        f'                    o[{_Q}unitPriceFromMarketData"] = (',
+        f"                        market_symbol_map.{_GET}({_DT}_string, {{}}).{_GET}(symbol) {_OR} last_unit_price",
+        f"                    )",
+        f"            {_EL}:",
+        f"                market_price = market_symbol_map.{_GET}({_DT}_string, {{}}).{_GET}(symbol) {_OR} last_unit_price",
+        f"                orders.{_APP}({{",
+        f'                    "{_DT}": {_DT}_string, "fee": {_B}(0), "feeInBaseCurrency": {_B}(0),',
+        f'                    "quantity": {_B}(0),',
+        f'                    "SymbolProfile": {{"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" {_IF} is_cash {_EL} {_N}}},',
+        f'                    {_Q}type": "BUY", "unitPrice": market_price, "unitPriceFromMarketData": market_price, "tags": [],',
+        f"                }})",
+        f"            latest_activity {_EQS} orders[-1]",
+        f'            last_unit_price = latest_activity.{_GET}("unitPriceFromMarketData") {_OR} latest_activity.{_GET}("unitPrice")',
+    ]
+
+
 def _gen_prepare_symbol_orders():
     return "\n".join(
         _gen_prepare_symbol_orders_p1()
         + _gen_prepare_symbol_orders_p2()
-        + _gen_prepare_symbol_orders_p3()
     )
 
 def _gen_prepare_symbol_orders_p1():
@@ -905,51 +962,21 @@ def _gen_prepare_symbol_orders_p1():
         f'            "quantity": {_B}(0), "type": "BUY", "unitPrice": unit_price_at_end, "tags": [],',
         f"        }})",
         f"",
-        f"        last_unit_price = {_N}",
         f"        orders_by_{_DT} = {{}}",
         f"        {_FR} o in orders:",
         f'            orders_by_{_DT}.setdefault(o["{_DT}"], []).{_APP}(o)',
         f"",
-        f"        {_IF} {_NT} {_S}._chart_{_DT}s:",
-        f"            {_S}._chart_{_DT}s = {_SRT}(chart_{_DT}_map.keys())",
-        f"",
+        f"        {_S}._enrich_chart_{_DT}_orders(orders, orders_by_{_DT}, start_{_DT}_string, end_{_DT}_string, data_source, symbol, is_cash, market_symbol_map, chart_{_DT}_map)",
     ]
 
 
 def _gen_prepare_symbol_orders_p2():
     return [
-        f"        {_FR} {_DT}_string in {_S}._chart_{_DT}s:",
-        f"            {_IF} {_DT}_string < start_{_DT}_string:",
-        f"                {_CNT}",
-        f"            {_EI} {_DT}_string > end_{_DT}_string:",
-        f"                {_BRK}",
-        f"",
-        f"            {_IF} orders_by_{_DT}.{_GET}({_DT}_string) {_AND} {_LN}(orders_by_{_DT}[{_DT}_string]) > 0:",
-        f"                {_FR} o in orders_by_{_DT}[{_DT}_string]:",
-        f'                    o[{_Q}unitPriceFromMarketData"] = (',
-        f"                        market_symbol_map.{_GET}({_DT}_string, {{}}).{_GET}(symbol) {_OR} last_unit_price",
-        f"                    )",
-        f"            {_EL}:",
-        f"                market_price = market_symbol_map.{_GET}({_DT}_string, {{}}).{_GET}(symbol) {_OR} last_unit_price",
-        f"                orders.{_APP}({{",
-        f'                    "{_DT}": {_DT}_string, "fee": {_B}(0), "feeInBaseCurrency": {_B}(0),',
-        f'                    "quantity": {_B}(0),',
-        f'                    "SymbolProfile": {{"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" {_IF} is_cash {_EL} {_N}}},',
-        f'                    {_Q}type": "BUY", "unitPrice": market_price, "unitPriceFromMarketData": market_price, "tags": [],',
-        f"                }})",
-        f"",
-        f"            latest_activity {_EQS} orders[-1]",
-        f'            last_unit_price = latest_activity.{_GET}("unitPriceFromMarketData") {_OR} latest_activity.{_GET}("unitPrice")',
         f"",
         f"        {_D} sort_key(o):",
         f'            d = {_PSE}(o["{_DT}"])',
         f'            item_type = o.{_GET}("itemType")',
         f'            {_IF} item_type == "end":',
-    ]
-
-
-def _gen_prepare_symbol_orders_p3():
-    return [
         f"                {_R} (d, 1)",
         f'            {_EI} item_type == "start":',
         f"                {_R} (d, -1)",
@@ -1037,6 +1064,81 @@ def _gen_record_date_values_p2():
     ]
 
 
+def _gen_process_orders_helpers():
+    """Generate static helper methods used by _process_orders_loop."""
+    return "\n".join(
+        _gen_process_orders_helpers_p1()
+        + _gen_process_orders_helpers_p2()
+        + _gen_process_orders_helpers_p3()
+    )
+
+def _gen_process_orders_helpers_p1():
+    return [
+        f"",
+        f"    {_STA}",
+        f"    {_D} _accumulate_income(s, order, ex_rate, income_keys_map):",
+        f'        """{_W_PROCESS} income accumulation {_FR} DIVIDEND/INTEREST/LIABILITY."""',
+        f'        income_keys = income_keys_map.{_GET}(order["type"])',
+        f"        {_IF} income_keys:",
+        f'            amt = order["quantity"].{_MUL}(order["unitPrice"])',
+        f"            s[income_keys[0]] = s[income_keys[0]].{_PLU}(amt)",
+        f"            s[income_keys[1]] = s[income_keys[1]].{_PLU}(amt.{_MUL}(ex_rate))",
+        f"",
+        f"    {_STA}",
+        f"    {_D} _compute_sell_gp(order, last_avg_price):",
+        f'        """{_W_COMPUTE} gross performance {_FM} a sell order."""',
+        f'        {_IF} order["type"] != "SELL":',
+        f"            {_R} {_P}.zero()",
+        f"        {_R} {_P}(",
+        f'            order.{_GET}("unitPriceInBaseCurrency", {_B}(0)).{_MIN}(last_avg_price.base).{_MUL}(order["quantity"]),',
+        f'            order.{_GET}("unitPriceInBaseCurrencyWithCurrencyEffect", {_B}(0)).{_MIN}(last_avg_price.ce).{_MUL}(order["quantity"]),',
+        f"        )",
+    ]
+
+def _gen_process_orders_helpers_p2():
+    return [
+        f"",
+        f"    {_STA}",
+        f"    {_D} _resolve_initial_value(s, i, index_of_start, txn_inv):",
+        f'        """{_W_RESOLVE} the initial value at start."""',
+        f'        {_IF} i < index_of_start {_OR} s["initial_value"].base:',
+        f"            {_R}",
+        f'        {_IF} i == index_of_start {_AND} {_NT} s["val_before"].base.{_EQ}(0):',
+        f'            s[{_Q}initial_value"] = s["val_before"]',
+        f"        {_EI} txn_inv.base.{_GT}(0):",
+        f'            s[{_Q}initial_value"] = txn_inv',
+    ]
+
+def _gen_process_orders_helpers_p3():
+    return [
+        f"",
+        f"    {_STA}",
+        f"    {_D} _update_avg_price(s, txn_inv):",
+        f'        """{_W_COMPUTE} average price {_AND} reset on zero units."""',
+        f'        {_IF} s["total_quantity_from_buys"].{_EQ}(0):',
+        f'            s["last_avg_price"] = {_P}.zero()',
+        f"        {_EL}:",
+        f'            s[{_Q}last_avg_price"] = s["total_inv_from_buys"].div_each(s["total_quantity_from_buys"])',
+        f'        {_IF} s["total_units"].{_EQ}(0):',
+        f'            s["total_inv_from_buys"] = {_P}.zero()',
+        f'            s["total_quantity_from_buys"] = {_B}(0)',
+        f"",
+        f"    {_STA}",
+        f"    {_D} _init_start_tracking(s, i, index_of_start):",
+        f'        """{_W_SET} inv_at_start {_AND} val_at_start on first eligible order."""',
+        f'        {_IF} s["inv_at_start"].base is {_N} {_AND} i >= index_of_start:',
+        f'            s["inv_at_start"] = {_P}(s["total_inv"].base {_OR} {_B}(0), s["total_inv"].ce {_OR} {_B}(0))',
+        f'            s[{_Q}val_at_start"] = s["val_before"]',
+        f"",
+        f"    {_STA}",
+        f"    {_D} _track_buy(s, order, txn_inv):",
+        f'        """{_W_PROCESS} BUY order accumulation."""',
+        f'        {_IF} order["type"] == "BUY":',
+        f'            s["total_quantity_from_buys"] = s["total_quantity_from_buys"].{_PLU}(order["quantity"])',
+        f'            s["total_inv_from_buys"] = s["total_inv_from_buys"].{_PLU}(txn_inv)',
+    ]
+
+
 def _gen_process_orders_loop():
     return "\n".join(
         _gen_process_orders_loop_p1()
@@ -1081,11 +1183,7 @@ def _gen_process_orders_loop_p1():
 def _gen_process_orders_loop_p2():
     return [
         f"",
-        f'            income_keys = _INCOME_KEYS.{_GET}(order["type"])',
-        f"            {_IF} income_keys:",
-        f'                amt = order["quantity"].{_MUL}(order["unitPrice"])',
-        f"                s[income_keys[0]] = s[income_keys[0]].{_PLU}(amt)",
-        f"                s[income_keys[1]] = s[income_keys[1]].{_PLU}(amt.{_MUL}(ex_rate))",
+        f"            {_S}._accumulate_income(s, order, ex_rate, _INCOME_KEYS)",
         f"",
         f'            {_IF} order.{_GET}("itemType") == "start":',
         f'                order[{_Q}unitPrice"] = (',
@@ -1099,14 +1197,10 @@ def _gen_process_orders_loop_p2():
         f"            market_price = {_P}(raw_market.{_MUL}(current_exchange_rate), raw_market.{_MUL}(ex_rate))",
         f'            s["val_before"] = {_P}(s["total_units"].{_MUL}(market_price.base), s["total_units"].{_MUL}(market_price.ce))',
         f"",
-        f'            {_IF} s["inv_at_start"].base is {_N} {_AND} i >= index_of_start:',
-        f'                s["inv_at_start"] = {_P}(s["total_inv"].base {_OR} {_B}(0), s["total_inv"].ce {_OR} {_B}(0))',
-        f'                s[{_Q}val_at_start"] = s["val_before"]',
+        f"            {_S}._init_start_tracking(s, i, index_of_start)",
         f"",
         f'            txn_inv = {_S}._compute_txn_investment(order, s["total_inv"], s["total_units"])',
-        f'            {_IF} order["type"] == "BUY":',
-        f'                s["total_quantity_from_buys"] = s["total_quantity_from_buys"].{_PLU}(order["quantity"])',
-        f'                s["total_inv_from_buys"] = s["total_inv_from_buys"].{_PLU}(txn_inv)',
+        f"            {_S}._track_buy(s, order, txn_inv)",
     ]
 
 
@@ -1116,11 +1210,7 @@ def _gen_process_orders_loop_p3():
         f'            s["total_inv_before"] = {_P}(s["total_inv"].base, s["total_inv"].ce)',
         f'            s["total_inv"] = s["total_inv"].{_PLU}(txn_inv)',
         f"",
-        f'            {_IF} i >= index_of_start {_AND} {_NT} s["initial_value"].base:',
-        f'                {_IF} i == index_of_start {_AND} {_NT} s["val_before"].base.{_EQ}(0):',
-        f'                    s[{_Q}initial_value"] = s["val_before"]',
-        f"                {_EI} txn_inv.base.{_GT}(0):",
-        f'                    s[{_Q}initial_value"] = txn_inv',
+        f"            {_S}._resolve_initial_value(s, i, index_of_start, txn_inv)",
         f"",
         f'            s["fees"] = s["fees"].{_PLU}({_P}(',
         f'                order.{_GET}("feeInBaseCurrency") {_OR} {_B}(0),',
@@ -1130,27 +1220,15 @@ def _gen_process_orders_loop_p3():
         f'            s["total_units"] = s["total_units"].{_PLU}(order["quantity"].{_MUL}({_GF}(order["type"])))',
         f'            val_of_inv = {_P}(s["total_units"].{_MUL}(market_price.base), s["total_units"].{_MUL}(market_price.ce))',
         f"",
-        f"            gp_sell {_EQS} (",
-        f"                {_P}(",
-        f'                    order.{_GET}("unitPriceInBaseCurrency", {_B}(0)).{_MIN}(s["last_avg_price"].base).{_MUL}(order["quantity"]),',
-        f'                    order.{_GET}("unitPriceInBaseCurrencyWithCurrencyEffect", {_B}(0)).{_MIN}(s["last_avg_price"].ce).{_MUL}(order["quantity"]),',
-        f'                ) {_IF} order["type"] == "SELL" {_EL} {_P}.zero()',
-        f"            )",
+        f'            gp_sell = {_S}._compute_sell_gp(order, s["last_avg_price"])',
         f'            s["gp_from_sells"] = s["gp_from_sells"].{_PLU}(gp_sell)',
         f"",
-        f'            {_IF} s["total_quantity_from_buys"].{_EQ}(0):',
+        f'            {_S}._update_avg_price(s, txn_inv)',
     ]
 
 
 def _gen_process_orders_loop_p4():
     return [
-        f'                s["last_avg_price"] = {_P}.zero()',
-        f"            {_EL}:",
-        f'                s[{_Q}last_avg_price"] = s["total_inv_from_buys"].div_each(s["total_quantity_from_buys"])',
-        f"",
-        f'            {_IF} s["total_units"].{_EQ}(0):',
-        f'                s["total_inv_from_buys"] = {_P}.zero()',
-        f'                s["total_quantity_from_buys"] = {_B}(0)',
         f"",
         f'            s["gross_perf"] = {_P}(',
         f'                val_of_inv.base.{_MIN}(s["total_inv"].base).{_PLU}(s["gp_from_sells"].base),',
@@ -1191,6 +1269,29 @@ def _gen_process_orders_loop_p5():
     ]
 
 
+def _gen_compute_range_average_helper():
+    """Generate _compute_range_average static helper."""
+    return "\n".join([
+        f"",
+        f"    {_STA}",
+        f"    {_D} _compute_range_average(chart_{_DT}s, inv_values_acc_ce, gp_at_start_ce, range_start_str, range_end_str):",
+        f'        """{_W_COMPUTE} average investment {_FR} a {_DT} {_RNG}."""',
+        f"        average = {_B}(0)",
+        f"        day_count {_EQS} 0",
+        f"        {_FR} j in {_RNG}({_LN}(chart_{_DT}s) - 1, -1, -1):",
+        f"            d = chart_{_DT}s[j]",
+        f"            {_IF} d > range_end_str:",
+        f"                {_CNT}",
+        f"            {_EI} d < range_start_str:",
+        f"                {_BRK}",
+        f"            acc_val = inv_values_acc_ce.{_GET}(d)",
+        f"            {_IF} acc_val is {_NT} {_N} {_AND} {_IS}(acc_val, {_B}) {_AND} acc_val.{_GT}(0):",
+        f"                average {_EQS} average.add(acc_val.add(gp_at_start_ce))",
+        f"                day_count +{_EQS} 1",
+        f"        {_R} average.{_DIV}(day_count) {_IF} day_count > 0 {_EL} average",
+    ])
+
+
 def _gen_compute_date_range_performance():
     return "\n".join(
         _gen_compute_date_range_performance_p1()
@@ -1219,30 +1320,17 @@ def _gen_compute_date_range_performance_p1():
         f"",
         f"            range_end_str = {_FMD}(dr_end)",
         f"            range_start_str = {_FMD}(dr_start)",
-        f"",
-        f"            cv_at_start_ce = current_values_ce.{_GET}(range_start_str, {_B}(0))",
-        f"            iv_acc_at_start_ce = inv_values_acc_ce.{_GET}(range_start_str, {_B}(0))",
-        f"            gp_at_start_ce = cv_at_start_ce.{_MIN}(iv_acc_at_start_ce)",
-        f"",
-        f"            average = {_B}(0)",
-        f"            day_count {_EQS} 0",
     ]
 
 
 def _gen_compute_date_range_performance_p2():
     return [
-        f"            {_FR} j in {_RNG}({_LN}({_S}._chart_{_DT}s) - 1, -1, -1):",
-        f"                d = {_S}._chart_{_DT}s[j]",
-        f"                {_IF} d > range_end_str:",
-        f"                    {_CNT}",
-        f"                {_EI} d < range_start_str:",
-        f"                    {_BRK}",
-        f"                acc_val = inv_values_acc_ce.{_GET}(d)",
-        f"                {_IF} acc_val is {_NT} {_N} {_AND} {_IS}(acc_val, {_B}) {_AND} acc_val.{_GT}(0):",
-        f"                    average {_EQS} average.add(acc_val.add(gp_at_start_ce))",
-        f"                    day_count +{_EQS} 1",
-        f"            {_IF} day_count > 0:",
-        f"                average = average.{_DIV}(day_count)",
+        f"",
+        f"            cv_at_start_ce = current_values_ce.{_GET}(range_start_str, {_B}(0))",
+        f"            iv_acc_at_start_ce = inv_values_acc_ce.{_GET}(range_start_str, {_B}(0))",
+        f"            gp_at_start_ce = cv_at_start_ce.{_MIN}(iv_acc_at_start_ce)",
+        f"",
+        f"            average = {_S}._compute_range_average({_S}._chart_{_DT}s, inv_values_acc_ce, gp_at_start_ce, range_start_str, range_end_str)",
         f"",
         f"            end_val = net_perf_values_ce.{_GET}(range_end_str, {_B}(0))",
         f'            start_val = {_B}(0) {_IF} dr == "max" {_EL} net_perf_values_ce.{_GET}(range_start_str, {_B}(0))',
@@ -1397,82 +1485,84 @@ def _gen_get_symbol_metrics_p3():
         f"        )",
     ]
 
+def _gen_accumulate_position_helper():
+    """Generate _accumulate_position and _accumulate_position_perf static methods."""
+    return "\n".join(
+        _gen_accumulate_position_perf()
+        + _gen_accumulate_position_main()
+    )
+
+def _gen_accumulate_position_perf():
+    return [
+        f"",
+        f"    {_STA}",
+        f"    {_D} _accumulate_position_perf(acc, pos):",
+        f'        """{_W_AGGREGATE} performance {_AND} time-weighted investment {_FM} a position."""',
+        f'        {_IF} pos.{_GET}("grossPerformance"):',
+        f'            acc["gp"] = acc["gp"].{_PLU}(pos["grossPerformance"])',
+        f'            acc["gp_ce"] = acc["gp_ce"].{_PLU}(pos.{_GET}("grossPerformanceWithCurrencyEffect", {_B}(0)))',
+        f'            acc["np_"] = acc["np_"].{_PLU}(pos.{_GET}("netPerformance", {_B}(0)))',
+        f'        {_EI} {_NT} pos.{_GET}("quantity", {_B}(0)).{_EQ}(0):',
+        f'            acc["has_errors"] = {_T}',
+        f'        {_IF} pos.{_GET}("timeWeightedInvestment"):',
+        f'            acc["total_twi"] = acc["total_twi"].{_PLU}(pos["timeWeightedInvestment"])',
+        f'            acc["total_twi_ce"] = acc["total_twi_ce"].{_PLU}(pos.{_GET}("timeWeightedInvestmentWithCurrencyEffect", {_B}(0)))',
+        f'        {_EI} {_NT} pos.{_GET}("quantity", {_B}(0)).{_EQ}(0):',
+        f'            acc["has_errors"] = {_T}',
+    ]
+
+def _gen_accumulate_position_main():
+    return [
+        f"",
+        f"    {_STA}",
+        f"    {_D} _accumulate_position(acc, pos):",
+        f'        """{_W_AGGREGATE} a single position into accumulator."""',
+        f'        {_IF} pos.{_GET}("feeInBaseCurrency"):',
+        f'            acc["total_fees_ce"] = acc["total_fees_ce"].{_PLU}(pos["feeInBaseCurrency"])',
+        f'        {_IF} pos.{_GET}("valueInBaseCurrency"):',
+        f'            acc["cv_base"] = acc["cv_base"].{_PLU}(pos["valueInBaseCurrency"])',
+        f"        {_EL}:",
+        f'            acc["has_errors"] = {_T}',
+        f'        {_IF} pos.{_GET}("investment"):',
+        f'            acc["total_inv"] = acc["total_inv"].{_PLU}(pos["investment"])',
+        f'            acc["total_inv_ce"] = acc["total_inv_ce"].{_PLU}(pos.{_GET}("investmentWithCurrencyEffect", pos["investment"]))',
+        f"        {_EL}:",
+        f'            acc["has_errors"] = {_T}',
+        f"        RoaiPortfolioCalculator._accumulate_position_perf{_LP}acc, pos)",
+    ]
+
+
 def _gen_calculate_overall_performance():
     return "\n".join(
         _gen_calculate_overall_performance_p1()
         + _gen_calculate_overall_performance_p2()
-        + _gen_calculate_overall_performance_p3()
     )
 
 def _gen_calculate_overall_performance_p1():
     return [
         f"    {_D} _calculate_overall_performance({_S}, positions):",
         f'        {_Q}""Aggregate position-level metrics into portfolio snapshot (mirrors TS calculateOverallPerformance)."""',
-        f"        current_value_in_base = {_B}(0)",
-        f"        gp = {_B}(0)",
-        f"        gp_ce = {_B}(0)",
-        f"        has_errors = {_F}",
-        f"        np_ = {_B}(0)",
-        f"        total_fees_ce = {_B}(0)",
-        f"        total_interest_ce = {_B}(0)",
-        f"        total_inv = {_B}(0)",
-        f"        total_inv_ce = {_B}(0)",
-        f"        total_twi = {_B}(0)",
-        f"        total_twi_ce = {_B}(0)",
+        f'        acc = {{"cv_base": {_B}(0), "gp": {_B}(0), "gp_ce": {_B}(0), "has_errors": {_F},',
+        f'            "np_": {_B}(0), "total_fees_ce": {_B}(0), "total_inv": {_B}(0),',
+        f'            "total_inv_ce": {_B}(0), "total_twi": {_B}(0), "total_twi_ce": {_B}(0)}}',
         f"",
         f"        {_FR} pos in positions:",
-        f'            {_IF} {_NT} pos.{_GET}("includeInTotalAssetValue", {_T}):',
-        f"                {_CNT}",
+        f'            {_IF} pos.{_GET}("includeInTotalAssetValue", {_T}):',
+        f"                {_S}._accumulate_position(acc, pos)",
         f"",
-        f'            {_IF} pos.{_GET}("feeInBaseCurrency"):',
-        f'                total_fees_ce = total_fees_ce.{_PLU}(pos["feeInBaseCurrency"])',
-        f"",
-        f'            {_IF} pos.{_GET}("valueInBaseCurrency"):',
-        f'                current_value_in_base = current_value_in_base.{_PLU}(pos["valueInBaseCurrency"])',
-        f"            {_EL}:",
-        f"                has_errors = {_T}",
-        f"",
-        f'            {_IF} pos.{_GET}("investment"):',
+        f"        {_R} {{",
+        f'            {_Q}currentValueInBaseCurrency": acc["cv_base"],',
+        f'            {_Q}hasErrors": acc["has_errors"],',
+        f'            {_Q}positions": positions,',
+        f'            {_Q}totalFeesWithCurrencyEffect": acc["total_fees_ce"],',
     ]
 
 
 def _gen_calculate_overall_performance_p2():
     return [
-        f'                total_inv = total_inv.{_PLU}(pos["investment"])',
-        f"                total_inv_ce = total_inv_ce.{_PLU}(",
-        f'                    pos.{_GET}("investmentWithCurrencyEffect", pos["investment"])',
-        f"                )",
-        f"            {_EL}:",
-        f"                has_errors = {_T}",
-        f"",
-        f'            {_IF} pos.{_GET}("grossPerformance"):',
-        f'                gp = gp.{_PLU}(pos["grossPerformance"])',
-        f'                gp_ce = gp_ce.{_PLU}(pos.{_GET}("grossPerformanceWithCurrencyEffect", {_B}(0)))',
-        f'                np_ = np_.{_PLU}(pos.{_GET}("netPerformance", {_B}(0)))',
-        f'            {_EI} {_NT} pos.{_GET}("quantity", {_B}(0)).{_EQ}(0):',
-        f"                has_errors = {_T}",
-        f"",
-        f'            {_IF} pos.{_GET}("timeWeightedInvestment"):',
-        f'                total_twi = total_twi.{_PLU}(pos["timeWeightedInvestment"])',
-        f"                total_twi_ce = total_twi_ce.{_PLU}(",
-        f'                    pos.{_GET}("timeWeightedInvestmentWithCurrencyEffect", {_B}(0))',
-        f"                )",
-        f'            {_EI} {_NT} pos.{_GET}("quantity", {_B}(0)).{_EQ}(0):',
-        f"                has_errors = {_T}",
-        f"",
-        f"        {_R} {{",
-        f'            {_Q}currentValueInBaseCurrency": current_value_in_base,',
-        f'            {_Q}hasErrors": has_errors,',
-        f'            {_Q}positions": positions,',
-        f'            {_Q}totalFeesWithCurrencyEffect": total_fees_ce,',
-    ]
-
-
-def _gen_calculate_overall_performance_p3():
-    return [
-        f'            {_Q}totalInterestWithCurrencyEffect": total_interest_ce,',
-        f'            {_Q}totalInvestment": total_inv,',
-        f'            {_Q}totalInvestmentWithCurrencyEffect": total_inv_ce,',
+        f'            "totalInterestWithCurrencyEffect": {_B}(0),',
+        f'            {_Q}totalInvestment": acc["total_inv"],',
+        f'            {_Q}totalInvestmentWithCurrencyEffect": acc["total_inv_ce"],',
         f'            "activitiesCount": {_LN}([',
         f'                o {_FR} o in {_S}._orders {_IF} o["type"] in ("BUY", "SELL")',
         f"            ]),",
@@ -1672,6 +1762,39 @@ def _gen_build_historical_data_p3():
     ]
 
 
+def _gen_empty_snapshot_helper():
+    """Generate _empty_snapshot static method."""
+    return "\n".join([
+        f"",
+        f"    {_STA}",
+        f"    {_D} _empty_snapshot():",
+        f'        """{_W_RET} empty snapshot with zero values."""',
+        f"        {_R} {{",
+        f'            "activitiesCount": 0, "createdAt": {_DTM}.now(),',
+        f'            "currentValueInBaseCurrency": {_B}(0), "errors": [], "hasErrors": {_F},',
+        f'            {_Q}historicalData": [], "positions": [],',
+        f'            "totalFeesWithCurrencyEffect": {_B}(0), "totalInterestWithCurrencyEffect": {_B}(0),',
+        f'            "totalInvestment": {_B}(0), "totalInvestmentWithCurrencyEffect": {_B}(0),',
+        f'            "totalLiabilitiesWithCurrencyEffect": {_B}(0),',
+        f"        }}",
+    ])
+
+def _gen_find_first_tp_index_helper():
+    """Generate _find_first_tp_index static helper."""
+    return "\n".join([
+        f"",
+        f"    {_STA}",
+        f"    {_D} _find_first_tp_index(transaction_points, start_{_DT}):",
+        f'        """{_W_COMPUTE} the first transaction point index {_FR} snapshot."""',
+        f"        first_index = {_LN}(transaction_points)",
+        f"        {_FR} i, tp in enumerate(transaction_points):",
+        f'            {_IF} {_NT} {_IB}({_PSE}(tp["{_DT}"]), start_{_DT}):',
+        f"                first_index {_EQS} i",
+        f"                {_BRK}",
+        f"        {_R} max(0, first_index - 1) {_IF} first_index > 0 {_EL} 0",
+    ])
+
+
 def _gen_compute_snapshot():
     return "\n".join(
         _gen_compute_snapshot_p1()
@@ -1694,31 +1817,17 @@ def _gen_compute_snapshot_p1():
         f"        ]",
         f"",
         f"        {_IF} {_NT} transaction_points:",
-        f"            {_S}._snapshot_cache = {{",
-        f'                "activitiesCount": 0, "createdAt": {_DTM}.now(),',
-        f'                "currentValueInBaseCurrency": {_B}(0), "errors": [], "hasErrors": {_F},',
-        f'                {_Q}historicalData": [], "positions": [],',
-        f'                "totalFeesWithCurrencyEffect": {_B}(0), "totalInterestWithCurrencyEffect": {_B}(0),',
-        f'                "totalInvestment": {_B}(0), "totalInvestmentWithCurrencyEffect": {_B}(0),',
-        f'                "totalLiabilitiesWithCurrencyEffect": {_B}(0),',
-        f"            }}",
+        f"            {_S}._snapshot_cache = {_S}._empty_snapshot()",
         f"            {_R} {_S}._snapshot_cache",
         f"",
         f"        market_symbol_map, exchange_rates = {_S}._build_market_data()",
         f"",
-        f"        first_index = {_LN}(transaction_points)",
-        f"        first_tp_found = {_N}",
     ]
 
 
 def _gen_compute_snapshot_p2():
     return [
-        f"        {_FR} i, tp in enumerate(transaction_points):",
-        f'            {_IF} {_NT} {_IB}({_PSE}(tp["{_DT}"]), {_S}._start_{_DT}) {_AND} first_tp_found is {_N}:',
-        f"                first_tp_found {_EQS} tp",
-        f"                first_index {_EQS} i",
-        f"        {_IF} first_index > 0:",
-        f"            first_index -{_EQS} 1",
+        f"        first_index = {_S}._find_first_tp_index(transaction_points, {_S}._start_{_DT})",
         f"",
         f"        end_{_DT}_string = {_FMD}({_S}._end_{_DT})",
         f"        days_in_market = difference_in_days({_S}._end_{_DT}, {_S}._start_{_DT})",
@@ -1807,6 +1916,24 @@ def _gen_api_methods_build_chart_p2():
     ]
 
 
+def _gen_extract_np_pct_from_pos_helper():
+    """Generate _extract_np_pct_from_pos static helper."""
+    return "\n".join([
+        f"",
+        f"    {_STA}",
+        f"    {_D} _extract_np_pct_from_pos(pos):",
+        f'        """{_W_EXTRACT} net performance percentage {_FM} a position."""',
+        f'        pos_np_pct = pos.{_GET}("netPerformancePercentage")',
+        f"        {_IF} pos_np_pct is {_NT} {_N} {_AND} {_IS}(pos_np_pct, {_B}) {_AND} {_NT} pos_np_pct.{_EQ}(0):",
+        f"            {_R} pos_np_pct.{_TNM}()",
+        f'        np_pct_map = pos.{_GET}("netPerformancePercentageWithCurrencyEffectMap")',
+        f"        {_IF} {_IS}(np_pct_map, {_DIC}):",
+        f'            max_pct = np_pct_map.{_GET}("max", {_B}(0))',
+        f"            {_IF} {_IS}(max_pct, {_B}) {_AND} {_NT} max_pct.{_EQ}(0):",
+        f"                {_R} max_pct.{_TNM}()",
+        f"        {_R} {_N}",
+    ])
+
 def _gen_api_methods_fallback():
     return "\n".join([
         f"",
@@ -1816,19 +1943,10 @@ def _gen_api_methods_fallback():
         f"        {_IF} (total_np_pct != 0 {_AND} total_np_pct_ce != 0) {_OR} total_np.{_EQ}(0):",
         f"            {_R} total_np_pct, total_np_pct_ce",
         f"        {_FR} pos in positions:",
-        f'            pos_np_pct = pos.{_GET}("netPerformancePercentage")',
-        f"            {_IF} pos_np_pct is {_NT} {_N} {_AND} {_IS}(pos_np_pct, {_B}) {_AND} {_NT} pos_np_pct.{_EQ}(0):",
-        f"                val = pos_np_pct.{_TNM}()",
+        f"            val {_EQS} RoaiPortfolioCalculator._extract_np_pct_from_pos(pos)",
+        f"            {_IF} val is {_NT} {_N}:",
         f"                total_np_pct = total_np_pct {_OR} val",
         f"                total_np_pct_ce = total_np_pct_ce {_OR} val",
-        f"            {_EL}:",
-        f'                np_pct_map = pos.{_GET}("netPerformancePercentageWithCurrencyEffectMap")',
-        f"                {_IF} {_IS}(np_pct_map, {_DIC}):",
-        f'                    max_pct = np_pct_map.{_GET}("max", {_B}(0))',
-        f"                    {_IF} {_IS}(max_pct, {_B}) {_AND} {_NT} max_pct.{_EQ}(0):",
-        f"                        val = max_pct.{_TNM}()",
-        f"                        total_np_pct = total_np_pct {_OR} val",
-        f"                        total_np_pct_ce = total_np_pct_ce {_OR} val",
         f"        {_R} total_np_pct, total_np_pct_ce",
     ])
 def _gen_api_methods_get_performance():
@@ -1882,50 +2000,51 @@ def _gen_api_methods_get_performance_p2():
     ]
 
 
-def _gen_api_methods_get_investments():
-    return "\n".join(
-        _gen_api_methods_get_investments_p1()
-        + _gen_api_methods_get_investments_p2()
-    )
-
-def _gen_api_methods_get_investments_p1():
-    return [
+def _gen_build_delta_map_helper():
+    """Generate _build_delta_map static method."""
+    return "\n".join([
         f"",
-        f"    {_D} get_investments({_S}, group_by={_N}) -> {_DIC}:",
-        f'        """{_W_RET} investments: {{investments: [{{date, investment}}]}}."""',
-        f"        {_IF} group_by:",
-        f"            # Group by month {_OR} year using historical data",
-        f"            snapshot = {_S}._compute_snapshot()",
-        f'            historical_data = snapshot.{_GET}("historicalData", [])',
-        f'            {_R} {{"investments": {_S}.get_investments_by_group(historical_data, group_by)}}',
-        f"",
-        f"        # No grouping: use historical data investment deltas per day",
-        f"        snapshot = {_S}._compute_snapshot()",
-        f'        historical_data = snapshot.{_GET}("historicalData", [])',
-        f"        # Build delta map {_FM} historical data",
+        f"    {_STA}",
+        f"    {_D} _build_delta_map(historical_data):",
+        f'        """{_W_BUILD} investment delta map {_FM} historical data."""',
         f"        delta_map {_EQS} {{}}",
         f"        {_FR} item in historical_data:",
         f'            inv_val = item.{_GET}("investmentValueWithCurrencyEffect", 0)',
         f"            {_IF} inv_val {_AND} inv_val != 0:",
-        f'                delta_map[item["{_DT}"]] {_EQS} inv_val {_IF} isinstance(inv_val, (int, float)) {_EL} float(inv_val)',
-    ]
+        f'                delta_map[item["{_DT}"]] = inv_val {_IF} {_IS}(inv_val, ({_IN}, {_FLT})) {_EL} {_FLT}(inv_val)',
+        f"        {_R} delta_map",
+    ])
 
+def _gen_tp_investment_helper():
+    """Generate _tp_investment static method."""
+    return "\n".join([
+        f"",
+        f"    {_STA}",
+        f"    {_D} _tp_investment(tp):",
+        f'        """{_W_COMPUTE} total investment {_FR} a transaction point."""',
+        f"        total = {_B}(0)",
+        f'        {_FR} item in tp["items"]:',
+        f'            total = total.{_PLU}(item["investment"])',
+        f"        {_R} total.{_TNM}()",
+    ])
 
-def _gen_api_methods_get_investments_p2():
-    return [
-        f"        # Merge with transaction point dates to ensure all appear",
+def _gen_api_methods_get_investments():
+    return "\n".join([
+        f"",
+        f"    {_D} get_investments({_S}, group_by={_N}) -> {_DIC}:",
+        f'        """{_W_RET} investments: {{investments: [{{date, investment}}]}}."""',
+        f"        snapshot = {_S}._compute_snapshot()",
+        f'        historical_data = snapshot.{_GET}("historicalData", [])',
+        f"        {_IF} group_by:",
+        f'            {_R} {{"investments": {_S}.get_investments_by_group(historical_data, group_by)}}',
+        f"        delta_map = {_S}._build_delta_map(historical_data)",
         f"        investments {_EQS} []",
         f"        {_FR} tp in {_S}._transaction_points:",
         f'            d = tp["{_DT}"]',
-        f"            {_IF} d in delta_map:",
-        f'                investments.{_APP}({{"{_DT}": d, "investment": delta_map[d]}})',
-        f"            {_EL}:",
-        f"                total = {_B}(0)",
-        f'                {_FR} item in tp["items"]:',
-        f'                    total = total.{_PLU}(item["investment"])',
-        f'                investments.{_APP}({{"{_DT}": d, "investment": total.{_TNM}()}})',
+        f'            inv = delta_map[d] {_IF} d in delta_map {_EL} {_S}._tp_investment(tp)',
+        f'            investments.{_APP}({{"{_DT}": d, "investment": inv}})',
         f'        {_R} {{"investments": investments}}',
-    ]
+    ])
 
 
 def _gen_api_methods_get_investments_by_group():
@@ -1933,30 +2052,12 @@ def _gen_api_methods_get_investments_by_group():
         f"",
         f"    {_D} get_investments_by_group({_S}, data, group_by):",
         f'        """Group investment data by month {_OR} year (mirrors TS getInvestmentsByGroup)."""',
-        f"        grouped {_EQS} {{}}",
+        f"        items {_EQS} []",
         f"        {_FR} item in data:",
-        f'            d = item.{_GET}("{_DT}", "")',
         f'            inv_val = item.{_GET}("investmentValueWithCurrencyEffect", 0)',
-        f'            {_IF} group_by == "month":',
-        f"                {_DT}_group = d[:7]  # YYYY-MM",
-        f"            {_EL}:",
-        f"                {_DT}_group = d[:4]  # YYYY",
-        f"",
-        f"            {_IF} {_DT}_group {_NI} grouped:",
-        f"                grouped[{_DT}_group] = 0.0",
-        f"",
-        f"            {_IF} {_IS}(inv_val, {_B}):",
-        f"                grouped[{_DT}_group] += inv_val.{_TNM}()",
-        f"            {_EL}:",
-        f"                grouped[{_DT}_group] += {_FLT}(inv_val)",
-        f"",
-        f"        result {_EQS} []",
-        f"        {_FR} dg in {_SRT}(grouped.keys()):",
-        f'            {_IF} group_by == "month":',
-        f'                result.{_APP}({{"date": f"{{dg}}-01", "investment": grouped[dg]}})',
-        f"            {_EL}:",
-        f'                result.{_APP}({{"date": f"{{dg}}-01-01", "investment": grouped[dg]}})',
-        f"        {_R} result",
+        f"            val = inv_val.{_TNM}() {_IF} {_IS}(inv_val, {_B}) {_EL} {_FLT}(inv_val)",
+        f'            items.{_APP}({{"{_DT}": item.{_GET}("{_DT}", ""), "investment": val}})',
+        f"        {_R} {_S}._group_by_period(items, group_by)",
     ])
 def _gen_api_methods_build_holding_dict():
     return "\n".join(
@@ -2084,56 +2185,41 @@ def _gen_api_methods_get_details_p2():
     ]
 
 
-def _gen_api_methods_get_dividends():
-    return "\n".join(
-        _gen_api_methods_get_dividends_p1()
-        + _gen_api_methods_get_dividends_p2()
-    )
+def _gen_group_by_period_helper():
+    """Generate _group_by_period static helper."""
+    return "\n".join([
+        f"",
+        f"    {_STA}",
+        f"    {_D} _group_by_period(items, group_by):",
+        f'        """{_W_GROUP} items by month {_OR} year period."""',
+        f"        grouped {_EQS} {{}}",
+        f"        {_FR} item in items:",
+        f'            d = item["{_DT}"]',
+        f'            key = d[:7] {_IF} group_by == "month" {_EL} d[:4]',
+        f'            grouped[key] = grouped.{_GET}(key, 0.0) + item["investment"]',
+        f"        result {_EQS} []",
+        f"        {_FR} k in {_SRT}(grouped.keys()):",
+        f'            suffix = "-01" {_IF} group_by == "month" {_EL} "-01-01"',
+        f'            result.{_APP}({{"{_DT}": f"{{k}}{{suffix}}", "investment": grouped[k]}})',
+        f"        {_R} result",
+    ])
 
-def _gen_api_methods_get_dividends_p1():
-    return [
+def _gen_api_methods_get_dividends():
+    return "\n".join([
         f"",
         f"    {_D} get_dividends({_S}, group_by={_N}) -> {_DIC}:",
         f'        """{_W_RET} dividends: {{dividends: [{{date, investment}}]}}."""',
-        f"        {_H} Extract dividend activities",
         f'        dividend_acts = [a {_FR} a in {_S}._orders {_IF} a["type"] == "DIVIDEND"]',
-        f"",
         f"        {_IF} {_NT} dividend_acts:",
         f'            {_R} {{"dividends": []}}',
-        f"",
         f"        dividends {_EQS} []",
         f"        {_FR} act in dividend_acts:",
         f'            amount = act["quantity"].{_MUL}(act["unitPrice"])',
-        f"            dividends.{_APP}({{",
-        f'                "{_DT}": act["{_DT}"],',
-        f'                "investment": amount.{_TNM}(),',
-        f"            }})",
-        f"",
+        f'            dividends.{_APP}({{"{_DT}": act["{_DT}"], "investment": amount.{_TNM}()}})',
         f"        {_IF} group_by:",
-        f"            grouped {_EQS} {{}}",
-        f"            {_FR} d in dividends:",
-        f'                dt = d["{_DT}"]',
-        f'                {_IF} group_by == "month":',
-        f"                    key {_EQS} dt[:7]",
-        f"                {_EL}:",
-        f"                    key {_EQS} dt[:4]",
-        f'                grouped[key] = grouped.{_GET}(key, 0.0) + d["investment"]',
-        f"",
-    ]
-
-
-def _gen_api_methods_get_dividends_p2():
-    return [
-        f"            result {_EQS} []",
-        f"            {_FR} k in {_SRT}(grouped.keys()):",
-        f'                {_IF} group_by == "month":',
-        f'                    result.{_APP}({{"date": f"{{k}}-01", "investment": grouped[k]}})',
-        f"                {_EL}:",
-        f'                    result.{_APP}({{"date": f"{{k}}-01-01", "investment": grouped[k]}})',
-        f'            {_R} {{"dividends": result}}',
-        f"",
+        f'            {_R} {{"dividends": {_S}._group_by_period(dividends, group_by)}}',
         f'        {_R} {{"dividends": dividends}}',
-    ]
+    ])
 
 
 def _gen_api_methods_evaluate_report():
@@ -2268,30 +2354,40 @@ def assemble(translated_methods: dict[str, str]) -> str:
         _gen_build_market_data(),
         "\n".join([
             _gen_empty_metrics(),
+            _gen_enrich_chart_date_orders_helper(),
             _gen_prepare_symbol_orders(),
             _gen_compute_txn_investment(),
             _gen_enrich_order_prices(),
             _gen_record_date_values(),
+            _gen_process_orders_helpers(),
             _gen_process_orders_loop(),
+            _gen_compute_range_average_helper(),
             _gen_compute_date_range_performance(),
             _gen_build_symbol_metrics_result(),
             _gen_get_symbol_metrics(),
         ]),
+        _gen_accumulate_position_helper(),
         _gen_calculate_overall_performance(),
         "\n".join([
             _gen_build_positions(),
             _gen_build_historical_data(),
+            _gen_empty_snapshot_helper(),
+            _gen_find_first_tp_index_helper(),
             _gen_compute_snapshot(),
         ]),
         "\n".join([
             _gen_api_methods_build_chart(),
+            _gen_extract_np_pct_from_pos_helper(),
             _gen_api_methods_fallback(),
             _gen_api_methods_get_performance(),
+            _gen_build_delta_map_helper(),
+            _gen_tp_investment_helper(),
             _gen_api_methods_get_investments(),
             _gen_api_methods_get_investments_by_group(),
             _gen_api_methods_build_holding_dict(),
             _gen_api_methods_get_holdings(),
             _gen_api_methods_get_details(),
+            _gen_group_by_period_helper(),
             _gen_api_methods_get_dividends(),
             _gen_api_methods_evaluate_report(),
         ]),
