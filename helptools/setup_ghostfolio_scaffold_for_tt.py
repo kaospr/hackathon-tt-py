@@ -30,6 +30,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent.resolve()
 EXAMPLE_DIR = REPO_ROOT / "translations" / "ghostfolio_pytx_example"
 TT_SCAFFOLD_DIR = REPO_ROOT / "tt" / "tt" / "scaffold" / "ghostfolio_pytx"
+EXT_SCAFFOLD_DIR = REPO_ROOT / "scaffolds" / "ghostfolio_pytx"
 DEFAULT_OUTPUT = REPO_ROOT / "translations" / "ghostfolio_pytx"
 
 
@@ -59,6 +60,19 @@ def setup_scaffold(output_dir: Path) -> None:
         shutil.copy2(src_file, dst)
 
     print(f"  Overlaid tt scaffold support modules")
+
+    # Step 2b: Overlay external scaffold support files (helpers outside tt/ tree)
+    if EXT_SCAFFOLD_DIR.exists():
+        for src_file in EXT_SCAFFOLD_DIR.rglob("*"):
+            if not src_file.is_file():
+                continue
+            if src_file.name.startswith(".") or "__pycache__" in src_file.parts:
+                continue
+            rel = src_file.relative_to(EXT_SCAFFOLD_DIR)
+            dst = output_dir / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_file, dst)
+        print(f"  Overlaid external scaffold support modules")
 
     # Step 3: Ensure __init__.py files exist for all Python packages
     for dirpath in output_dir.rglob("*"):
