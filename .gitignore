@@ -55,6 +55,7 @@ Thumbs.db
 
 # Scoring
 evaluate/scoring/results/
+evaluate/checks/results/
 
 # Node / TypeScript / JavaScript
 **/node_modules/
