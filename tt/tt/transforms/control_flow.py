@@ -8,6 +8,15 @@ from __future__ import annotations
 
 import re
 
+# Regex matching an assignment boundary: ``prefix = rest`` where ``=`` is
+# a plain assignment (not ``==``, ``!=``, ``>=``, ``<=``).
+_ASSIGN_BOUNDARY_RE = re.compile(r"^(.*?(?<![=!<>])=(?!=)\s*)(.*?)$", re.DOTALL)
+
+
+def _process_lines(text: str, fn) -> str:
+    """Split *text* into lines, apply *fn* to each, and rejoin."""
+    return "\n".join(fn(line) for line in text.split("\n"))
+
 
 def apply(source: str) -> str:
     """Apply all control-flow transforms and return the result."""
@@ -98,12 +107,7 @@ def _convert_for_of(source: str) -> str:
 
 def _convert_c_style_for(source: str) -> str:
     """Convert common C-style for patterns to Python range() loops."""
-    lines = source.split("\n")
-    result: list[str] = []
-    for line in lines:
-        converted = _try_convert_c_for_line(line)
-        result.append(converted)
-    return "\n".join(result)
+    return _process_lines(source, _try_convert_c_for_line)
 
 
 def _try_convert_c_for_line(line: str) -> str:
@@ -168,19 +172,12 @@ def _try_convert_c_for_line(line: str) -> str:
 
 def _length_expr(expr: str) -> str:
     """Convert ``foo.length`` to ``len(foo)`` in range expressions."""
-    # arr.length -> len(arr)
+    # arr.length or self.chartDates.length -> len(...)
     m = re.match(r"^(\w+(?:\.\w+)*)\.length$", expr)
     if m:
         return f"len({m.group(1)})"
-    # arr.length - 1  ->  len(arr) - 1
+    # arr.length - N  ->  len(arr) - N
     m = re.match(r"^(\w+(?:\.\w+)*)\.length\s*-\s*(\d+)$", expr)
-    if m:
-        return f"len({m.group(1)}) - {m.group(2)}"
-    # self.chartDates.length  (with self prefix)
-    m = re.match(r"^(self\.\w+)\.length$", expr)
-    if m:
-        return f"len({m.group(1)})"
-    m = re.match(r"^(self\.\w+)\.length\s*-\s*(\d+)$", expr)
     if m:
         return f"len({m.group(1)}) - {m.group(2)}"
     return expr
@@ -251,14 +248,10 @@ def _remove_closing_braces(source: str) -> str:
     appear *inline* (e.g. ``return { a: 1 }``) are unaffected because
     they share a line with other code.
     """
-    lines = source.split("\n")
-    result: list[str] = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped in ("}", "};"):
-            continue
-        result.append(line)
-    return "\n".join(result)
+    return "\n".join(
+        line for line in source.split("\n")
+        if line.strip() not in ("}", "};")
+    )
 
 
 # ======================================================================
@@ -270,12 +263,7 @@ def _convert_single_line_ternaries(source: str) -> str:
 
     Only handles ternaries that fit on a single logical line.
     """
-    # We process line by line so we don't accidentally match across lines.
-    lines = source.split("\n")
-    result: list[str] = []
-    for line in lines:
-        result.append(_ternary_line(line))
-    return "\n".join(result)
+    return _process_lines(source, _ternary_line)
 
 
 def _ternary_line(line: str) -> str:
@@ -352,8 +340,7 @@ def _try_parse_ternary(text: str, qmark_pos: int) -> str | None:
     # But we need to extract just the condition part from 'before'
     # Strategy: the condition is the rightmost expression in 'before'
     # after the last = sign (or the whole 'before' if no =)
-    # Match assignment = but not ==, !=, >=, <=
-    assign_match = re.search(r"^(.*?(?<![=!<>])=(?!=)\s*)(.*?)$", before, re.DOTALL)
+    assign_match = _ASSIGN_BOUNDARY_RE.search(before)
     if assign_match and assign_match.group(2).strip():
         prefix = assign_match.group(1)
         condition = assign_match.group(2).strip()
@@ -459,6 +446,38 @@ def _multiline_ternary_pass(source: str) -> str:
     return "\n".join(result)
 
 
+def _collect_continuation_lines(
+    lines: list[str], i: int, base_indent: int, *, allow_nested: bool,
+) -> tuple[list[str], int]:
+    """Collect continuation lines for a ternary branch value.
+
+    Returns the collected stripped parts and the updated line index.
+    When *allow_nested* is True, nested ternary markers (``?`` / ``:``)
+    at deeper indent are included (used for the false-value branch).
+    """
+    parts: list[str] = []
+    while i < len(lines):
+        stripped = lines[i].lstrip()
+        line_indent = len(lines[i]) - len(lines[i].lstrip())
+        # Stop markers at same or shallower indent
+        if stripped.startswith(": ") and line_indent <= base_indent:
+            break
+        if stripped.startswith("? ") and line_indent <= base_indent:
+            break
+        # Nested ternary parts at deeper indent (only for false branch)
+        if allow_nested and stripped.startswith(("? ", ": ")) and line_indent > base_indent:
+            parts.append(stripped)
+            i += 1
+            continue
+        # Regular continuation lines (deeper indent)
+        if line_indent > base_indent and stripped:
+            parts.append(stripped)
+            i += 1
+            continue
+        break
+    return parts, i
+
+
 def _parse_multiline_ternary(lines: list[str], start: int) -> tuple[str | None, int]:
     """Parse a multi-line ternary where condition is on the same line as the
     assignment, and ``?`` is on the next line.
@@ -483,20 +502,8 @@ def _parse_multiline_ternary(lines: list[str], start: int) -> tuple[str | None, 
     # Collect true-value (after "? ") — may span multiple continuation lines
     true_parts = [lines[i].lstrip()[2:].strip()]
     i += 1
-    while i < len(lines):
-        stripped = lines[i].lstrip()
-        line_indent = len(lines[i]) - len(lines[i].lstrip())
-        if stripped.startswith(": ") and line_indent <= q_indent:
-            break
-        # Check for nested ternary ? at same or shallower indent -> stop
-        if stripped.startswith("? ") and line_indent <= q_indent:
-            break
-        # Continuation line (e.g. chained methods indented deeper)
-        if line_indent > q_indent and stripped:
-            true_parts.append(stripped)
-            i += 1
-            continue
-        break
+    collected, i = _collect_continuation_lines(lines, i, q_indent, allow_nested=False)
+    true_parts.extend(collected)
 
     if i >= len(lines):
         return None, 1
@@ -507,24 +514,8 @@ def _parse_multiline_ternary(lines: list[str], start: int) -> tuple[str | None, 
     colon_indent = len(lines[i]) - len(lines[i].lstrip())
     false_parts = [lines[i].lstrip()[2:].strip()]
     i += 1
-    while i < len(lines):
-        stripped = lines[i].lstrip()
-        line_indent = len(lines[i]) - len(lines[i].lstrip())
-        # Nested ternary parts (? and : at deeper indent)
-        if stripped.startswith("? ") and line_indent > colon_indent:
-            false_parts.append(stripped)
-            i += 1
-            continue
-        if stripped.startswith(": ") and line_indent > colon_indent:
-            false_parts.append(stripped)
-            i += 1
-            continue
-        # Continuation lines (deeper indent)
-        if line_indent > colon_indent and stripped:
-            false_parts.append(stripped)
-            i += 1
-            continue
-        break
+    collected, i = _collect_continuation_lines(lines, i, colon_indent, allow_nested=True)
+    false_parts.extend(collected)
 
     consumed = i - start
 
@@ -537,9 +528,8 @@ def _parse_multiline_ternary(lines: list[str], start: int) -> tuple[str | None, 
         false_val = _convert_ternaries_in_text(false_val)
 
     # Extract the condition and prefix from the condition line.
-    # We need to find assignment = but NOT ==, !=, >=, <=, ===, !==
     cond_line = condition_line.rstrip()
-    assign_match = re.match(r"^(\s*\S+.*?(?<![=!<>])=(?!=)\s*)(.*?)$", cond_line)
+    assign_match = _ASSIGN_BOUNDARY_RE.match(cond_line)
     if assign_match and assign_match.group(2).strip():
         prefix = assign_match.group(1)
         cond = assign_match.group(2).strip()
@@ -600,14 +590,11 @@ def _convert_block_comments(source: str) -> str:
     def _repl(m: re.Match) -> str:
         indent = m.group(1)
         body = m.group(2)
-
-        lines = body.split("\n")
-        result_lines: list[str] = []
-        for line in lines:
-            # Strip leading * (common in JSDoc-style comments)
-            cleaned = re.sub(r"^\s*\*\s?", "", line).strip()
-            if cleaned:
-                result_lines.append(f"{indent}# {cleaned}")
+        result_lines = [
+            f"{indent}# {cleaned}"
+            for line in body.split("\n")
+            if (cleaned := re.sub(r"^\s*\*\s?", "", line).strip())
+        ]
         return "\n".join(result_lines) if result_lines else ""
 
     return re.sub(r"^([ \t]*)/\*(.*?)\*/", _repl, source,

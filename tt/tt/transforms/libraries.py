@@ -3,39 +3,66 @@ from __future__ import annotations
 
 import re
 
+# Simple camelCase -> snake_case function renames.  Each entry maps
+# a TypeScript function name to its Python equivalent.  The rename is
+# applied as ``\bOLD\(`` -> ``NEW(``.
+_SIMPLE_RENAMES: list[tuple[str, str]] = [
+    # date-fns
+    ("differenceInDays", "difference_in_days"),
+    ("isBefore", "is_before"),
+    ("isAfter", "is_after"),
+    ("addMilliseconds", "add_milliseconds"),
+    ("startOfYear", "start_of_year"),
+    ("endOfYear", "end_of_year"),
+    ("startOfDay", "start_of_day"),
+    ("endOfDay", "end_of_day"),
+    ("startOfMonth", "start_of_month"),
+    ("subDays", "sub_days"),
+    ("subYears", "sub_years"),
+    ("isThisYear", "is_this_year"),
+    ("isWithinInterval", "is_within_interval"),
+    ("parseDate", "parse_date"),
+    ("resetHours", "reset_hours"),
+    ("getIntervalFromDateRange", "get_interval_from_date_range"),
+    # lodash / helpers
+    ("cloneDeep", "clone_deep"),
+    ("sortBy", "sort_by"),
+    ("uniqBy", "uniq_by"),
+    ("isNumber", "is_number"),
+    ("getSum", "get_sum"),
+    ("getFactor", "get_factor"),
+]
+
+
+def _apply_simple_renames(source: str) -> str:
+    """Apply all simple function renames from the table above."""
+    for old, new in _SIMPLE_RENAMES:
+        source = re.sub(rf'\b{old}\(', f'{new}(', source)
+    return source
+
 
 def _remove_logging_lines(source: str) -> str:
     """Remove console.log, Logger.warn, Logger.debug lines entirely."""
-    # Remove entire lines containing console.log(
-    source = re.sub(r'^[^\n]*console\.log\([^)]*\)[^\n]*\n?', '', source, flags=re.MULTILINE)
-    # console.log with multi-line arguments (opening paren, content spanning lines, closing)
-    source = re.sub(
-        r'^\s*console\.log\(.*?\);\s*\n?',
-        '',
-        source,
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    # Remove remaining console.log blocks (multi-line template literals etc.)
-    # Match: if (ENABLE_LOGGING) { console.log(...) } blocks
+    # Remove lines/blocks for each logging call pattern
+    for call in (r'console\.log', r'Logger\.warn', r'Logger\.debug'):
+        # Single-line calls
+        source = re.sub(
+            rf'^[^\n]*{call}\([^)]*\)[^\n]*\n?', '', source,
+            flags=re.MULTILINE,
+        )
+        # Multi-line calls (content spanning lines)
+        source = re.sub(
+            rf'^\s*{call}\(.*?\);\s*\n?', '', source,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+
+    # Remove ENABLE_LOGGING guard blocks containing console.log
     source = re.sub(
         r'if\s*\(\s*PortfolioCalculator\.ENABLE_LOGGING\s*\)\s*\{[^}]*console\.log[^}]*\}',
         '',
         source,
         flags=re.DOTALL,
     )
-
-    # Remove lines with Logger.warn(
-    source = re.sub(r'^[^\n]*Logger\.warn\([^)]*\)[^\n]*\n?', '', source, flags=re.MULTILINE)
-    # Multi-line Logger.warn
-    source = re.sub(
-        r'^\s*Logger\.warn\(.*?\);\s*\n?',
-        '',
-        source,
-        flags=re.MULTILINE | re.DOTALL,
-    )
-
-    # Remove lines with Logger.debug(
-    source = re.sub(r'^[^\n]*Logger\.debug\([^)]*\)[^\n]*\n?', '', source, flags=re.MULTILINE)
 
     return source
 
@@ -47,6 +74,36 @@ def _convert_enable_logging(source: str) -> str:
         'False',
         source,
     )
+    return source
+
+
+def _convert_interval_call(source: str, ts_name: str, py_name: str) -> str:
+    """Convert ``tsName({ end, start }, { step? })`` to ``py_name(start, end[, step])``."""
+    # Both property orderings: {end, start} and {start, end}, with optional step
+    _PROP = r'(?::\s*(\w+))?'
+    for first, second, start_grp, end_grp in [
+        ('end', 'start', 2, 1),
+        ('start', 'end', 1, 2),
+    ]:
+        # With step argument
+        pat_step = (
+            rf'\b{ts_name}\(\s*\{{\s*{first}\s*{_PROP}\s*,\s*{second}\s*{_PROP}\s*\}}'
+            rf'\s*,\s*\{{\s*step\s*{_PROP}\s*\}}\s*\)'
+        )
+        source = re.sub(
+            pat_step,
+            lambda m, sg=start_grp, eg=end_grp: f'{py_name}({m.group(sg) or first}, {m.group(eg) or second}, {m.group(3) or "step"})',
+            source,
+        )
+        # Without step argument
+        pat_no_step = (
+            rf'\b{ts_name}\(\s*\{{\s*{first}\s*{_PROP}\s*,\s*{second}\s*{_PROP}\s*\}}\s*\)'
+        )
+        source = re.sub(
+            pat_no_step,
+            lambda m, sg=start_grp, eg=end_grp: f'{py_name}({m.group(sg) or first}, {m.group(eg) or second})',
+            source,
+        )
     return source
 
 
@@ -74,125 +131,15 @@ def _convert_date_fns(source: str) -> str:
         source,
     )
 
-    # differenceInDays(a, b) -> difference_in_days(a, b)
-    source = re.sub(
-        r'\bdifferenceInDays\(',
-        'difference_in_days(',
-        source,
-    )
-
-    # isBefore(a, b) -> is_before(a, b)
-    source = re.sub(r'\bisBefore\(', 'is_before(', source)
-
-    # isAfter(a, b) -> is_after(a, b)
-    source = re.sub(r'\bisAfter\(', 'is_after(', source)
-
-    # addMilliseconds(d, n) -> add_milliseconds(d, n)
-    source = re.sub(r'\baddMilliseconds\(', 'add_milliseconds(', source)
-
-    # eachDayOfInterval({ end, start }, { step }) -> each_day_of_interval(start, end, step)
-    # Handle: eachDayOfInterval({ end: e, start: s }, { step: n })
-    source = re.sub(
-        r'\beachDayOfInterval\(\s*\{\s*end\s*(?::\s*(\w+))?\s*,\s*start\s*(?::\s*(\w+))?\s*\}\s*,\s*\{\s*step\s*(?::\s*(\w+))?\s*\}\s*\)',
-        lambda m: 'each_day_of_interval({start}, {end}, {step})'.format(
-            start=m.group(2) or 'start',
-            end=m.group(1) or 'end',
-            step=m.group(3) or 'step',
-        ),
-        source,
-    )
-    # eachDayOfInterval({ end, start }) -> each_day_of_interval(start, end)
-    source = re.sub(
-        r'\beachDayOfInterval\(\s*\{\s*end\s*(?::\s*(\w+))?\s*,\s*start\s*(?::\s*(\w+))?\s*\}\s*\)',
-        lambda m: 'each_day_of_interval({start}, {end})'.format(
-            start=m.group(2) or 'start',
-            end=m.group(1) or 'end',
-        ),
-        source,
-    )
-    # Also handle { start, end } order (start first)
-    source = re.sub(
-        r'\beachDayOfInterval\(\s*\{\s*start\s*(?::\s*(\w+))?\s*,\s*end\s*(?::\s*(\w+))?\s*\}\s*,\s*\{\s*step\s*(?::\s*(\w+))?\s*\}\s*\)',
-        lambda m: 'each_day_of_interval({start}, {end}, {step})'.format(
-            start=m.group(1) or 'start',
-            end=m.group(2) or 'end',
-            step=m.group(3) or 'step',
-        ),
-        source,
-    )
-    source = re.sub(
-        r'\beachDayOfInterval\(\s*\{\s*start\s*(?::\s*(\w+))?\s*,\s*end\s*(?::\s*(\w+))?\s*\}\s*\)',
-        lambda m: 'each_day_of_interval({start}, {end})'.format(
-            start=m.group(1) or 'start',
-            end=m.group(2) or 'end',
-        ),
-        source,
-    )
-
-    # eachYearOfInterval({ end, start }) -> each_year_of_interval(start, end)
-    source = re.sub(
-        r'\beachYearOfInterval\(\s*\{\s*end\s*(?::\s*(\w+))?\s*,\s*start\s*(?::\s*(\w+))?\s*\}\s*\)',
-        lambda m: 'each_year_of_interval({start}, {end})'.format(
-            start=m.group(2) or 'start',
-            end=m.group(1) or 'end',
-        ),
-        source,
-    )
-    source = re.sub(
-        r'\beachYearOfInterval\(\s*\{\s*start\s*(?::\s*(\w+))?\s*,\s*end\s*(?::\s*(\w+))?\s*\}\s*\)',
-        lambda m: 'each_year_of_interval({start}, {end})'.format(
-            start=m.group(1) or 'start',
-            end=m.group(2) or 'end',
-        ),
-        source,
-    )
-
-    # startOfYear(d) -> start_of_year(d)
-    source = re.sub(r'\bstartOfYear\(', 'start_of_year(', source)
-
-    # endOfYear(d) -> end_of_year(d)
-    source = re.sub(r'\bendOfYear\(', 'end_of_year(', source)
-
-    # startOfDay(d) -> start_of_day(d)
-    source = re.sub(r'\bstartOfDay\(', 'start_of_day(', source)
-
-    # endOfDay(d) -> end_of_day(d)
-    source = re.sub(r'\bendOfDay\(', 'end_of_day(', source)
-
-    # startOfMonth(d) -> start_of_month(d)
-    source = re.sub(r'\bstartOfMonth\(', 'start_of_month(', source)
+    # eachDayOfInterval / eachYearOfInterval -> each_*_of_interval(start, end[, step])
+    source = _convert_interval_call(source, 'eachDayOfInterval', 'each_day_of_interval')
+    source = _convert_interval_call(source, 'eachYearOfInterval', 'each_year_of_interval')
 
     # startOfWeek(d, { weekStartsOn: n }) -> start_of_week(d, week_starts_on=n)
+    # (must come before the simple rename of startOfWeek)
     source = re.sub(
         r'\bstartOfWeek\(\s*([^,)]+)\s*,\s*\{\s*weekStartsOn\s*:\s*(\d+)\s*\}\s*\)',
         r'start_of_week(\1, week_starts_on=\2)',
-        source,
-    )
-    # startOfWeek(d) -> start_of_week(d)
-    source = re.sub(r'\bstartOfWeek\(', 'start_of_week(', source)
-
-    # subDays(d, n) -> sub_days(d, n)
-    source = re.sub(r'\bsubDays\(', 'sub_days(', source)
-
-    # subYears(d, n) -> sub_years(d, n)
-    source = re.sub(r'\bsubYears\(', 'sub_years(', source)
-
-    # isThisYear(d) -> is_this_year(d)
-    source = re.sub(r'\bisThisYear\(', 'is_this_year(', source)
-
-    # isWithinInterval(d, interval) -> is_within_interval(d, interval)
-    source = re.sub(r'\bisWithinInterval\(', 'is_within_interval(', source)
-
-    # parseDate(s) -> parse_date(s)
-    source = re.sub(r'\bparseDate\(', 'parse_date(', source)
-
-    # resetHours(d) -> reset_hours(d)
-    source = re.sub(r'\bresetHours\(', 'reset_hours(', source)
-
-    # getIntervalFromDateRange(range) -> get_interval_from_date_range(range)
-    source = re.sub(
-        r'\bgetIntervalFromDateRange\(',
-        'get_interval_from_date_range(',
         source,
     )
 
@@ -207,30 +154,6 @@ def _convert_date_fns(source: str) -> str:
     # return a dict-like object. Let's convert the property names:
     source = re.sub(r'\.endDate\b', '["end_date"]', source)
     source = re.sub(r'\.startDate\b', '["start_date"]', source)
-
-    return source
-
-
-def _convert_lodash(source: str) -> str:
-    """Convert lodash function calls to Python helper equivalents."""
-
-    # cloneDeep(x) -> clone_deep(x)
-    source = re.sub(r'\bcloneDeep\(', 'clone_deep(', source)
-
-    # sortBy(arr, fn) -> sort_by(arr, fn)
-    source = re.sub(r'\bsortBy\(', 'sort_by(', source)
-
-    # uniqBy(arr, key) -> uniq_by(arr, key)
-    source = re.sub(r'\buniqBy\(', 'uniq_by(', source)
-
-    # isNumber(x) -> is_number(x)
-    source = re.sub(r'\bisNumber\(', 'is_number(', source)
-
-    # getSum(items) -> get_sum(items)
-    source = re.sub(r'\bgetSum\(', 'get_sum(', source)
-
-    # getFactor(type) -> get_factor(type)
-    source = re.sub(r'\bgetFactor\(', 'get_factor(', source)
 
     return source
 
@@ -310,14 +233,14 @@ def apply(source: str) -> str:
     source = _convert_enable_logging(source)
     source = _remove_logging_lines(source)
 
-    # 2. date-fns functions
+    # 2. date-fns functions (complex patterns first)
     source = _convert_date_fns(source)
 
     # 3. date min/max (array-style)
     source = _convert_date_min_max(source)
 
-    # 4. lodash functions
-    source = _convert_lodash(source)
+    # 4. Simple camelCase -> snake_case renames (date-fns + lodash + helpers)
+    source = _apply_simple_renames(source)
 
     # 5. class-transformer
     source = _convert_class_transformer(source)

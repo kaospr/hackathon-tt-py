@@ -160,39 +160,27 @@ def _convert_arrow_functions(source: str) -> str:
     - (x) => expression  ->  lambda x: expression
     """
 
-    # Destructured single-var arrow with block body:
-    # ({ field }) => { return expr; }
-    def replace_destructured_body_arrow(m: re.Match) -> str:
+    # Destructured single-var arrow: ({ field }) => expr
+    # Shared replacer for both block body and expression body forms.
+    def _destructured_arrow(m: re.Match) -> str:
         varname = m.group(1).strip()
         body = m.group(2).strip()
         if ',' not in varname:
-            new_body = re.sub(
+            body = re.sub(
                 r'\b' + re.escape(varname) + r'\b', f'_item.{varname}', body
             )
-            return f'lambda _item: {new_body}'
         return f'lambda _item: {body}'
 
+    # Block body: ({ field }) => { return expr; }
     source = re.sub(
         r'\(\{\s*(\w+)\s*\}\)\s*=>\s*\{\s*return\s+(.+?);\s*\}',
-        replace_destructured_body_arrow,
+        _destructured_arrow,
         source,
     )
-
-    # Destructured single-var arrow with expression body (no braces):
-    # ({ field }) => expression
-    def replace_destructured_expr_arrow(m: re.Match) -> str:
-        varname = m.group(1).strip()
-        body = m.group(2).strip()
-        if ',' not in varname:
-            new_body = re.sub(
-                r'\b' + re.escape(varname) + r'\b', f'_item.{varname}', body
-            )
-            return f'lambda _item: {new_body}'
-        return f'lambda _item: {body}'
-
+    # Expression body: ({ field }) => expression
     source = re.sub(
         r'\(\{\s*(\w+)\s*\}\)\s*=>\s*(?!\{)([^\n,)]+)',
-        replace_destructured_expr_arrow,
+        _destructured_arrow,
         source,
     )
 
@@ -358,15 +346,11 @@ def _convert_new_date(source: str) -> str:
 
     Note: `new` keyword may already be removed by syntax.py.
     """
-    # new Date() -> datetime.now()
-    source = re.sub(r'\bnew\s+Date\(\)', 'datetime.now()', source)
-    # Date() with no args (new already removed)
-    source = re.sub(r'(?<!\w)Date\(\)(?!\w)', 'datetime.now()', source)
+    # Date() with no args (with or without `new`) -> datetime.now()
+    source = re.sub(r'\b(?:new\s+)?Date\(\)', 'datetime.now()', source)
 
-    # new Date(expr) -> parse_date(expr)
-    source = re.sub(r'\bnew\s+Date\(([^)]+)\)', r'parse_date(\1)', source)
-    # Date(expr) (new already removed)
-    source = re.sub(r'(?<!\w)Date\(([^)]+)\)', r'parse_date(\1)', source)
+    # Date(expr) (with or without `new`) -> parse_date(expr)
+    source = re.sub(r'\b(?:new\s+)?Date\(([^)]+)\)', r'parse_date(\1)', source)
 
     # .getTime() -> .timestamp()
     source = re.sub(r'\.getTime\(\)', '.timestamp()', source)
