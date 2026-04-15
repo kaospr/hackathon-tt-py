@@ -135,8 +135,7 @@ def _skip_param_list(content: str, pos: int) -> int | None:
 def _scan_for_body_brace(content: str, i: int) -> int | None:
     """Scan past return type annotation to find the method body '{'."""
     length = len(content)
-    brace_depth = 0
-    found_colon = False
+    state = [0, False]  # [brace_depth, found_colon]
 
     while i < length:
         ch = content[i]
@@ -146,32 +145,36 @@ def _scan_for_body_brace(content: str, i: int) -> int | None:
             continue
 
         i = _skip_comment(content, i)
-        if i is None:
-            return None
-        if i >= length:
+        if i is None or i >= length:
             return None
         ch = content[i]
 
-        if ch == ";" and brace_depth == 0:
-            return None
-        if ch == ":":
-            found_colon = True
-
-        if ch == "{":
-            result = _handle_brace(content, i, brace_depth, found_colon)
-            if isinstance(result, int) and result == i:
-                return i
-            if isinstance(result, int):
-                brace_depth = result
-                i += 1
-                continue
-            brace_depth = result[0]
-        elif ch == "}":
-            brace_depth -= 1
-            if brace_depth < 0:
-                return None
-        i += 1
+        result, i = _process_brace_char(content, i, ch, state)
+        if result is not None:
+            return result
     return None
+
+
+def _process_brace_char(content, i, ch, state):
+    """Process one character during body brace scanning. Returns (result, next_i)."""
+    brace_depth, found_colon = state
+    if ch == ";" and brace_depth == 0:
+        return None, len(content)
+    if ch == ":":
+        state[1] = True
+        found_colon = True
+    if ch == "{":
+        result = _handle_brace(content, i, brace_depth, found_colon)
+        if isinstance(result, int) and result == i:
+            return i, i  # Found body brace
+        if isinstance(result, int):
+            state[0] = result
+            return None, i + 1
+    elif ch == "}":
+        state[0] = brace_depth - 1
+        if state[0] < 0:
+            return None, len(content)
+    return None, i + 1
 
 
 def _skip_comment(content: str, i: int) -> int | None:
