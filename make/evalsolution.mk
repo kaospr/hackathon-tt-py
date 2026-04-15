@@ -64,7 +64,7 @@ evaluate_tt:
 	@echo "=== Evaluating TT=$(TT_PROJECT) PROJECT=$(PROJECT_NAME) ==="
 	@echo "=== [1/3] Translate (timed) ==="
 	rm -rf translations/ghostfolio_pytx
-	time uv run --project $(TT_PROJECT) $(notdir $(TT_PROJECT)) translate
+	uv run --project $(TT_PROJECT) $(notdir $(TT_PROJECT)) translate
 	@echo "=== [2/3] API tests + scoring against translated version ==="
 	rm -rf translations/ghostfolio_pytx/.venv
 	-bash projecttests/tools/spinup_and_test_ghostfolio_pytx.sh
