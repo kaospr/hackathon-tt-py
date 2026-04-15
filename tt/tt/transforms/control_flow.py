@@ -112,62 +112,54 @@ def _convert_c_style_for(source: str) -> str:
 
 def _try_convert_c_for_line(line: str) -> str:
     """Try to convert a single line containing a C-style for loop."""
-    # Match the general pattern: for (init; cond; update) {
-    m = re.match(
-        r"^(\s*)for\s*\(\s*"
-        r"(?:let|var|const)?\s*(\w+)\s*=\s*([^;]+);\s*"   # init: i = start
-        r"(\w+)\s*([<>=!]+)\s*([^;]+);\s*"                 # cond: i < end
-        r"(\w+)\s*([+\-*/]=?)\s*(\d+)"                     # update: i += 1
-        r"\s*\)\s*\{",
-        line,
-    )
+    m = _match_c_for(line)
     if not m:
         return line
+    return _build_range_loop(m) or line
 
-    indent = m.group(1)
-    init_var = m.group(2)
-    init_val = m.group(3).strip()
-    cond_var = m.group(4)
-    cond_op = m.group(5)
-    cond_val = m.group(6).strip()
-    upd_var = m.group(7)
-    upd_op = m.group(8)
-    upd_step = m.group(9)
 
-    # Sanity: all three parts should reference the same variable
-    if not (init_var == cond_var == upd_var):
-        return line
+_C_FOR_RE = re.compile(
+    r"^(\s*)for\s*\(\s*"
+    r"(?:let|var|const)?\s*(\w+)\s*=\s*([^;]+);\s*"
+    r"(\w+)\s*([<>=!]+)\s*([^;]+);\s*"
+    r"(\w+)\s*([+\-*/]=?)\s*(\d+)"
+    r"\s*\)\s*\{"
+)
 
-    # Forward loop:  for (let i = 0; i < N; i += 1)
-    if init_val == "0" and cond_op in ("<",) and upd_op in ("+=",) and upd_step == "1":
-        end_expr = _length_expr(cond_val)
-        return f"{indent}for {init_var} in range({end_expr}):"
 
-    # Forward loop with non-zero start
-    if cond_op in ("<",) and upd_op in ("+=",) and upd_step == "1":
-        end_expr = _length_expr(cond_val)
-        return f"{indent}for {init_var} in range({init_val}, {end_expr}):"
+def _match_c_for(line: str) -> re.Match | None:
+    """Match and validate a C-style for-loop line."""
+    m = _C_FOR_RE.match(line)
+    if not m:
+        return None
+    if not (m.group(2) == m.group(4) == m.group(7)):
+        return None
+    return m
 
-    # Reverse loop:  for (let i = N - 1; i >= 0; i -= 1)
-    if cond_op in (">=",) and cond_val == "0" and upd_op in ("-=",) and upd_step == "1":
-        start_expr = _length_expr(init_val)
-        return f"{indent}for {init_var} in range({start_expr}, -1, -1):"
 
-    # Reverse loop with non-zero lower bound
-    if cond_op in (">=",) and upd_op in ("-=",) and upd_step == "1":
-        start_expr = _length_expr(init_val)
-        end_val = _length_expr(cond_val)
-        return f"{indent}for {init_var} in range({start_expr}, {end_val} - 1, -1):"
+def _build_range_loop(m: re.Match) -> str | None:
+    """Build a Python range() loop from a C-style for regex match."""
+    indent, var = m.group(1), m.group(2)
+    init_val, cond_op = m.group(3).strip(), m.group(5)
+    cond_val, upd_op, step = m.group(6).strip(), m.group(8), m.group(9)
+    end = _length_expr(cond_val)
 
-    # General forward loop with step
-    if cond_op in ("<",) and upd_op in ("+=",):
-        end_expr = _length_expr(cond_val)
+    if cond_op == "<" and upd_op == "+=" and step == "1":
         if init_val == "0":
-            return f"{indent}for {init_var} in range(0, {end_expr}, {upd_step}):"
-        return f"{indent}for {init_var} in range({init_val}, {end_expr}, {upd_step}):"
+            return f"{indent}for {var} in range({end}):"
+        return f"{indent}for {var} in range({init_val}, {end}):"
 
-    # Fallback: leave untouched
-    return line
+    if cond_op == ">=" and upd_op == "-=" and step == "1":
+        start = _length_expr(init_val)
+        if cond_val == "0":
+            return f"{indent}for {var} in range({start}, -1, -1):"
+        return f"{indent}for {var} in range({start}, {_length_expr(cond_val)} - 1, -1):"
+
+    if cond_op == "<" and upd_op == "+=":
+        start_arg = "" if init_val == "0" else f"{init_val}, "
+        return f"{indent}for {var} in range({start_arg}{end}, {step}):"
+
+    return None
 
 
 def _length_expr(expr: str) -> str:
@@ -479,65 +471,52 @@ def _collect_continuation_lines(
 
 
 def _parse_multiline_ternary(lines: list[str], start: int) -> tuple[str | None, int]:
-    """Parse a multi-line ternary where condition is on the same line as the
-    assignment, and ``?`` is on the next line.
-
-    Pattern::
-
-        <prefix> = <condition>
-          ? <trueVal>
-          : <falseVal>
-    """
+    """Parse a multi-line ternary: ``<prefix> = <cond> \\n ? <T> \\n : <F>``."""
     condition_line = lines[start]
     i = start + 1
 
-    if i >= len(lines):
-        return None, 1
-    if not lines[i].lstrip().startswith("? "):
+    if i >= len(lines) or not lines[i].lstrip().startswith("? "):
         return None, 1
 
-    # The ? line indent tells us the ternary depth
+    true_val, false_val, i = _collect_ternary_branches(lines, i)
+    if true_val is None:
+        return None, 1
+
+    prefix, cond = _split_condition_line(condition_line)
+    return f"{prefix}{true_val} if {cond} else {false_val}", i - start
+
+
+def _collect_ternary_branches(lines, i):
+    """Collect true and false branches of a multi-line ternary starting at ?-line."""
     q_indent = len(lines[i]) - len(lines[i].lstrip())
-
-    # Collect true-value (after "? ") — may span multiple continuation lines
     true_parts = [lines[i].lstrip()[2:].strip()]
     i += 1
     collected, i = _collect_continuation_lines(lines, i, q_indent, allow_nested=False)
     true_parts.extend(collected)
 
-    if i >= len(lines):
-        return None, 1
-    if not lines[i].lstrip().startswith(": "):
-        return None, 1
+    if i >= len(lines) or not lines[i].lstrip().startswith(": "):
+        return None, None, i
 
-    # Collect false-value (after ": ") — may include nested ternaries
-    colon_indent = len(lines[i]) - len(lines[i].lstrip())
+    c_indent = len(lines[i]) - len(lines[i].lstrip())
     false_parts = [lines[i].lstrip()[2:].strip()]
     i += 1
-    collected, i = _collect_continuation_lines(lines, i, colon_indent, allow_nested=True)
+    collected, i = _collect_continuation_lines(lines, i, c_indent, allow_nested=True)
     false_parts.extend(collected)
-
-    consumed = i - start
 
     true_val = " ".join(true_parts)
     false_val = " ".join(false_parts)
-
-    # Handle nested ternaries in the false value
-    # They appear as: "cond2 ? val2 : val3" after joining
     if "? " in false_val:
         false_val = _convert_ternaries_in_text(false_val)
+    return true_val, false_val, i
 
-    # Extract the condition and prefix from the condition line.
+
+def _split_condition_line(condition_line):
+    """Extract prefix and condition from the assignment/condition line."""
     cond_line = condition_line.rstrip()
     assign_match = _ASSIGN_BOUNDARY_RE.match(cond_line)
     if assign_match and assign_match.group(2).strip():
-        prefix = assign_match.group(1)
-        cond = assign_match.group(2).strip()
-    else:
-        prefix = re.match(r"^(\s*)", cond_line).group(1)
-        cond = cond_line.strip()
-
-    return f"{prefix}{true_val} if {cond} else {false_val}", consumed
+        return assign_match.group(1), assign_match.group(2).strip()
+    return re.match(r"^(\s*)", cond_line).group(1), cond_line.strip()
 
 
 def _parse_multiline_ternary_split(lines: list[str], start: int) -> tuple[str | None, int]:

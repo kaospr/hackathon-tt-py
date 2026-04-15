@@ -107,117 +107,95 @@ def _is_abstract_declaration(content: str, pos: int) -> bool:
 
 
 def _find_opening_brace(content: str, pos: int) -> int | None:
-    """
-    Starting from *pos* (which is inside the parameter list), find the
-    opening '{' that starts the method body.
+    """Find the opening '{' of the method body, skipping params and return type."""
+    i = _skip_param_list(content, pos)
+    if i is None:
+        return None
+    return _scan_for_body_brace(content, i)
 
-    We need to skip over:
-    - The parameter list (balanced parentheses)
-    - The return type annotation (after the closing ')' and ':')
-    - Any type-level braces in the return type (e.g. `{ [date: string]: true }`)
 
-    Returns the index of the '{' that opens the method body, or None
-    if we hit a ';' first (abstract method).
-    """
-    # First, balance the parentheses to get past the parameter list
-    paren_depth = 1  # We already consumed the opening '('
+def _skip_param_list(content: str, pos: int) -> int | None:
+    """Balance parentheses to skip past the parameter list."""
+    depth = 1
     i = pos
     length = len(content)
-
-    while i < length and paren_depth > 0:
+    while i < length and depth > 0:
         ch = content[i]
         if ch == "(":
-            paren_depth += 1
+            depth += 1
         elif ch == ")":
-            paren_depth -= 1
-        elif ch == "'" or ch == '"' or ch == "`":
-            # Skip string literals
+            depth -= 1
+        elif ch in ("'", '"', "`"):
             i = _skip_string(content, i)
             continue
         i += 1
+    return i if i < length else None
 
-    if i >= length:
-        return None
 
-    # Now we're past the closing ')'. We need to find the opening '{'
-    # of the method body. There might be a return type annotation like
-    # `: SomeType` or `: { [date: string]: true }` before the body brace.
-    #
-    # Strategy: scan forward. If we see ':', we're in a return type annotation.
-    # We need to handle braces in the return type (they don't start the body).
-    # The method body's '{' is the one at brace depth 0 after we've consumed
-    # any return type braces.
-
+def _scan_for_body_brace(content: str, i: int) -> int | None:
+    """Scan past return type annotation to find the method body '{'."""
+    length = len(content)
     brace_depth = 0
     found_colon = False
 
     while i < length:
         ch = content[i]
 
-        if ch == "'" or ch == '"' or ch == "`":
+        if ch in ("'", '"', "`"):
             i = _skip_string(content, i)
             continue
 
-        if ch == "/" and i + 1 < length:
-            if content[i + 1] == "/":
-                # Line comment -- skip to end of line
-                nl = content.find("\n", i)
-                i = nl + 1 if nl != -1 else length
-                continue
-            elif content[i + 1] == "*":
-                # Block comment -- skip to */
-                end = content.find("*/", i + 2)
-                i = end + 2 if end != -1 else length
-                continue
+        i = _skip_comment(content, i)
+        if i is None:
+            return None
+        if i >= length:
+            return None
+        ch = content[i]
 
         if ch == ";" and brace_depth == 0:
-            # Abstract method or declaration -- no body
             return None
-
         if ch == ":":
             found_colon = True
 
         if ch == "{":
-            if brace_depth == 0 and found_colon:
-                # This could be a type annotation brace like `: { [date: string]: boolean }`
-                # OR the actual method body. We need to check: if there's a closing '}'
-                # followed by more annotation content before the real body '{', this is a
-                # type annotation brace.
-                #
-                # Heuristic: look at what follows matching '}'. If the matching '}' is
-                # followed (after whitespace) by ')', '&', '|', ',', or ':', it's a type
-                # annotation brace. If it's followed by nothing special or another '{',
-                # it might be the body. But actually the simplest reliable approach:
-                # count this brace and continue -- the body '{' is the one where we're
-                # at depth 0 after all type annotation braces have been balanced.
-                #
-                # Wait -- that doesn't work because the body '{' also increments depth.
-                # Better approach: peek ahead. If the content after '{' starts with
-                # typical type annotation patterns like whitespace + '[' or whitespace + identifier + ':',
-                # it's a type annotation. Otherwise it's the body.
-                if _is_type_brace(content, i):
-                    brace_depth += 1
-                    i += 1
-                    continue
-                else:
-                    return i
-            elif brace_depth > 0:
-                brace_depth += 1
-            else:
-                # No colon seen yet, or we're at depth 0 -- this is the body
+            result = _handle_brace(content, i, brace_depth, found_colon)
+            if isinstance(result, int) and result == i:
                 return i
-            i += 1
-            continue
-
-        if ch == "}":
+            if isinstance(result, int):
+                brace_depth = result
+                i += 1
+                continue
+            brace_depth = result[0]
+        elif ch == "}":
             brace_depth -= 1
             if brace_depth < 0:
-                # Something went wrong
                 return None
-
         i += 1
-
     return None
+
+
+def _skip_comment(content: str, i: int) -> int | None:
+    """Skip line or block comment at position i. Returns i if no comment."""
+    length = len(content)
+    if content[i] == "/" and i + 1 < length:
+        if content[i + 1] == "/":
+            nl = content.find("\n", i)
+            return nl + 1 if nl != -1 else length
+        if content[i + 1] == "*":
+            end = content.find("*/", i + 2)
+            return end + 2 if end != -1 else length
+    return i
+
+
+def _handle_brace(content: str, i: int, brace_depth: int, found_colon: bool):
+    """Handle a '{' character. Returns i to signal body found, or new depth."""
+    if brace_depth == 0 and found_colon:
+        if _is_type_brace(content, i):
+            return brace_depth + 1
+        return i  # This IS the body brace
+    if brace_depth > 0:
+        return brace_depth + 1
+    return i  # Body brace (no colon context)
 
 
 def _is_type_brace(content: str, pos: int) -> bool:
