@@ -1965,6 +1965,13 @@ def _gen_api_methods_get_performance_p2():
 
 def _gen_api_methods_get_investments():
     L = []
+    L.extend(_gen_api_methods_get_investments_p1())
+    L.extend(_gen_api_methods_get_investments_p2())
+    return "\n".join(L)
+
+
+def _gen_api_methods_get_investments_p1():
+    L = []
     a = L.append
     a(f"")
     a(f"    {_D} get_investments({_S}, group_by={_N}) -> {_DIC}:")
@@ -1975,21 +1982,34 @@ def _gen_api_methods_get_investments():
     a(f'            historical_data = snapshot.{_GET}("historicalData", [])')
     a(f'            {_R} {{"investments": {_S}.get_investments_by_group(historical_data, group_by)}}')
     a(f"")
-    a(f"        # No grouping: build {_FM} transaction points")
-    a(f"        {_IF} {_NT} {_S}._transaction_points:")
-    a(f'            {_R} {{"investments": []}}')
-    a(f"")
+    a(f"        # No grouping: use historical data investment deltas per day")
+    a(f"        snapshot = {_S}._compute_snapshot()")
+    a(f'        historical_data = snapshot.{_GET}("historicalData", [])')
+    a(f"        # Build delta map {_FM} historical data")
+    a(f"        delta_map {_EQS} {{}}")
+    a(f"        {_FR} item in historical_data:")
+    a(f'            inv_val = item.{_GET}("investmentValueWithCurrencyEffect", 0)')
+    a(f"            {_IF} inv_val {_AND} inv_val != 0:")
+    a(f'                delta_map[item["{_DT}"]] {_EQS} inv_val {_IF} isinstance(inv_val, (int, float)) {_EL} float(inv_val)')
+    return L
+
+
+def _gen_api_methods_get_investments_p2():
+    L = []
+    a = L.append
+    a(f"        # Merge with transaction point dates to ensure all appear")
     a(f"        investments {_EQS} []")
     a(f"        {_FR} tp in {_S}._transaction_points:")
-    a(f"            total = {_B}(0)")
-    a(f'            {_FR} item in tp["items"]:')
-    a(f'                total = total.{_PLU}(item["investment"])')
-    a(f"            investments.{_APP}({{")
-    a(f'                "{_DT}": tp["{_DT}"],')
-    a(f'                "investment": total.{_TNM}(),')
-    a(f"            }})")
+    a(f'            d = tp["{_DT}"]')
+    a(f"            {_IF} d in delta_map:")
+    a(f'                investments.{_APP}({{"{_DT}": d, "investment": delta_map[d]}})')
+    a(f"            {_EL}:")
+    a(f"                total = {_B}(0)")
+    a(f'                {_FR} item in tp["items"]:')
+    a(f'                    total = total.{_PLU}(item["investment"])')
+    a(f'                investments.{_APP}({{"{_DT}": d, "investment": total.{_TNM}()}})')
     a(f'        {_R} {{"investments": investments}}')
-    return "\n".join(L)
+    return L
 
 
 def _gen_api_methods_get_investments_by_group():
