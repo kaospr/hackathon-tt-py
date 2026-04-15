@@ -4,6 +4,49 @@ from __future__ import annotations
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 
+def _parse_big_numeric(value) -> Decimal:
+    """Convert a numeric value to Decimal."""
+    if isinstance(value, bool):
+        return Decimal(1) if value else Decimal(0)
+    return Decimal(str(value))
+
+
+def _parse_big_value(value) -> Decimal:
+    """Convert a raw value to Decimal for Big construction."""
+    if isinstance(value, Big):
+        return value._val
+    if isinstance(value, Decimal):
+        return value
+    if value is None:
+        return Decimal(0)
+    if isinstance(value, (bool, int, float)):
+        return _parse_big_numeric(value)
+    if isinstance(value, str):
+        return _parse_big_str(value)
+    return _parse_big_fallback(value)
+
+
+def _parse_big_str(value: str) -> Decimal:
+    """Parse a string value to Decimal."""
+    stripped = value.strip()
+    if stripped == "":
+        return Decimal(0)
+    try:
+        return Decimal(stripped)
+    except InvalidOperation:
+        raise ValueError(f"Big: cannot convert {value!r} to a number")
+
+
+def _parse_big_fallback(value) -> Decimal:
+    """Last-resort conversion to Decimal via str."""
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, TypeError):
+        raise TypeError(
+            f"Big: unsupported type {type(value).__name__!r} for value {value!r}"
+        )
+
+
 class Big:
     """Arbitrary-precision number compatible with Big.js method API.
 
@@ -18,34 +61,7 @@ class Big:
     __slots__ = ("_val",)
 
     def __init__(self, value=0):
-        if isinstance(value, Big):
-            self._val = value._val
-        elif isinstance(value, Decimal):
-            self._val = value
-        elif value is None:
-            self._val = Decimal(0)
-        elif isinstance(value, bool):
-            # bool is a subclass of int; handle before int check
-            self._val = Decimal(1) if value else Decimal(0)
-        elif isinstance(value, (int, float)):
-            self._val = Decimal(str(value))
-        elif isinstance(value, str):
-            stripped = value.strip()
-            if stripped == "":
-                self._val = Decimal(0)
-            else:
-                try:
-                    self._val = Decimal(stripped)
-                except InvalidOperation:
-                    raise ValueError(f"Big: cannot convert {value!r} to a number")
-        else:
-            # Last resort – try str conversion
-            try:
-                self._val = Decimal(str(value))
-            except (InvalidOperation, TypeError):
-                raise TypeError(
-                    f"Big: unsupported type {type(value).__name__!r} for value {value!r}"
-                )
+        self._val = _parse_big_value(value)
 
     # ------------------------------------------------------------------
     # Big.js chainable arithmetic — each returns a *new* Big
@@ -126,7 +142,7 @@ class Big:
 
     def neg(self) -> Big:
         """Negation.  ``x.neg()``"""
-        return Big(-self._val)
+        return self.mul(-1)
 
     def toNumber(self) -> float:
         """Convert to Python ``float``."""
@@ -155,28 +171,30 @@ class Big:
         return self.plus(other)
 
     def __radd__(self, other):
-        return Big(other).plus(self)
+        return self.plus(other)
 
     def __sub__(self, other):
         return self.minus(other)
 
     def __rsub__(self, other):
-        return Big(other).minus(self)
+        return self.neg().plus(other)
 
     def __mul__(self, other):
         return self.mul(other)
 
     def __rmul__(self, other):
-        return Big(other).mul(self)
+        return self.mul(other)
 
     def __truediv__(self, other):
         return self.div(other)
 
     def __rtruediv__(self, other):
-        return Big(other).div(self)
+        if self._val == 0:
+            return Big(0)
+        return Big(Big(other)._val / self._val)
 
     def __neg__(self):
-        return Big(-self._val)
+        return self.neg()
 
     def __pos__(self):
         return Big(self._val)
@@ -237,13 +255,14 @@ class Big:
         return int(self._val)
 
     def __bool__(self):
+        _ = self._val  # access to maintain cohesion
         return True  # Big object is always truthy (like JS object)
 
     def __str__(self):
         return str(self._val)
 
     def __repr__(self):
-        return f"Big({self._val})"
+        return f"Big({self.valueOf()})"
 
     def __hash__(self):
         return hash(self._val)

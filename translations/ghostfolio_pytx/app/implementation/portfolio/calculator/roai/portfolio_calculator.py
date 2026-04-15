@@ -141,32 +141,38 @@ def each_year_of_interval(interval) -> list[date]:
     return result
 
 
+def _resolve_max_range(today, reference_date):
+    """Resolve the max date range."""
+    if reference_date is not None:
+        return {"startDate": parse_date(reference_date), "endDate": today}
+    return {"startDate": sub_years(today, 50), "endDate": today}
+
+
+def _resolve_year_range(date_range, today):
+    """Resolve a year string range like 2021."""
+    try:
+        year = int(date_range)
+        return {"startDate": date(year, 1, 1), "endDate": date(year, 12, 31)}
+    except (ValueError, TypeError):
+        return {"startDate": sub_years(today, 50), "endDate": today}
+
+
 def get_interval_from_date_range(date_range, reference_date=None):
     """Return {startDate, endDate} for a named range like '1d', '1y', 'max', etc."""
     today = date.today()
-    if date_range == "1d":
-        return {"startDate": sub_days(today, 1), "endDate": today}
-    elif date_range == "1y":
-        return {"startDate": sub_years(today, 1), "endDate": today}
-    elif date_range == "5y":
-        return {"startDate": sub_years(today, 5), "endDate": today}
-    elif date_range == "ytd":
-        return {"startDate": start_of_year(today), "endDate": today}
-    elif date_range == "mtd":
-        return {"startDate": start_of_month(today), "endDate": today}
-    elif date_range == "wtd":
-        return {"startDate": start_of_week(today), "endDate": today}
-    elif date_range == "max":
-        if reference_date is not None:
-            return {"startDate": parse_date(reference_date), "endDate": today}
-        return {"startDate": sub_years(today, 50), "endDate": today}
-    else:
-        # Treat as a year string like "2021"
-        try:
-            year = int(date_range)
-            return {"startDate": date(year, 1, 1), "endDate": date(year, 12, 31)}
-        except (ValueError, TypeError):
-            return {"startDate": sub_years(today, 50), "endDate": today}
+    _RANGE_MAP = {
+        "1d": lambda: {"startDate": sub_days(today, 1), "endDate": today},
+        "1y": lambda: {"startDate": sub_years(today, 1), "endDate": today},
+        "5y": lambda: {"startDate": sub_years(today, 5), "endDate": today},
+        "ytd": lambda: {"startDate": start_of_year(today), "endDate": today},
+        "mtd": lambda: {"startDate": start_of_month(today), "endDate": today},
+        "wtd": lambda: {"startDate": start_of_week(today), "endDate": today},
+        "max": lambda: _resolve_max_range(today, reference_date),
+    }
+    resolver = _RANGE_MAP.get(date_range)
+    if resolver:
+        return resolver()
+    return _resolve_year_range(date_range, today)
 
 
 def clone_deep(obj):
@@ -381,6 +387,17 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
                 if latest and latest > 0:
                     market_symbol_map[today_str][sym] = Big(latest)
 
+    def _fetch_symbol_prices(self, all_dates, symbols):
+        """Build market symbol map from price data."""
+        market_symbol_map = {}
+        for date_str in sorted(all_dates):
+            market_symbol_map[date_str] = {}
+            for sym in symbols:
+                price = self.current_rate_service.get_price(sym, date_str)
+                if price is not None:
+                    market_symbol_map[date_str][sym] = Big(price)
+        return market_symbol_map
+
     def _build_market_data(self):
         """Build marketSymbolMap and exchangeRates from current_rate_service."""
         if not self._transaction_points:
@@ -395,14 +412,7 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
         for tp in self._transaction_points:
             all_dates.add(tp["date"])
 
-        market_symbol_map = {}
-        for date_str in sorted(all_dates):
-            market_symbol_map[date_str] = {}
-            for sym in symbols:
-                price = self.current_rate_service.get_price(sym, date_str)
-                if price is not None:
-                    market_symbol_map[date_str][sym] = Big(price)
-
+        market_symbol_map = self._fetch_symbol_prices(all_dates, symbols)
         self._ensure_today_prices(market_symbol_map, symbols)
 
         today_str = format_date(date.today())
@@ -448,6 +458,32 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
             "totalLiabilitiesInBaseCurrency": Big(0),
         }
 
+    def _enrich_chart_date_orders(self, orders, orders_by_date, start_date_string, end_date_string, data_source, symbol, is_cash, market_symbol_map, chart_date_map):
+        """Add chart-date orders and enrich with market prices."""
+        last_unit_price = None
+        if not self._chart_dates:
+            self._chart_dates = sorted(chart_date_map.keys())
+        for date_string in self._chart_dates:
+            if date_string < start_date_string:
+                continue
+            elif date_string > end_date_string:
+                break
+            if orders_by_date.get(date_string) and len(orders_by_date[date_string]) > 0:
+                for o in orders_by_date[date_string]:
+                    o["unitPriceFromMarketData"] = (
+                        market_symbol_map.get(date_string, {}).get(symbol) or last_unit_price
+                    )
+            else:
+                market_price = market_symbol_map.get(date_string, {}).get(symbol) or last_unit_price
+                orders.append({
+                    "date": date_string, "fee": Big(0), "feeInBaseCurrency": Big(0),
+                    "quantity": Big(0),
+                    "SymbolProfile": {"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" if is_cash else None},
+                    "type": "BUY", "unitPrice": market_price, "unitPriceFromMarketData": market_price, "tags": [],
+                })
+            latest_activity = orders[-1]
+            last_unit_price = latest_activity.get("unitPriceFromMarketData") or latest_activity.get("unitPrice")
+
     def _prepare_symbol_orders(self, orders, chart_date_map, data_source, symbol, is_cash, start_date_string, end_date_string, market_symbol_map):
         """Add synthetic and chart-date orders, then sort them."""
         unit_price_at_start = market_symbol_map.get(start_date_string, {}).get(symbol)
@@ -466,36 +502,11 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
             "quantity": Big(0), "type": "BUY", "unitPrice": unit_price_at_end, "tags": [],
         })
 
-        last_unit_price = None
         orders_by_date = {}
         for o in orders:
             orders_by_date.setdefault(o["date"], []).append(o)
 
-        if not self._chart_dates:
-            self._chart_dates = sorted(chart_date_map.keys())
-
-        for date_string in self._chart_dates:
-            if date_string < start_date_string:
-                continue
-            elif date_string > end_date_string:
-                break
-
-            if orders_by_date.get(date_string) and len(orders_by_date[date_string]) > 0:
-                for o in orders_by_date[date_string]:
-                    o["unitPriceFromMarketData"] = (
-                        market_symbol_map.get(date_string, {}).get(symbol) or last_unit_price
-                    )
-            else:
-                market_price = market_symbol_map.get(date_string, {}).get(symbol) or last_unit_price
-                orders.append({
-                    "date": date_string, "fee": Big(0), "feeInBaseCurrency": Big(0),
-                    "quantity": Big(0),
-                    "SymbolProfile": {"dataSource": data_source, "symbol": symbol, "assetSubClass": "CASH" if is_cash else None},
-                    "type": "BUY", "unitPrice": market_price, "unitPriceFromMarketData": market_price, "tags": [],
-                })
-
-            latest_activity = orders[-1]
-            last_unit_price = latest_activity.get("unitPriceFromMarketData") or latest_activity.get("unitPrice")
+        self._enrich_chart_date_orders(orders, orders_by_date, start_date_string, end_date_string, data_source, symbol, is_cash, market_symbol_map, chart_date_map)
 
         def sort_key(o):
             d = parse_date(o["date"])
@@ -564,6 +575,60 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
         s["twi_values"][d] = stw.base.div(tid) if tid > EPSILON else (ti.base if ti.base.gt(0) else Big(0))
         s["twi_values_ce"][d] = stw.ce.div(tid) if tid > EPSILON else (ti.ce if ti.ce.gt(0) else Big(0))
 
+    @staticmethod
+    def _accumulate_income(s, order, ex_rate, income_keys_map):
+        """Process income accumulation for DIVIDEND/INTEREST/LIABILITY."""
+        income_keys = income_keys_map.get(order["type"])
+        if income_keys:
+            amt = order["quantity"].mul(order["unitPrice"])
+            s[income_keys[0]] = s[income_keys[0]].plus(amt)
+            s[income_keys[1]] = s[income_keys[1]].plus(amt.mul(ex_rate))
+
+    @staticmethod
+    def _compute_sell_gp(order, last_avg_price):
+        """Compute gross performance from a sell order."""
+        if order["type"] != "SELL":
+            return Pair.zero()
+        return Pair(
+            order.get("unitPriceInBaseCurrency", Big(0)).minus(last_avg_price.base).mul(order["quantity"]),
+            order.get("unitPriceInBaseCurrencyWithCurrencyEffect", Big(0)).minus(last_avg_price.ce).mul(order["quantity"]),
+        )
+
+    @staticmethod
+    def _resolve_initial_value(s, i, index_of_start, txn_inv):
+        """Resolve the initial value at start."""
+        if i < index_of_start or s["initial_value"].base:
+            return
+        if i == index_of_start and not s["val_before"].base.eq(0):
+            s["initial_value"] = s["val_before"]
+        elif txn_inv.base.gt(0):
+            s["initial_value"] = txn_inv
+
+    @staticmethod
+    def _update_avg_price(s, txn_inv):
+        """Compute average price and reset on zero units."""
+        if s["total_quantity_from_buys"].eq(0):
+            s["last_avg_price"] = Pair.zero()
+        else:
+            s["last_avg_price"] = s["total_inv_from_buys"].div_each(s["total_quantity_from_buys"])
+        if s["total_units"].eq(0):
+            s["total_inv_from_buys"] = Pair.zero()
+            s["total_quantity_from_buys"] = Big(0)
+
+    @staticmethod
+    def _init_start_tracking(s, i, index_of_start):
+        """Set inv_at_start and val_at_start on first eligible order."""
+        if s["inv_at_start"].base is None and i >= index_of_start:
+            s["inv_at_start"] = Pair(s["total_inv"].base or Big(0), s["total_inv"].ce or Big(0))
+            s["val_at_start"] = s["val_before"]
+
+    @staticmethod
+    def _track_buy(s, order, txn_inv):
+        """Process BUY order accumulation."""
+        if order["type"] == "BUY":
+            s["total_quantity_from_buys"] = s["total_quantity_from_buys"].plus(order["quantity"])
+            s["total_inv_from_buys"] = s["total_inv_from_buys"].plus(txn_inv)
+
     def _process_orders_loop(self, orders, index_of_start, index_of_end, exchange_rates, current_exchange_rate, unit_price_at_start):
         """Process all orders and compute running totals using Pair for base/ce values."""
         s = {
@@ -591,11 +656,7 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
         for i, order in enumerate(orders):
             ex_rate = exchange_rates.get(order["date"], 1)
 
-            income_keys = _INCOME_KEYS.get(order["type"])
-            if income_keys:
-                amt = order["quantity"].mul(order["unitPrice"])
-                s[income_keys[0]] = s[income_keys[0]].plus(amt)
-                s[income_keys[1]] = s[income_keys[1]].plus(amt.mul(ex_rate))
+            self._accumulate_income(s, order, ex_rate, _INCOME_KEYS)
 
             if order.get("itemType") == "start":
                 order["unitPrice"] = (
@@ -609,23 +670,15 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
             market_price = Pair(raw_market.mul(current_exchange_rate), raw_market.mul(ex_rate))
             s["val_before"] = Pair(s["total_units"].mul(market_price.base), s["total_units"].mul(market_price.ce))
 
-            if s["inv_at_start"].base is None and i >= index_of_start:
-                s["inv_at_start"] = Pair(s["total_inv"].base or Big(0), s["total_inv"].ce or Big(0))
-                s["val_at_start"] = s["val_before"]
+            self._init_start_tracking(s, i, index_of_start)
 
             txn_inv = self._compute_txn_investment(order, s["total_inv"], s["total_units"])
-            if order["type"] == "BUY":
-                s["total_quantity_from_buys"] = s["total_quantity_from_buys"].plus(order["quantity"])
-                s["total_inv_from_buys"] = s["total_inv_from_buys"].plus(txn_inv)
+            self._track_buy(s, order, txn_inv)
 
             s["total_inv_before"] = Pair(s["total_inv"].base, s["total_inv"].ce)
             s["total_inv"] = s["total_inv"].plus(txn_inv)
 
-            if i >= index_of_start and not s["initial_value"].base:
-                if i == index_of_start and not s["val_before"].base.eq(0):
-                    s["initial_value"] = s["val_before"]
-                elif txn_inv.base.gt(0):
-                    s["initial_value"] = txn_inv
+            self._resolve_initial_value(s, i, index_of_start, txn_inv)
 
             s["fees"] = s["fees"].plus(Pair(
                 order.get("feeInBaseCurrency") or Big(0),
@@ -635,22 +688,10 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
             s["total_units"] = s["total_units"].plus(order["quantity"].mul(get_factor(order["type"])))
             val_of_inv = Pair(s["total_units"].mul(market_price.base), s["total_units"].mul(market_price.ce))
 
-            gp_sell = (
-                Pair(
-                    order.get("unitPriceInBaseCurrency", Big(0)).minus(s["last_avg_price"].base).mul(order["quantity"]),
-                    order.get("unitPriceInBaseCurrencyWithCurrencyEffect", Big(0)).minus(s["last_avg_price"].ce).mul(order["quantity"]),
-                ) if order["type"] == "SELL" else Pair.zero()
-            )
+            gp_sell = self._compute_sell_gp(order, s["last_avg_price"])
             s["gp_from_sells"] = s["gp_from_sells"].plus(gp_sell)
 
-            if s["total_quantity_from_buys"].eq(0):
-                s["last_avg_price"] = Pair.zero()
-            else:
-                s["last_avg_price"] = s["total_inv_from_buys"].div_each(s["total_quantity_from_buys"])
-
-            if s["total_units"].eq(0):
-                s["total_inv_from_buys"] = Pair.zero()
-                s["total_quantity_from_buys"] = Big(0)
+            self._update_avg_price(s, txn_inv)
 
             s["gross_perf"] = Pair(
                 val_of_inv.base.minus(s["total_inv"].base).plus(s["gp_from_sells"].base),
@@ -684,6 +725,23 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
             "unit_price_at_end": orders[next((i for i, o in enumerate(orders) if o.get("itemType") == "end"), len(orders) - 1)].get("unitPrice"),
         }
 
+    @staticmethod
+    def _compute_range_average(chart_dates, inv_values_acc_ce, gp_at_start_ce, range_start_str, range_end_str):
+        """Compute average investment for a date range."""
+        average = Big(0)
+        day_count = 0
+        for j in range(len(chart_dates) - 1, -1, -1):
+            d = chart_dates[j]
+            if d > range_end_str:
+                continue
+            elif d < range_start_str:
+                break
+            acc_val = inv_values_acc_ce.get(d)
+            if acc_val is not None and isinstance(acc_val, Big) and acc_val.gt(0):
+                average = average.add(acc_val.add(gp_at_start_ce))
+                day_count += 1
+        return average.div(day_count) if day_count > 0 else average
+
     def _compute_date_range_performance(self, start, end, current_values_ce, inv_values_acc_ce, net_perf_values_ce):
         """Compute per-dateRange net performance maps."""
         np_pct_ce_map = {}
@@ -708,20 +766,7 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
             iv_acc_at_start_ce = inv_values_acc_ce.get(range_start_str, Big(0))
             gp_at_start_ce = cv_at_start_ce.minus(iv_acc_at_start_ce)
 
-            average = Big(0)
-            day_count = 0
-            for j in range(len(self._chart_dates) - 1, -1, -1):
-                d = self._chart_dates[j]
-                if d > range_end_str:
-                    continue
-                elif d < range_start_str:
-                    break
-                acc_val = inv_values_acc_ce.get(d)
-                if acc_val is not None and isinstance(acc_val, Big) and acc_val.gt(0):
-                    average = average.add(acc_val.add(gp_at_start_ce))
-                    day_count += 1
-            if day_count > 0:
-                average = average.div(day_count)
+            average = self._compute_range_average(self._chart_dates, inv_values_acc_ce, gp_at_start_ce, range_start_str, range_end_str)
 
             end_val = net_perf_values_ce.get(range_end_str, Big(0))
             start_val = Big(0) if dr == "max" else net_perf_values_ce.get(range_start_str, Big(0))
@@ -837,63 +882,56 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
             r, start, end, gp_pct, gp_pct_ce, np_pct, np_pct_ce_map, np_with_ce_map, twi_avg,
         )
 
+
+    @staticmethod
+    def _accumulate_position_perf(acc, pos):
+        """Aggregate performance and time-weighted investment from a position."""
+        if pos.get("grossPerformance"):
+            acc["gp"] = acc["gp"].plus(pos["grossPerformance"])
+            acc["gp_ce"] = acc["gp_ce"].plus(pos.get("grossPerformanceWithCurrencyEffect", Big(0)))
+            acc["np_"] = acc["np_"].plus(pos.get("netPerformance", Big(0)))
+        elif not pos.get("quantity", Big(0)).eq(0):
+            acc["has_errors"] = True
+        if pos.get("timeWeightedInvestment"):
+            acc["total_twi"] = acc["total_twi"].plus(pos["timeWeightedInvestment"])
+            acc["total_twi_ce"] = acc["total_twi_ce"].plus(pos.get("timeWeightedInvestmentWithCurrencyEffect", Big(0)))
+        elif not pos.get("quantity", Big(0)).eq(0):
+            acc["has_errors"] = True
+
+    @staticmethod
+    def _accumulate_position(acc, pos):
+        """Aggregate a single position into accumulator."""
+        if pos.get("feeInBaseCurrency"):
+            acc["total_fees_ce"] = acc["total_fees_ce"].plus(pos["feeInBaseCurrency"])
+        if pos.get("valueInBaseCurrency"):
+            acc["cv_base"] = acc["cv_base"].plus(pos["valueInBaseCurrency"])
+        else:
+            acc["has_errors"] = True
+        if pos.get("investment"):
+            acc["total_inv"] = acc["total_inv"].plus(pos["investment"])
+            acc["total_inv_ce"] = acc["total_inv_ce"].plus(pos.get("investmentWithCurrencyEffect", pos["investment"]))
+        else:
+            acc["has_errors"] = True
+        RoaiPortfolioCalculator._accumulate_position_perf(acc, pos)
+
     def _calculate_overall_performance(self, positions):
         """Aggregate position-level metrics into portfolio snapshot (mirrors TS calculateOverallPerformance)."""
-        current_value_in_base = Big(0)
-        gp = Big(0)
-        gp_ce = Big(0)
-        has_errors = False
-        np_ = Big(0)
-        total_fees_ce = Big(0)
-        total_interest_ce = Big(0)
-        total_inv = Big(0)
-        total_inv_ce = Big(0)
-        total_twi = Big(0)
-        total_twi_ce = Big(0)
+        acc = {"cv_base": Big(0), "gp": Big(0), "gp_ce": Big(0), "has_errors": False,
+            "np_": Big(0), "total_fees_ce": Big(0), "total_inv": Big(0),
+            "total_inv_ce": Big(0), "total_twi": Big(0), "total_twi_ce": Big(0)}
 
         for pos in positions:
-            if not pos.get("includeInTotalAssetValue", True):
-                continue
-
-            if pos.get("feeInBaseCurrency"):
-                total_fees_ce = total_fees_ce.plus(pos["feeInBaseCurrency"])
-
-            if pos.get("valueInBaseCurrency"):
-                current_value_in_base = current_value_in_base.plus(pos["valueInBaseCurrency"])
-            else:
-                has_errors = True
-
-            if pos.get("investment"):
-                total_inv = total_inv.plus(pos["investment"])
-                total_inv_ce = total_inv_ce.plus(
-                    pos.get("investmentWithCurrencyEffect", pos["investment"])
-                )
-            else:
-                has_errors = True
-
-            if pos.get("grossPerformance"):
-                gp = gp.plus(pos["grossPerformance"])
-                gp_ce = gp_ce.plus(pos.get("grossPerformanceWithCurrencyEffect", Big(0)))
-                np_ = np_.plus(pos.get("netPerformance", Big(0)))
-            elif not pos.get("quantity", Big(0)).eq(0):
-                has_errors = True
-
-            if pos.get("timeWeightedInvestment"):
-                total_twi = total_twi.plus(pos["timeWeightedInvestment"])
-                total_twi_ce = total_twi_ce.plus(
-                    pos.get("timeWeightedInvestmentWithCurrencyEffect", Big(0))
-                )
-            elif not pos.get("quantity", Big(0)).eq(0):
-                has_errors = True
+            if pos.get("includeInTotalAssetValue", True):
+                self._accumulate_position(acc, pos)
 
         return {
-            "currentValueInBaseCurrency": current_value_in_base,
-            "hasErrors": has_errors,
+            "currentValueInBaseCurrency": acc["cv_base"],
+            "hasErrors": acc["has_errors"],
             "positions": positions,
-            "totalFeesWithCurrencyEffect": total_fees_ce,
-            "totalInterestWithCurrencyEffect": total_interest_ce,
-            "totalInvestment": total_inv,
-            "totalInvestmentWithCurrencyEffect": total_inv_ce,
+            "totalFeesWithCurrencyEffect": acc["total_fees_ce"],
+            "totalInterestWithCurrencyEffect": Big(0),
+            "totalInvestment": acc["total_inv"],
+            "totalInvestmentWithCurrencyEffect": acc["total_inv_ce"],
             "activitiesCount": len([
                 o for o in self._orders if o["type"] in ("BUY", "SELL")
             ]),
@@ -1049,6 +1087,28 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
             })
         return historical_data
 
+    @staticmethod
+    def _empty_snapshot():
+        """Return empty snapshot with zero values."""
+        return {
+            "activitiesCount": 0, "createdAt": datetime.now(),
+            "currentValueInBaseCurrency": Big(0), "errors": [], "hasErrors": False,
+            "historicalData": [], "positions": [],
+            "totalFeesWithCurrencyEffect": Big(0), "totalInterestWithCurrencyEffect": Big(0),
+            "totalInvestment": Big(0), "totalInvestmentWithCurrencyEffect": Big(0),
+            "totalLiabilitiesWithCurrencyEffect": Big(0),
+        }
+
+    @staticmethod
+    def _find_first_tp_index(transaction_points, start_date):
+        """Compute the first transaction point index for snapshot."""
+        first_index = len(transaction_points)
+        for i, tp in enumerate(transaction_points):
+            if not is_before(parse_date(tp["date"]), start_date):
+                first_index = i
+                break
+        return max(0, first_index - 1) if first_index > 0 else 0
+
     def _compute_snapshot(self):
         """Build full portfolio snapshot (mirrors TS computeSnapshot)."""
         if self._snapshot_cache is not None:
@@ -1061,26 +1121,12 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
         ]
 
         if not transaction_points:
-            self._snapshot_cache = {
-                "activitiesCount": 0, "createdAt": datetime.now(),
-                "currentValueInBaseCurrency": Big(0), "errors": [], "hasErrors": False,
-                "historicalData": [], "positions": [],
-                "totalFeesWithCurrencyEffect": Big(0), "totalInterestWithCurrencyEffect": Big(0),
-                "totalInvestment": Big(0), "totalInvestmentWithCurrencyEffect": Big(0),
-                "totalLiabilitiesWithCurrencyEffect": Big(0),
-            }
+            self._snapshot_cache = self._empty_snapshot()
             return self._snapshot_cache
 
         market_symbol_map, exchange_rates = self._build_market_data()
 
-        first_index = len(transaction_points)
-        first_tp_found = None
-        for i, tp in enumerate(transaction_points):
-            if not is_before(parse_date(tp["date"]), self._start_date) and first_tp_found is None:
-                first_tp_found = tp
-                first_index = i
-        if first_index > 0:
-            first_index -= 1
+        first_index = self._find_first_tp_index(transaction_points, self._start_date)
 
         end_date_string = format_date(self._end_date)
         days_in_market = difference_in_days(self._end_date, self._start_date)
@@ -1149,24 +1195,28 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
         return chart
 
     @staticmethod
+    def _extract_np_pct_from_pos(pos):
+        """Extract net performance percentage from a position."""
+        pos_np_pct = pos.get("netPerformancePercentage")
+        if pos_np_pct is not None and isinstance(pos_np_pct, Big) and not pos_np_pct.eq(0):
+            return pos_np_pct.toNumber()
+        np_pct_map = pos.get("netPerformancePercentageWithCurrencyEffectMap")
+        if isinstance(np_pct_map, dict):
+            max_pct = np_pct_map.get("max", Big(0))
+            if isinstance(max_pct, Big) and not max_pct.eq(0):
+                return max_pct.toNumber()
+        return None
+
+    @staticmethod
     def _fallback_np_pct(positions, total_np, total_np_pct, total_np_pct_ce):
         """Resolve net performance percentages from positions when chart gives 0."""
         if (total_np_pct != 0 and total_np_pct_ce != 0) or total_np.eq(0):
             return total_np_pct, total_np_pct_ce
         for pos in positions:
-            pos_np_pct = pos.get("netPerformancePercentage")
-            if pos_np_pct is not None and isinstance(pos_np_pct, Big) and not pos_np_pct.eq(0):
-                val = pos_np_pct.toNumber()
+            val = RoaiPortfolioCalculator._extract_np_pct_from_pos(pos)
+            if val is not None:
                 total_np_pct = total_np_pct or val
                 total_np_pct_ce = total_np_pct_ce or val
-            else:
-                np_pct_map = pos.get("netPerformancePercentageWithCurrencyEffectMap")
-                if isinstance(np_pct_map, dict):
-                    max_pct = np_pct_map.get("max", Big(0))
-                    if isinstance(max_pct, Big) and not max_pct.eq(0):
-                        val = max_pct.toNumber()
-                        total_np_pct = total_np_pct or val
-                        total_np_pct_ce = total_np_pct_ce or val
         return total_np_pct, total_np_pct_ce
 
     def get_performance(self) -> dict:
@@ -1204,55 +1254,46 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
         first_order_date = min((a["date"] for a in self._orders), default=None) if self._orders else None
         return {"chart": chart, "firstOrderDate": first_order_date, "performance": perf}
 
+    @staticmethod
+    def _build_delta_map(historical_data):
+        """Build investment delta map from historical data."""
+        delta_map = {}
+        for item in historical_data:
+            inv_val = item.get("investmentValueWithCurrencyEffect", 0)
+            if inv_val and inv_val != 0:
+                delta_map[item["date"]] = inv_val if isinstance(inv_val, (int, float)) else float(inv_val)
+        return delta_map
+
+    @staticmethod
+    def _tp_investment(tp):
+        """Compute total investment for a transaction point."""
+        total = Big(0)
+        for item in tp["items"]:
+            total = total.plus(item["investment"])
+        return total.toNumber()
+
     def get_investments(self, group_by=None) -> dict:
         """Return investments: {investments: [{date, investment}]}."""
+        snapshot = self._compute_snapshot()
+        historical_data = snapshot.get("historicalData", [])
         if group_by:
-            # Group by month or year using historical data
-            snapshot = self._compute_snapshot()
-            historical_data = snapshot.get("historicalData", [])
             return {"investments": self.get_investments_by_group(historical_data, group_by)}
-
-        # No grouping: build from transaction points
-        if not self._transaction_points:
-            return {"investments": []}
-
+        delta_map = self._build_delta_map(historical_data)
         investments = []
         for tp in self._transaction_points:
-            total = Big(0)
-            for item in tp["items"]:
-                total = total.plus(item["investment"])
-            investments.append({
-                "date": tp["date"],
-                "investment": total.toNumber(),
-            })
+            d = tp["date"]
+            inv = delta_map[d] if d in delta_map else self._tp_investment(tp)
+            investments.append({"date": d, "investment": inv})
         return {"investments": investments}
 
     def get_investments_by_group(self, data, group_by):
         """Group investment data by month or year (mirrors TS getInvestmentsByGroup)."""
-        grouped = {}
+        items = []
         for item in data:
-            d = item.get("date", "")
             inv_val = item.get("investmentValueWithCurrencyEffect", 0)
-            if group_by == "month":
-                date_group = d[:7]  # YYYY-MM
-            else:
-                date_group = d[:4]  # YYYY
-
-            if date_group not in grouped:
-                grouped[date_group] = 0.0
-
-            if isinstance(inv_val, Big):
-                grouped[date_group] += inv_val.toNumber()
-            else:
-                grouped[date_group] += float(inv_val)
-
-        result = []
-        for dg in sorted(grouped.keys()):
-            if group_by == "month":
-                result.append({"date": f"{dg}-01", "investment": grouped[dg]})
-            else:
-                result.append({"date": f"{dg}-01-01", "investment": grouped[dg]})
-        return result
+            val = inv_val.toNumber() if isinstance(inv_val, Big) else float(inv_val)
+            items.append({"date": item.get("date", ""), "investment": val})
+        return self._group_by_period(items, group_by)
 
     @staticmethod
     def _build_holding_dict(pos, extra=None):
@@ -1345,40 +1386,31 @@ class RoaiPortfolioCalculator(PortfolioCalculator):
             "hasError": snapshot.get("hasErrors", False),
         }
 
+    @staticmethod
+    def _group_by_period(items, group_by):
+        """Group items by month or year period."""
+        grouped = {}
+        for item in items:
+            d = item["date"]
+            key = d[:7] if group_by == "month" else d[:4]
+            grouped[key] = grouped.get(key, 0.0) + item["investment"]
+        result = []
+        for k in sorted(grouped.keys()):
+            suffix = "-01" if group_by == "month" else "-01-01"
+            result.append({"date": f"{k}{suffix}", "investment": grouped[k]})
+        return result
+
     def get_dividends(self, group_by=None) -> dict:
         """Return dividends: {dividends: [{date, investment}]}."""
-        # Extract dividend activities
         dividend_acts = [a for a in self._orders if a["type"] == "DIVIDEND"]
-
         if not dividend_acts:
             return {"dividends": []}
-
         dividends = []
         for act in dividend_acts:
             amount = act["quantity"].mul(act["unitPrice"])
-            dividends.append({
-                "date": act["date"],
-                "investment": amount.toNumber(),
-            })
-
+            dividends.append({"date": act["date"], "investment": amount.toNumber()})
         if group_by:
-            grouped = {}
-            for d in dividends:
-                dt = d["date"]
-                if group_by == "month":
-                    key = dt[:7]
-                else:
-                    key = dt[:4]
-                grouped[key] = grouped.get(key, 0.0) + d["investment"]
-
-            result = []
-            for k in sorted(grouped.keys()):
-                if group_by == "month":
-                    result.append({"date": f"{k}-01", "investment": grouped[k]})
-                else:
-                    result.append({"date": f"{k}-01-01", "investment": grouped[k]})
-            return {"dividends": result}
-
+            return {"dividends": self._group_by_period(dividends, group_by)}
         return {"dividends": dividends}
 
     def evaluate_report(self) -> dict:
